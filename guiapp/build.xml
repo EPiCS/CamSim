@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Ant tutorial: http://ant.apache.org/manual/tutorial-HelloWorldWithAnt.html -->
+
+<project name="handover-guiapp" basedir="." default="main">
+
+    <property name="src.dir"     value="src"/>
+    <property name="build.dir"   value="build"/>
+    <property name="lib.dir"     value="lib"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+    
+    <property name="sim.jar"                 value="../simulator/build/jar/handover-simulator.jar"/>
+    <property name="common.jar"     value="../common/build/jar/handover-common.jar"/>
+
+    <property name="main-class"  value="epics.camwin.Main"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+	  <zipgroupfileset dir="lib" includes="*.jar"/>
+          <manifest>
+            <attribute name="Main-Class" value="${main-class}" />
+          </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="${jar.dir}/${ant.project.name}.jar" fork="true"/>
+    </target>
+
+    <target name="pull-dependancies" >
+      <copy file="${sim.jar}" todir="${lib.dir}" />
+      <copy file="${common.jar}" todir="${lib.dir}" />
+    </target>
+
+    <target name="main" depends="clean,jar"/>
+
+</project>
