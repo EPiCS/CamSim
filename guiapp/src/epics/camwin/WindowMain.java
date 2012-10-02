@@ -42,7 +42,7 @@ public class WindowMain implements ActionListener{
     public WorldView wv;
     JComboBox demos;
     DataView dv;
-//    JButton save;
+    JButton save;
 //    JLabel curL;
     
 	public WindowMain(SimCoreModel sm, String input){
@@ -163,11 +163,11 @@ public class WindowMain implements ActionListener{
         b8.addActionListener(this);
         button_panel.add(b8);
         
-//        save = new JButton("Save scenario");
-//        save.setActionCommand("save");
-//        save.addActionListener(this);
+        save = new JButton("Save scenario");
+        save.setActionCommand("save");
+        save.addActionListener(this);
 //        save.setEnabled(false);
-//        button_panel.add(save);
+        button_panel.add(save);
         
         return button_panel;
 	}
@@ -189,37 +189,37 @@ public class WindowMain implements ActionListener{
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-//		if(e.getActionCommand().equals("save")){
-//			JFileChooser jfc = new JFileChooser("./");
-//			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-//			jfc.setFileFilter(new FileFilter() {
-//				
-//				@Override
-//				public String getDescription() {
-//					return "Szenarios (.xml)";
-//				}
-//				
-//				@Override
-//				public boolean accept(File f) {
-//					if(f.isDirectory())
-//						return true;
-//					
-//					if(f.getName().endsWith(".xml")){
-//						return true;
-//					}
-//					else{
-//						return false;
-//					}
-//				}
-//			});
-//			int retVal = jfc.showSaveDialog(frame);
-//			if(retVal == JFileChooser.APPROVE_OPTION){
-//				sim_model.save_to_xml(jfc.getSelectedFile().getName());
-//			}
-//			
-//			
-//			
-//		}
+		if(e.getActionCommand().equals("save")){
+			JFileChooser jfc = new JFileChooser("./");
+			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			jfc.setFileFilter(new FileFilter() {
+				
+				@Override
+				public String getDescription() {
+					return "Szenarios (.xml)";
+				}
+				
+				@Override
+				public boolean accept(File f) {
+					if(f.isDirectory())
+						return true;
+					
+					if(f.getName().endsWith(".xml")){
+						return true;
+					}
+					else{
+						return false;
+					}
+				}
+			});
+			int retVal = jfc.showSaveDialog(frame);
+			if(retVal == JFileChooser.APPROVE_OPTION){
+				sim_model.save_to_xml(jfc.getSelectedFile().getAbsolutePath());
+			}
+			
+			
+			
+		}
 		if(e.getActionCommand().equals("addobj")){
 			if (!modeDemo3) {
                 sim_model.add_random_object();

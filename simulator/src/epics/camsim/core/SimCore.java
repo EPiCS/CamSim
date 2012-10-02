@@ -10,6 +10,9 @@ import epics.common.*;
 import epics.common.IMessage.MessageType;
 
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -463,12 +466,19 @@ public class SimCore {
     }
 
     public void remove_random_object(){
+    	if(this.objects.isEmpty()){
+    		return;
+    	}
+    	
+        int rnd = RandomNumberGenerator.nextInt( objects.size() );
+        
+        TraceableObject obj_to_remove = this.objects.get(rnd);
 
-        //int rnd = r.nextInt( objects.size() );
-
-        //for ( CameraController cc : cameras ){
-            //cc.
-        //}
+       
+        for ( CameraController c : this.cameras ){
+            c.removeObject(obj_to_remove.getFeatures());
+        }
+        this.objects.remove(rnd);
 
     }
 
@@ -882,5 +892,30 @@ public class SimCore {
     public ArrayList<TraceableObject> getObjects() {
         return objects;
     }
+
+	public void save_to_xml(String absolutePath) {
+		File f = new File(absolutePath + ".xml");
+		
+		FileWriter fw;
+		try {
+			fw = new FileWriter(f);
+			String s = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"+System.getProperty( "line.separator" )+"		<root>"+System.getProperty( "line.separator" )+"	    " +
+				"<simulation max_x=\"" + max_x + "\" max_y=\"" + max_y + "\" min_x=\"" + min_x + "\" min_y=\"" + min_y + "\">"+ System.getProperty( "line.separator" )+ "	        <cameras>"+ System.getProperty( "line.separator" );
+			fw.write(s);
+			
+			for (CameraController cam : cameras) {
+				fw.write("	        	     "+ cam.toString() + System.getProperty( "line.separator" ));
+			}
+			fw.write("	        </cameras>"+System.getProperty( "line.separator" )+"        <objects>"+System.getProperty( "line.separator" ));
+			for(TraceableObject to : objects){
+				fw.write("	        	     "+ to.toXMLString() + System.getProperty( "line.separator" ));
+			}
+			fw.write("        </objects>"+System.getProperty( "line.separator" )+"    </simulation>"+System.getProperty( "line.separator" )+"</root>");
+			fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 }

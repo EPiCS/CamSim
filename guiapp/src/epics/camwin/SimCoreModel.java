@@ -95,4 +95,9 @@ public class SimCoreModel extends Observable {
 		
 	}
 
+	public void save_to_xml(String absolutePath) {
+		sim.save_to_xml(absolutePath);
+		
+	}
+
 }

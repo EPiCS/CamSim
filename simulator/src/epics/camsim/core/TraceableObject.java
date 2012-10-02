@@ -157,14 +157,18 @@ public class TraceableObject{
         return this.features;
     }
     
-    //<object features="1.0" heading="90.0" speed="1.0" x="-30.0" y="-2.0"/>
+    
     @Override
     public String toString(){
-//    	String feat = "" + this.features;
-//    	feat = feat.substring(1, feat.length()-1);
-//    	String retVal = "<object features=\"" + feat + "\" heading=\"" + this.heading * Math.toRadians(3600) + "\" speed=\"" + this.speed + "\" x=\"" + this.x + "\" y=\"" + this.y + "\"/>";
-//    	return retVal;
     	return this.features.toString();
     }
+
+
+	public String toXMLString() {
+		String feat = "" + this.features;
+    	feat = feat.substring(1, feat.length()-1);
+    	String retVal = "<object features=\"" + feat + "\" heading=\"" + this.heading * Math.toRadians(3600) + "\" speed=\"" + this.speed + "\" x=\"" + this.x + "\" y=\"" + this.y + "\"/>";
+    	return retVal;
+	}
 
 }
