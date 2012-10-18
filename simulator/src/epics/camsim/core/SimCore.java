@@ -27,11 +27,11 @@ import java.util.Random;
 
 public class SimCore {
 
-	static final int DETECTFALSEOBJECT = 0; //percent to detect object that is not existent
-	static final int CAMERRORRATE = -1; //percent of camera error. -1 = no camera error
-	static final int RESETRATE = 50;
+	int TRACKERERROR = -1; //percent of missdetected objects
+	int CAMERRORRATE = -1; //percent of camera error. -1 = no camera error
+	int RESETRATE = 50; //looses knowledge about everything - happens in x percentage of cameraerror (only when error occurs, knowledgeloss can happen)
 	static final boolean BIDIRECTIONAL_VISION = true;
-	static boolean USEGLOBAL = false;
+	boolean USEGLOBAL = false;
 	
 	
     static int camIDGenerator = 0;
@@ -64,13 +64,21 @@ public class SimCore {
 	private int _comm = -1;
 
 
-    public SimCore( long seed, double min_x, double max_x, double min_y, double max_y, boolean global){
+//    public SimCore( long seed, double min_x, double max_x, double min_y, double max_y, boolean global){
+//    	this(seed, min_x, max_x, min_y, max_y, global, -1, 50, -1);
+//    }
+    	
+    public SimCore( long seed, double min_x, double max_x, double min_y, double max_y, boolean global, int camError, int camReset, int trackError){
         Statistics.init(null);
         RandomNumberGenerator.init(seed);
         this.min_x = min_x;
         this.max_x = max_x;
         this.min_y = min_y;
         this.max_y = max_y;
+        
+        this.RESETRATE = camReset;
+        this.CAMERRORRATE = camError;
+        this.TRACKERERROR = trackError;
         
         this.USEGLOBAL = global;
         
@@ -81,7 +89,16 @@ public class SimCore {
         init_demo();
     }
 
-    public SimCore( long seed, String output, SimSettings ss, boolean global) {
+//    public SimCore( long seed, String output, SimSettings ss, boolean global){
+//    	this(seed, output, ss, global, -1, 50, -1);
+//    }
+    
+    public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError) {
+    	
+	    this.RESETRATE = camReset;
+	    this.CAMERRORRATE = camError;
+	    this.TRACKERERROR = trackError;
+	    
     	USEGLOBAL = global;
     	    	
         if(USEGLOBAL){
@@ -195,9 +212,9 @@ public class SimCore {
         {
             icam = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
         }
-        else if(ai_algorithm.compareTo("asker") == 0){
-        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
-        }
+//        else if(ai_algorithm.compareTo("asker") == 0){
+//        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
+//        }
         else{
             throw new InvalidParameterException("Invalid ai_algorithm parameter.");
         }
@@ -212,7 +229,7 @@ public class SimCore {
                 Math.toRadians(angle_degrees),
                 range,
                 icam,
-                limit);
+                limit, 100 - TRACKERERROR);
 
         if(USEGLOBAL){
         	reg.addCamera(cc);
@@ -246,9 +263,9 @@ public class SimCore {
         {
             icam = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
         }
-        else if(ai_alg.compareTo("asker") == 0){
-        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
-        }
+//        else if(ai_alg.compareTo("asker") == 0){
+//        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
+//        }
         else{
             throw new InvalidParameterException("Invalid ai_algorithm parameter.");
         }
@@ -259,7 +276,7 @@ public class SimCore {
                 x_pos, y_pos,
                 Math.toRadians(heading_degrees),
                 Math.toRadians(angle_degrees),
-                range, icam, limit);
+                range, icam, limit, 100 - TRACKERERROR);
 
         if(USEGLOBAL){
         	reg.addCamera(cc);
@@ -289,15 +306,15 @@ public class SimCore {
 		case 2:
 			ai = new ActiveAINodeMulti(_comm, staticVG, vg, reg);
 			break;
-		case 3:
-			ai = new PassiveAINodeSingle(_comm, staticVG, vg, reg);
-			break;
-		case 4:
-			ai = new ActiveAINodeSingleAsker(_comm, staticVG, vg, reg);
-			break;
-		case 5:
-			ai = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
-			break;
+//		case 3:
+//			ai = new PassiveAINodeSingle(_comm, staticVG, vg, reg);
+//			break;
+//		case 4:
+//			ai = new ActiveAINodeSingleAsker(_comm, staticVG, vg, reg);
+//			break;
+//		case 5:
+//			ai = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
+//			break;
 		default:
 			ai = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
 			break;
@@ -311,7 +328,7 @@ public class SimCore {
                  Math.toRadians(angle_degrees),
                  range,
                  ai,
-                 limit);
+                 limit, 100 - TRACKERERROR);
          
          if(USEGLOBAL){
          	reg.addCamera(cc);
@@ -394,10 +411,10 @@ public class SimCore {
         	}
         	else{
 		        for(CameraController cc : this.getCameras()){
-		    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
-		    			if(!cc.isOffline())
-		    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-			    	}
+//		    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
+//		    			if(!cc.isOffline())
+//		    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+//			    	}
 		    	}
         	}
         }
@@ -414,10 +431,10 @@ public class SimCore {
         }
         else{
 	        for(CameraController cc : this.getCameras()){
-	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
+//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
 	    			if(!cc.isOffline())
 	    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-		    	}
+//		    	}
 	    	}
         }
         
@@ -432,10 +449,10 @@ public class SimCore {
         }
         else{
 	        for(CameraController cc : this.getCameras()){
-	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
+//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
 	    			if(!cc.isOffline())
 	    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-		    	}
+//		    	}
 	    	}  
         }
     }
@@ -449,10 +466,10 @@ public class SimCore {
         }
         else{
 	        for(CameraController cc : this.getCameras()){
-	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //((cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
+//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //((cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
 	    			if(!cc.isOffline())
 	    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-		    	}
+//		    	}
 	    	}
         }
     }
@@ -504,9 +521,9 @@ public class SimCore {
         
         for(TraceableObject to : this.getObjects()){
 	        for(CameraController cc : this.getCameras()){
-	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //((cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
+//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //((cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
 			    	cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-		    	}
+//		    	}
 	    	}
         }
     }
@@ -588,7 +605,7 @@ public class SimCore {
 		if(random <= CAMERRORRATE){
         	//select random camera and set it offline for a random number of timesteps
 			int ranCam = r.nextInt(this.cameras.size());
-        	int sleepFor = r.nextInt(50);
+        	int sleepFor = r.nextInt(10);
         	
         	CameraController cc = cameras.get(ranCam);
         	cc.setOffline(sleepFor);
@@ -749,14 +766,14 @@ public class SimCore {
     	
 	}
 
-	private boolean detectedFalseObejct() {
-		Random r = new Random();
-		int res = r.nextInt(100);
-		if(res < DETECTFALSEOBJECT){
-			return true;
-		}
-		return false;
-	}
+//	private boolean detectedFalseObejct() {
+//		Random r = new Random();
+//		int res = r.nextInt(100);
+//		if(res < TRACKERERROR){
+//			return true;
+//		}
+//		return false;
+//	}
 
 
 	private void printObjects() throws Exception {
@@ -916,6 +933,13 @@ public class SimCore {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public void reset() {
+		this.min_x = -70;
+		this.max_x = 70;
+		this.min_y = -70;
+		this.max_y = 70;	
 	}
 
 }
