@@ -339,16 +339,7 @@ public class WindowMain implements ActionListener{
         modeDemo1 = true;
         timeReset();
 
-        sim_model.getCameras().clear();
-        sim_model.getObjects().clear();
-
-        sim_model.add_camera(-15, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(-5, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(5, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(15, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(26, 8, -135, 70, 20, 0, 0, null);
-
-        sim_model.add_object(-30, -2, 90, 1);
+        sim_model.loadDemo(1);
 
 //        curL.setText("Currently running: Demo I");
         
@@ -359,17 +350,10 @@ public class WindowMain implements ActionListener{
 		modeDemo3 = false;
         modeDemo1 = false;
         timeReset();
-        sim_model.getCameras().clear();
-        sim_model.getObjects().clear();
-
-        sim_model.add_camera(-15, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(-5, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(5, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(15, 10, -180, 70, 20, 0, 0, null);
-        sim_model.add_camera(26, 8, -135, 70, 20, 0, 0, null);
-
-        sim_model.add_object(-30, -2, 90, 1);
-        sim_model.add_object(30, -2, -90, 1);
+        
+        sim_model.loadDemo(2);
+        
+        
         
 //        curL.setText("Currently running: Demo II");
         
@@ -380,50 +364,8 @@ public class WindowMain implements ActionListener{
 		modeDemo3 = true;
       	modeDemo1 = false;
       	timeReset();
-      	sim_model.getCameras().clear();
-      	sim_model.getObjects().clear();
-
-      	double d = 11;
-
-      	sim_model.add_camera(-20, d, -180, 70, 20, 0, 0, null);
-      	sim_model.add_camera(-10, d, -180, 70, 20, 0, 0, null);
-      	sim_model.add_camera(10, d, -180, 70, 20, 0, 0, null);
-      	sim_model.add_camera(20, d, -180, 70, 20, 0, 0, null);
-
-      	sim_model.add_camera(-20, -d, 0, 70, 20, 0, 0, null);
-      	sim_model.add_camera(-10, -d, 0, 70, 20, 0, 0, null);
-      	sim_model.add_camera(10, -d, 0, 70, 20, 0, 0, null);
-      	sim_model.add_camera(20, -d, 0, 70, 20, 0, 0, null);
-
-      	sim_model.add_camera(d, -20, -90, 70, 20, 0, 0, null);
-      	sim_model.add_camera(d, -10, -90, 70, 20, 0, 0, null);
-      	sim_model.add_camera(d, 10, -90, 70, 20, 0, 0, null);
-      	sim_model.add_camera(d, 20, -90, 70, 20, 0, 0, null);
-
-      	sim_model.add_camera(-d, -20, 90, 70, 20, 0, 0, null);
-      	sim_model.add_camera(-d, -10, 90, 70, 20, 0, 0, null);
-      	sim_model.add_camera(-d, 10, 90, 70, 20, 0, 0, null);
-      	sim_model.add_camera(-d, 20, 90, 70, 20, 0, 0, null);
-
-      	double ln = 27;
-      	double ss = 3;
-
-      	ArrayList<Point2D> waypoints = new ArrayList<Point2D>();
-      	waypoints.add(new Point2D.Double(-ln, -ss));
-      	waypoints.add(new Point2D.Double(-ss, -ss));
-      	waypoints.add(new Point2D.Double(-ss, -ln));
-      	waypoints.add(new Point2D.Double(ss, -ln));
-      	waypoints.add(new Point2D.Double(ss, -ss));
-      	waypoints.add(new Point2D.Double(ln, -ss));
-      	waypoints.add(new Point2D.Double(ln, ss));
-      	waypoints.add(new Point2D.Double(ss, ss));
-
-      	waypoints.add(new Point2D.Double(ss, ln));
-      	waypoints.add(new Point2D.Double(-ss, ln));
-      	waypoints.add(new Point2D.Double(-ss, ss));
-      	waypoints.add(new Point2D.Double(-ln, ss));
-
-      	sim_model.add_object(0.9, waypoints, SimCore.getNextID());
+      	
+      	sim_model.loadDemo(3);
       	
 //      	curL.setText("Currently running: Demo III");
         

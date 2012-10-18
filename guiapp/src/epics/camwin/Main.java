@@ -44,6 +44,9 @@ public class Main {
     static String algo = "";
     static String comm = "";
     static int predefVG = -1;
+    static int trackErr = -1;
+    static int camErr = -1;
+    static int camReset = 50;
 
     static void print_parameters() {
 
@@ -116,7 +119,7 @@ public class Main {
 
         int c;
         String arg;
-        LongOpt[] longopts = new LongOpt[9];
+        LongOpt[] longopts = new LongOpt[12];
 
         StringBuffer sb = new StringBuffer();
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
@@ -128,8 +131,12 @@ public class Main {
         longopts[6] = new LongOpt("algo", LongOpt.REQUIRED_ARGUMENT, null, 'a');
         longopts[7] = new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c');
         longopts[8] = new LongOpt("vg", LongOpt.REQUIRED_ARGUMENT, null, 'v');
+        longopts[9] = new LongOpt("deterr", LongOpt.REQUIRED_ARGUMENT, null, 'd');
+        longopts[10] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
+        longopts[11] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
         
-        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:s:t:", longopts);
+        
+        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:d:e:r:s:t:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -194,6 +201,18 @@ public class Main {
                 	arg = g.getOptarg();
                 	comm = arg;
                 	break;
+                case 'd':
+                	arg = g.getOptarg();
+                	trackErr = Integer.parseInt(arg);
+                	break;
+                case 'r':
+                	arg = g.getOptarg();
+                	camReset = Integer.parseInt(arg);
+                	break;
+                case 'e':
+                	arg = g.getOptarg();
+                	camErr = Integer.parseInt(arg);
+                	break;
                 case 'v':
                 	arg = g.getOptarg();
                 	predefVG = Integer.parseInt(arg);
@@ -257,7 +276,7 @@ public class Main {
         }
         if (showgui == false) {
 
-            SimCore sim = new SimCore(seed, output_file, ss, useGlobal);
+            SimCore sim = new SimCore(seed, output_file, ss, useGlobal, camErr, camReset, trackErr);
 
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();
@@ -267,7 +286,7 @@ public class Main {
 
         } else {
 
-        	SimCore sim = new SimCore(seed, output_file, ss, useGlobal);
+        	SimCore sim = new SimCore(seed, output_file, ss, useGlobal, camErr, camReset, trackErr);
             sim_model = new SimCoreModel(sim);
             WindowMain win = new WindowMain(sim_model, input_file);
             win.createAndShowGUI();

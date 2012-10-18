@@ -16,7 +16,7 @@ import java.util.*;
 public class CameraController implements ICameraController{
 
 	private static int LIMIT = 0;
-	private static int DETECTIONRATE = 100; //percent to detect obejct that is there
+	private static int DETECTIONRATE = 80; //percent to detect object that is there
 	private ICameraAINode camAINode;
 
     private String name;
@@ -41,10 +41,16 @@ public class CameraController implements ICameraController{
     private Map<TraceableObject, Double> visible_objects
             = new HashMap<TraceableObject, Double>();
 	private boolean sleepForever = false;
+  
 
-
+//    public CameraController( String name, double x, double y,
+//            double heading, double viewing_angle, double range, ICameraAINode ai, int limit){
+//    	this(name, x, y , heading, viewing_angle, range, ai, limit, 100);
+//    }
+    
     public CameraController( String name, double x, double y,
-            double heading, double viewing_angle, double range, ICameraAINode ai, int limit){
+                double heading, double viewing_angle, double range, ICameraAINode ai, int limit, int detectionRate){
+    	this.DETECTIONRATE = detectionRate;
     	this.LIMIT = limit;
         this.x = x;
         this.y = y;

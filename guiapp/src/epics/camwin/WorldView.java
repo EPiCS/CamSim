@@ -287,34 +287,34 @@ public class WorldView extends JPanel implements Observer
                 int col = (int)(confidence * 128 + 50);
                 if ( col > 255 ){ col = 255; }
 	            
-                if(c.getAINode() instanceof epics.ai.ActiveAINodeSingleAsker){
-	                if( key == c.getTraced()){
-	                    g2.setColor( Color.green );
-	
-	                    col = (int)(confidence * 128 + 128);
-	                    if ( col > 255 ){ col = 255; }
-	
-	                    g2.setColor( new Color(255-col, 255, 255-col )  );
-	
-	                    Line2D.Double q = new Line2D.Double(
-	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-	                    this.cst.simToWindowX(key.getX()), this.cst.simToWindowY(key.getY()) );
-	                    g2.draw(q);
-	                }
-	                else{
-	                    /*
-	
-	                    g2.setColor( new Color(255-col, 255-col, 255-col )  );
-	
-	                    Line2D.Double q = new Line2D.Double(
-	                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-	                        this.cst.simToWindowX(key.getX()), this.cst.simToWindowY(key.getY()) );
-	                    g2.draw(q);
-	                     * 
-	                     */
-	                }
-	            }
-                else{
+//                if(c.getAINode() instanceof epics.ai.ActiveAINodeSingleAsker){
+//	                if( key == c.getTraced()){
+//	                    g2.setColor( Color.green );
+//	
+//	                    col = (int)(confidence * 128 + 128);
+//	                    if ( col > 255 ){ col = 255; }
+//	
+//	                    g2.setColor( new Color(255-col, 255, 255-col )  );
+//	
+//	                    Line2D.Double q = new Line2D.Double(
+//	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
+//	                    this.cst.simToWindowX(key.getX()), this.cst.simToWindowY(key.getY()) );
+//	                    g2.draw(q);
+//	                }
+//	                else{
+//	                    /*
+//	
+//	                    g2.setColor( new Color(255-col, 255-col, 255-col )  );
+//	
+//	                    Line2D.Double q = new Line2D.Double(
+//	                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
+//	                        this.cst.simToWindowX(key.getX()), this.cst.simToWindowY(key.getY()) );
+//	                    g2.draw(q);
+//	                     * 
+//	                     */
+//	                }
+//	            }
+//                else{
                 	for(TraceableObject traced : c.getTrackedObjects().values()){
                 		if(key.equals(traced)){
                             g2.setColor( Color.green );
@@ -330,7 +330,7 @@ public class WorldView extends JPanel implements Observer
                             g2.draw(q);
                     	}
                 	}
-                }
+//                }
             
             }
         
