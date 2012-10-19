@@ -15,8 +15,9 @@ mkdir build
 javac -sourcepath src -classpath $BUILDCLASSPATH -d $BUILDDIR $BUILDMAIN
 if [ "$?" -eq 0 ]; then
    echo $DASH"Compile successful"$DASH
+   unzip gnuprologjava-0.2.6.jar -d build
    cd build
-   jar -cvf ../$JARNAME .
+   jar -cvmf ../Manifest.txt ../$JARNAME .
    JARSUCCESS=$?
    cd ..
 else
