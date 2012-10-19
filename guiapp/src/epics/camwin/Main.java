@@ -98,7 +98,7 @@ public class Main {
                 " -o --output [STRING]   Change output file name (default: output.csv)\n" +
                 " -s --seed [INTEGER]    Used this seed (default: 0)\n" +
                 " -t --time [INTEGER]    Simulation time, in time steps (default: 100)\n" +
-                " -g --global            Uses Global Registration Component\n" +
+                //" -g --global            Uses Global Registration Component\n" +
                 " -v --vg [INTEGER]		 defines the visiongraph ((default) -1 = defined in scenario file, 0 = static as defined in scenario, 1 = dynamic - ignore scenario file, 2 = dynamic - start with scenario file \n" +
                 " -c --comm [INTEGER] 	 Defines Communication ((default) 0 = Broadcast, 1 = SMOOTH, 2 = STEP, 3 = Static) \n" +
                 " -a --algo [STRING]	 Defines the used algorithm ((default) \"active\", \"passive\") \n" +
