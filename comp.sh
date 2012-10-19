@@ -3,7 +3,17 @@ BUILDDIR="build"
 JARNAME="build.jar"
 BUILDCLASSPATH="./gnuprologjava-0.2.6.jar"
 BUILDMAIN="./src/epics/camwin/Main.java"
+MANIFESTNAME="MANIFEST.MF"
 DASH="\n--------------------------------------\n"
+
+#function createmanifest {
+#    if [ -f $MANIFESTNAME ]; then
+#	rm $MANIFESTNAME
+#	echo "Removed old manifest"
+#    fi
+#    echo "Main-Class: epics.camwin.Main" > $MANIFESTNAME
+#    echo "Created new manifest"
+#}
 
 if [ -d $BUILDDIR ]; then
    echo $DASH"Deleting previous build dir"$DASH
@@ -17,7 +27,15 @@ if [ "$?" -eq 0 ]; then
    echo $DASH"Compile successful"$DASH
    unzip gnuprologjava-0.2.6.jar -d build
    cd build
-   jar -cvmf ../Manifest.txt ../$JARNAME .
+
+   if [ -f $MANIFESTNAME ]; then
+       rm $MANIFESTNAME
+       echo "Removed old manifest"
+   fi
+   echo "Main-Class: epics.camwin.Main" > $MANIFESTNAME
+   echo "Created new manifest"
+
+   jar -cvmf ../$MANIFESTNAME ../$JARNAME .
    JARSUCCESS=$?
    cd ..
 

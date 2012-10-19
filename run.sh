@@ -9,4 +9,4 @@ chmod u+x $RUNJAR
 #echo "Command is: java -cp $LIBPATH -jar $RUNJAR"
 #java -cp $LIBPATH -jar $RUNJAR
 #java -cp ./build.jar;./gnuprologjava-0.2.6.jar -jar build.jar
-java -jar $RUNJAR $*
+java -jar $RUNJAR scenario_1.xml # $*
