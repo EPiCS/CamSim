@@ -9,4 +9,7 @@ This code is an extension of the 'Smart Camera Simulation Environment' by Lukas 
 
 * * *
 
+Structure
+---------
+
 Please note that I am using the project in a different structure than the project I have forked from. I am using the 'src' directory in the root instead of src directories within each of the directories (e.g. previously /ai/src/... is now /src/ai...) which is more in keeping with Java package structures. The build script exclusively reads this directory.
