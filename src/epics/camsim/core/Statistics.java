@@ -93,7 +93,7 @@ public class Statistics {
         identification.add(ident_tmp);
         visible.add(visible_tmp);
 
-        System.out.println("TIME, UTILITY, COMMUNICATION, MISSIDENTIFICATION, VISIBLE:    " + time_step + " , " + util_tmp + " , " + comm_tmp + " , " + ident_tmp + " , " + visible_tmp);
+        System.out.println("TIME, GLOBAL_UTILITY, COMMUNICATION, MISIDENTIFICATION, VISIBLE:\n    " + time_step + " , " + util_tmp + " , " + comm_tmp + " , " + ident_tmp + " , " + visible_tmp);
 
         time_step++;
         util_tmp = 0;

@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package epics.camsim.core;
 
 import epics.ai.*;
@@ -193,8 +188,6 @@ public class SimCore {
             String ai_algorithm,
             int comm, int limit, Map<String, Double> vg){
 
-    	
-    	
         ai_alg = ai_algorithm;
         if(_comm == -1){
         	_comm = comm;
@@ -212,9 +205,10 @@ public class SimCore {
         {
             icam = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
         }
-//        else if(ai_algorithm.compareTo("asker") == 0){
-//        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
-//        }
+        else if(ai_algorithm.compareTo("historical_unweighted") == 0)
+        {
+	    icam = new HistoricalUnweightedAINodeMulti(_comm, staticVG, vg, reg);
+        }
         else{
             throw new InvalidParameterException("Invalid ai_algorithm parameter.");
         }
@@ -263,6 +257,11 @@ public class SimCore {
         {
             icam = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
         }
+        else if(ai_alg.compareTo("historical_unweighted") == 0)
+        {
+            icam = new HistoricalUnweightedAINodeMulti(_comm, staticVG, vg, reg);
+        }
+
 //        else if(ai_alg.compareTo("asker") == 0){
 //        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
 //        }
@@ -287,7 +286,7 @@ public class SimCore {
             c1.addCamera( cc );
             cc.addCamera(c1);
         }
-    }
+	}
     
     public void add_camera( String name,
             double x_pos, double y_pos,

@@ -1,11 +1,12 @@
 #!/bin/bash
+STARTTIME=$SECONDS
 ROOTDIR=~/code/OGAMOTUMBNDSC
-BUILDDIR="build"
-JARNAME="build.jar"
-BUILDCLASSPATH="./gnuprologjava-0.2.6.jar"
-BUILDMAIN="./src/epics/camwin/Main.java"
-MANIFESTNAME="MANIFEST.MF"
-DASH="\n--------------------------------------\n"
+BUILDDIR=build
+JARNAME=build.jar
+BUILDCLASSPATH=./gnuprologjava-0.2.6.jar
+BUILDMAIN=./src/epics/camwin/Main.java
+MANIFESTNAME=MANIFEST.MF
+DASH="--------------------------------------"
 
 function createmanifest {
     if [ -f $MANIFESTNAME ]; then
@@ -19,7 +20,9 @@ function createmanifest {
 cd $ROOTDIR
 
 if [ -d $BUILDDIR ]; then
-   echo $DASH"Deleting previous build dir"$DASH
+   echo $DASH
+   echo "Deleting previous build dir"
+   echo $DASH
    rm -r .$BUILDDIR
 fi
 
@@ -27,7 +30,9 @@ mkdir $BUILDDIR
 javac -sourcepath src -classpath $BUILDCLASSPATH -d $BUILDDIR $BUILDMAIN
 
 if [ "$?" -eq 0 ]; then
-   echo $DASH"Compile successful"$DASH
+   echo $DASH
+   echo " Compile successful "
+   echo $DASH
    unzip gnuprologjava-0.2.6.jar -d build
    cd build
    
@@ -38,7 +43,9 @@ if [ "$?" -eq 0 ]; then
    cd ..
 
    if [ "$JARSUCCESS" -eq 0 ]; then
-       echo $DASH"Jar built. Setting perms..."$DASH
+       echo $DASH
+       echo "Jar built. Setting perms..."
+       echo $DASH
        chmod u+x ./$JARNAME
    fi
 else
@@ -50,4 +57,4 @@ if [ -d $BUILDDIR ]; then
     echo "Build directory deleted"
 fi
 
-echo "Done."
+echo "Done in "$(($SECONDS-$STARTTIME))"seconds"
