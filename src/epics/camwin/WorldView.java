@@ -1,28 +1,24 @@
 
 package epics.camwin;
 
-import epics.camsim.core.CameraController;
-import epics.camsim.core.TraceableObject;
-import epics.common.ITrObjectRepresentation;
-
 import java.awt.BasicStroke;
-
-import javax.swing.JDesktopPane;
-import javax.swing.JPanel;
-import java.util.Observer;
-import java.util.Observable;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Color;
 import java.awt.Polygon;
-import java.util.ArrayList;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
-import java.awt.geom.QuadCurve2D;
-
-import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
+
+import javax.swing.JPanel;
+
+import epics.camsim.core.CameraController;
+import epics.camsim.core.TraceableObject;
 
 /**
 Draws a spatial network on a panel

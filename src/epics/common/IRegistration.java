@@ -1,8 +1,5 @@
 package epics.common;
 
-import epics.camsim.core.CameraController;
-//import epics.camsim.core.TraceableObject;
-
 public interface IRegistration {
 
 	void objectIsAdvertised(ITrObjectRepresentation to);

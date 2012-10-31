@@ -8,20 +8,14 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileFilter;
-
-import com.sun.org.apache.xerces.internal.impl.RevalidationHandler;
 
 import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;

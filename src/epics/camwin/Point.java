@@ -1,14 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- *///
-
 package epics.camwin;
-
-/**
- *
- * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
- */
 
 import java.awt.geom.Ellipse2D;
 

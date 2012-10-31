@@ -3,7 +3,6 @@ package epics.ai;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -12,8 +11,14 @@ import java.util.Random;
 import epics.camsim.core.Bid;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
-import epics.common.*;
+import epics.common.CmdLogger;
+import epics.common.IBid;
+import epics.common.ICameraAINode;
+import epics.common.ICameraController;
+import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
+import epics.common.IRegistration;
+import epics.common.ITrObjectRepresentation;
 
 public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 	

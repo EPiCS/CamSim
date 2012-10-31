@@ -1,13 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package epics.camsim.core;
 
-import epics.common.ICameraController;
-import epics.common.ITrObjectRepresentation;
 import java.util.List;
+
+import epics.common.ITrObjectRepresentation;
 
 /**
  *  This class is a representation of an TraceabeObject FROM THE POINT OF VIEW

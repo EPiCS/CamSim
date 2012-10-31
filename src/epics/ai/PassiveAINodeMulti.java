@@ -7,10 +7,14 @@ import java.util.Map;
 import java.util.Random;
 
 import epics.camsim.core.Bid;
-import epics.camsim.core.CameraController;
-import epics.camsim.core.TraceableObjectRepresentation;
-import epics.common.*;
+import epics.common.CmdLogger;
+import epics.common.IBid;
+import epics.common.ICameraAINode;
+import epics.common.ICameraController;
+import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
+import epics.common.IRegistration;
+import epics.common.ITrObjectRepresentation;
 
 public class PassiveAINodeMulti implements ICameraAINode {
 	

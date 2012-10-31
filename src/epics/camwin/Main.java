@@ -1,26 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package epics.camwin;
 
-import epics.camsim.core.CameraController;
 import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
-import epics.camsim.core.TraceableObject;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
-import java.awt.event.ActionEvent;
-
-import javax.swing.JFrame;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.event.ActionListener;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.Timer;
 
 /**
  *
