@@ -87,7 +87,10 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 	private Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = new HashMap<ITrObjectRepresentation, Integer>();
     private Map<ITrObjectRepresentation, ITrObjectRepresentation> wrongIdentified = new HashMap<ITrObjectRepresentation, ITrObjectRepresentation>();
     private Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
+
+	// Historical utility based fields
     private Map<ITrObjectRepresentation, LinkedList<Point2D.Double>> historicalLocations = new HashMap<ITrObjectRepresentation, LinkedList<Point2D.Double>>();
+	private Map<ITrObjectRepresentation, Integer> timestepsVisible = new HashMap<ITrObjectRepresentation, Integer>();
 
     private int addedObjectsInThisStep = 0;
  
@@ -467,9 +470,10 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 
 	/** Store the current point for each visible object, and delete
 	 *  the old one in the front of the queue if necessary. This allows
-	 *  bids to be made later based on where the point has been. */
+	 *  bids to be made later based on where the point has been. 
+	 *  Also updates how many timesteps this object has been visible. */
 	private void updateHistoricalPoints() {
-		//    private Map<ITrObjectRepresentation, LinkedList<Point>> historicalLocations = new HashMap<ITrObjectRepresentation, LinkedList<Point>>();
+		//List<ITrObjectRepresentation> objectsSeen = timestepsVisible.keySet().clone();
 
 		// For every object, check for points. If nothing there, create a list first.
 		for(ITrObjectRepresentation itro : this.camController.getVisibleObjects_bb().keySet()) {
@@ -494,6 +498,11 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 				System.out.println("\t\t"+curPoint);
 			}
 			System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
+
+			Integer timestepsVisNum = timestepsVisible.get(itro);
+			if (timestepsVisNum == null) {
+				timestepsVisible.put(itro, 1); // First time seen
+			} //else if (timestepsVisNum 
 		}
 	}
 
@@ -515,6 +524,12 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 		return totalDistance / ((double)pointsForObject.size()-1.0);
 	}
     
+	private Double getHistoryBasedBid(ITrObjectRepresentation itro) {
+		// Formula is bid = avgTS * confidence
+		// where avgTS is the average timesteps an object is present for
+		throw new UnsupportedOperationException("Don't call this method yet!");
+	}
+
     private void updateReceivedDelay(){
     	List<IMessage> rem = new ArrayList<IMessage>();
     	for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {

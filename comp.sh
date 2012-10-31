@@ -37,8 +37,7 @@ if [ "$?" -eq 0 ]; then
    cd build
    
    createmanifest
-
-   jar -cvmf ../$MANIFESTNAME ../$JARNAME .
+   jar -cvmf ./$MANIFESTNAME ../$JARNAME .
    JARSUCCESS=$?
    cd ..
 
@@ -57,4 +56,9 @@ if [ -d $BUILDDIR ]; then
     echo "Build directory deleted"
 fi
 
-echo "Done in "$(($SECONDS-$STARTTIME))"seconds"
+if [ -f $MANIFESTNAME ]; then
+	rm $MANIFESTNAME
+	echo "Manifest removed"
+fi
+
+echo "Done in "$(($SECONDS-$STARTTIME))" seconds"
