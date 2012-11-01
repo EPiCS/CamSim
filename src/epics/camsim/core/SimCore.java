@@ -574,9 +574,7 @@ public class SimCore {
 
     public void update() throws Exception{
     	    	
-        /*
-         * Print messages on the screen, one per step
-         */
+        // Print messages on the screen, one per step
         if( CmdLogger.hasSomething() ){
             CmdLogger.update();
             System.out.println("W    T    F   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -590,9 +588,7 @@ public class SimCore {
         	reg.update();
         }
         
-        /*
-         * Update all traceable objects (move them around)
-         */
+        // Update all traceable objects (move them around)
         for ( TraceableObject o : this.objects ){
             o.update();
         }

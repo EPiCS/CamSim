@@ -86,7 +86,8 @@ public class Statistics {
         visible.add(visible_tmp);
 
         System.out.println("TIME, GLOBAL_UTILITY, COMMUNICATION, MISIDENTIFICATION, VISIBLE:\n    " + time_step + " , " + util_tmp + " , " + comm_tmp + " , " + ident_tmp + " , " + visible_tmp);
-
+        System.out.println("--------------------------------------------------------------------------");
+        
         time_step++;
         util_tmp = 0;
         comm_tmp = 0;

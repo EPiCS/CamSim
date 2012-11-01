@@ -23,7 +23,6 @@ import epics.camsim.core.SimSettings;
 /**
  * 
  * @author Lukas Esterle <Lukas.Esterle@aau.at> & Marcin Bogdanski
- *
  */
 
 public class WindowMain implements ActionListener{
@@ -57,9 +56,6 @@ public class WindowMain implements ActionListener{
 	JDesktopPane desktop;
 	
     public void createAndShowGUI() {
-    	
-        
-    	
         frame = new JFrame("Camera Simulator");
         frame.setSize(1024, 768);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -183,37 +179,35 @@ public class WindowMain implements ActionListener{
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		FileFilter scenariosFilter = new FileFilter() {
+			@Override
+			public String getDescription() {
+				return "Scenarios (.xml)";
+			}
+			
+			@Override
+			public boolean accept(File f) {
+				if(f.isDirectory())
+					return true;
+				
+				if(f.getName().endsWith(".xml")){
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
 		if(e.getActionCommand().equals("save")){
 			JFileChooser jfc = new JFileChooser("./");
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			jfc.setFileFilter(new FileFilter() {
-				
-				@Override
-				public String getDescription() {
-					return "Szenarios (.xml)";
-				}
-				
-				@Override
-				public boolean accept(File f) {
-					if(f.isDirectory())
-						return true;
-					
-					if(f.getName().endsWith(".xml")){
-						return true;
-					}
-					else{
-						return false;
-					}
-				}
-			});
+			
+			jfc.setFileFilter(scenariosFilter);
 			int retVal = jfc.showSaveDialog(frame);
 			if(retVal == JFileChooser.APPROVE_OPTION){
 				sim_model.save_to_xml(jfc.getSelectedFile().getAbsolutePath());
 			}
-			
-			
-			
 		}
+
 		if(e.getActionCommand().equals("addobj")){
 			if (!modeDemo3) {
                 sim_model.add_random_object();
@@ -235,8 +229,6 @@ public class WindowMain implements ActionListener{
                 waypoints.add(new Point2D.Double(-ss, ln));
                 waypoints.add(new Point2D.Double(-ss, ss));
                 waypoints.add(new Point2D.Double(-ln, ss));
-
-
 
                 sim_model.add_object(0.9, waypoints, SimCore.getNextID());
             }
@@ -284,26 +276,7 @@ public class WindowMain implements ActionListener{
 				case 0: 
 						JFileChooser jfc = new JFileChooser("./");
 						jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-						jfc.setFileFilter(new FileFilter() {
-							
-							@Override
-							public String getDescription() {
-								return "Szenarios (.xml)";
-							}
-							
-							@Override
-							public boolean accept(File f) {
-								if(f.isDirectory())
-									return true;
-								
-								if(f.getName().endsWith(".xml")){
-									return true;
-								}
-								else{
-									return false;
-								}
-							}
-						});
+						jfc.setFileFilter(scenariosFilter);
 						int retVal = jfc.showOpenDialog(frame);
 						
 						if(retVal == JFileChooser.APPROVE_OPTION){

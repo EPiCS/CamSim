@@ -3,6 +3,7 @@ package epics.ai;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
     private static final int AUCTION_DURATION = 0;
 
 	// How many historical points (x,y) to keep in order to judge 
-	// quantitiy of movement, that we use to calculate bids
+	// quantity of movement, that we use to calculate bids
 	private static final int NUM_OF_HISTORICAL_POINTS = 3;
     
     IRegistration reg;
@@ -96,7 +97,10 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 	// Historical utility based fields
     private Map<ITrObjectRepresentation, LinkedList<Point2D.Double>> historicalLocations = new HashMap<ITrObjectRepresentation, LinkedList<Point2D.Double>>();
 	private Map<ITrObjectRepresentation, Integer> timestepsVisible = new HashMap<ITrObjectRepresentation, Integer>();
-
+	
+	private double totalTSVisible = 0; // How many timesteps in total objects are visible for (divide by counter for avg)
+	private int tsVisibleCounter = 0; // How many objects have left our FOV (avg = totalTSVisible/tsVisibleCounter)  
+	
     private int addedObjectsInThisStep = 0;
  
     private class Pair {
@@ -486,6 +490,7 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 			TraceableObject object = tor.getTraceableObject();
 			LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 
+			// If new object
 			if (pointsForObject == null) {
 				pointsForObject = new LinkedList<Point2D.Double>();
 				historicalLocations.put(itro, pointsForObject);
@@ -504,10 +509,30 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
 			}
 			System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
 
-			Integer timestepsVisNum = timestepsVisible.get(itro);
-			if (timestepsVisNum == null) {
+			if (! timestepsVisible.containsKey(itro)) {
 				timestepsVisible.put(itro, 1); // First time seen
-			} //else if (timestepsVisNum 
+			} else {
+				// Seen for one more timestep. Increment
+				timestepsVisible.put(itro, timestepsVisible.get(itro) + 1);
+			}
+		}
+		
+		Iterator<ITrObjectRepresentation> iter = timestepsVisible.keySet().iterator();
+		while (iter.hasNext()) {
+			ITrObjectRepresentation itro = iter.next();
+			if (! this.camController.getVisibleObjects_bb().containsKey(itro)) {
+				// Object disappeared. Grab visible timesteps
+				int visibleTS = timestepsVisible.get(itro);
+				this.totalTSVisible += visibleTS;
+				this.tsVisibleCounter++;
+				iter.remove(); // Object is accounted for
+								
+				if (DEBUG_CAM) {
+					System.out.println("\tObject "+itro.getFeatures()+" lost by "+this.camController.getName()+". ");
+					System.out.println("\tTS visible: "+visibleTS+" and current avg: "+totalTSVisible/tsVisibleCounter
+							+" ("+tsVisibleCounter+" objects seen so far)");
+				}
+			}
 		}
 	}
 
