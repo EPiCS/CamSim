@@ -115,25 +115,29 @@ public class TraceableObject{
 
         if ( this.x > sim.get_max_x() ){
             //System.out.println( "       KICKING IN       ");
-            this.heading += 180 + RandomNumberGenerator.nextDouble()*30; this.x -= speed;
+            this.heading += getTurnaroundAngle(); this.x -= speed;
         }
         if ( this.x < sim.get_min_x() ){
             //System.out.println( "       KICKING IN       ");
-            this.heading += 180 + RandomNumberGenerator.nextDouble()*30; this.x += speed;
+            this.heading += getTurnaroundAngle(); this.x += speed;
         }
 
         if ( this.y > sim.get_max_y() ){
             //System.out.println( "       KICKING IN       ");
-            this.heading += 180 + RandomNumberGenerator.nextDouble()*30; this.y -= speed;
+            this.heading += getTurnaroundAngle(); this.y -= speed;
         }
         if ( this.y < sim.get_min_y() ){
             //System.out.println( "       KICKING IN       ");
-            this.heading += 180 + RandomNumberGenerator.nextDouble()*30; this.y += speed;
+            this.heading += getTurnaroundAngle(); this.y += speed;
         }
-
-        
     }
 
+    /** Gets an angle to turn around by with some partial added randomness */
+    public double getTurnaroundAngle() {
+    	// Turn around 180 degrees, add a bit of angle for randomness
+    	return Math.PI + RandomNumberGenerator.nextDouble() * Math.PI / 6.0;
+    }
+    
     /*
      * After this point, default and GETTERS - SETTERS only
      */
