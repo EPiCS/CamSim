@@ -168,7 +168,7 @@ public class Main {
                         simulation_time = Integer.parseInt(arg);
                     } catch (NumberFormatException e) {
                         System.err.println(
-                                "Value passed as time is not a vaild integer: "
+                                "Value passed as time is not a valid integer: "
                                 + arg + " i");
                         System.exit(1);
                     }
@@ -222,7 +222,7 @@ public class Main {
 
         int opt_arg_counter = 0;
         StringBuilder strb = new StringBuilder();
-        String filename = null;
+        
         for (int i = g.getOptind(); i < args.length; i++) {
             opt_arg_counter++;
             strb.append(args[i]);
@@ -257,19 +257,15 @@ public class Main {
 	            System.exit(1);
 	        }
         }
+        
+        SimCore sim = new SimCore(seed, output_file, ss, useGlobal, camErr, camReset, trackErr);
         if (showgui == false) {
-
-            SimCore sim = new SimCore(seed, output_file, ss, useGlobal, camErr, camReset, trackErr);
-
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();
             }
-
             sim.close_files();
 
         } else {
-
-        	SimCore sim = new SimCore(seed, output_file, ss, useGlobal, camErr, camReset, trackErr);
             sim_model = new SimCoreModel(sim);
             WindowMain win = new WindowMain(sim_model, input_file);
             win.createAndShowGUI();

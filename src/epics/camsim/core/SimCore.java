@@ -356,14 +356,14 @@ public class SimCore {
         	if(USEGLOBAL){
         		reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         	}
-        	else{
-		        for(CameraController cc : this.getCameras()){
+//        	else{
+//		        for(CameraController cc : this.getCameras()){
 //		    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
 //		    			if(!cc.isOffline())
 //		    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
 //			    	}
-		    	}
-        	}
+//		    	}
+//        	}
         }
     }
 
