@@ -288,59 +288,7 @@ public class SimCore {
         }
 	}
     
-    public void add_camera( String name,
-            double x_pos, double y_pos,
-            double heading_degrees, double angle_degrees, double range, int comm, int limit, int aiID, Map<String, Double> vg){
-    	 checkCoordInRange(x_pos, y_pos);
-    	 
-    	 if(_comm == -1){
-    		 _comm = comm;
-    	 }
-    	 
-    	 ICameraAINode ai;
-    	 switch (aiID) {
-		case 1:
-			ai = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
-			break;
-		case 2:
-			ai = new ActiveAINodeMulti(_comm, staticVG, vg, reg);
-			break;
-//		case 3:
-//			ai = new PassiveAINodeSingle(_comm, staticVG, vg, reg);
-//			break;
-//		case 4:
-//			ai = new ActiveAINodeSingleAsker(_comm, staticVG, vg, reg);
-//			break;
-//		case 5:
-//			ai = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
-//			break;
-		default:
-			ai = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
-			break;
-		}
-    	 
-         CameraController cc = new CameraController(
-                 //"C"+getNextID(),
-        		 name,
-                 x_pos, y_pos,
-                 Math.toRadians(heading_degrees),
-                 Math.toRadians(angle_degrees),
-                 range,
-                 ai,
-                 limit, 100 - TRACKERERROR);
-         
-         if(USEGLOBAL){
-         	reg.addCamera(cc);
-     	}
-         
-         this.getCameras().add( cc );
-         for ( CameraController c1 : this.cameras ){
-             c1.addCamera( cc );
-             cc.addCamera(c1);
-         }
-    }
-    	
-    public void add_random_camera(){
+  	public void add_random_camera(){
         this.add_camera(
         		"C"+getNextID(),
                 RandomNumberGenerator.nextDouble() * (max_x - min_x) + min_x,
