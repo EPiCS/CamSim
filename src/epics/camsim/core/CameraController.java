@@ -12,7 +12,7 @@ public class CameraController implements ICameraController{
 
 	private static int LIMIT = 0;
 	private static int DETECTIONRATE = 80; //percent to detect object that is there
-	private ICameraAINode camAINode;
+	private AbstractAINode camAINode;
 
     private String name;
 
@@ -44,7 +44,7 @@ public class CameraController implements ICameraController{
 //    }
     
     public CameraController( String name, double x, double y,
-                double heading, double viewing_angle, double range, ICameraAINode ai, int limit, int detectionRate){
+                double heading, double viewing_angle, double range, AbstractAINode ai, int limit, int detectionRate){
     	this.DETECTIONRATE = detectionRate;
     	this.LIMIT = limit;
         this.x = x;
@@ -540,7 +540,7 @@ public class CameraController implements ICameraController{
 	}
 
 
-    public ICameraAINode getAINode() {
+    public AbstractAINode getAINode() {
     	if(!isOffline()){//isOfflineFor <= 0){
     		return this.camAINode;
     	}

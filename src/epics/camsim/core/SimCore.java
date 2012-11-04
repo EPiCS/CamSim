@@ -1,19 +1,22 @@
 package epics.camsim.core;
 
-import epics.ai.*;
-import epics.common.*;
-import epics.common.IMessage.MessageType;
-
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.security.InvalidParameterException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import epics.common.AbstractAINode;
+import epics.common.CmdLogger;
+import epics.common.IMessage.MessageType;
+import epics.common.IRegistration;
+import epics.common.RandomNumberGenerator;
 
 /**
  *
@@ -189,56 +192,11 @@ public class SimCore {
             int comm, int limit, Map<String, Double> vg){
 
         ai_alg = ai_algorithm;
-        if(_comm == -1){
-        	_comm = comm;
-        }
-
-        /*
-         * TODO: Load classes dynamically, or even load .jar dynamically and
-         * compare with classes there
-         */
-    	ICameraAINode icam = null;
-        if ( ai_algorithm.compareTo("active") == 0){
-            icam = new ActiveAINodeMulti(_comm, staticVG, vg, reg);
-        }
-        else if(ai_algorithm.compareTo("passive") == 0)
-        {
-            icam = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
-        }
-        else if(ai_algorithm.compareTo("historical_unweighted") == 0)
-        {
-	    icam = new HistoricalUnweightedAINodeMulti(_comm, staticVG, vg, reg);
-        }
-        else{
-            throw new InvalidParameterException("Invalid ai_algorithm parameter.");
-        }
-
-
-        checkCoordInRange(x_pos, y_pos);
-        CameraController cc = new CameraController(
-                //"C"+getNextID(),
-        		name,
-                x_pos, y_pos,
-                Math.toRadians(heading_degrees),
-                Math.toRadians(angle_degrees),
-                range,
-                icam,
-                limit, 100 - TRACKERERROR);
-
-        if(USEGLOBAL){
-        	reg.addCamera(cc);
-    	}
-        
-        this.getCameras().add( cc );
-        for ( CameraController c1 : this.cameras ){
-            c1.addCamera( cc );
-            cc.addCamera(c1);
-        }
+        add_camera(
+        	name, x_pos, y_pos, heading_degrees, angle_degrees,
+            range, comm, limit, vg);
     }
 
-    /*
-     * TODO remove, switch completly to XML based simulations
-     */
     public void add_camera(String name,
             double x_pos, double y_pos,
             double heading_degrees, double angle_degrees, double range, int comm, int limit, Map<String, Double> vg){
@@ -249,33 +207,22 @@ public class SimCore {
     	
         checkCoordInRange(x_pos, y_pos);
         
-        ICameraAINode icam = null;
-        if ( ai_alg.compareTo("active") == 0){
-            icam = new ActiveAINodeMulti(_comm, staticVG, vg, reg);
-        }
-        else if(ai_alg.compareTo("passive") == 0)
-        {
-            icam = new PassiveAINodeMulti(_comm, staticVG, vg, reg);
-        }
-        else if(ai_alg.compareTo("historical_unweighted") == 0)
-        {
-            icam = new HistoricalUnweightedAINodeMulti(_comm, staticVG, vg, reg);
-        }
-
-//        else if(ai_alg.compareTo("asker") == 0){
-//        	icam = new ActiveAINodeMultiAsker(_comm, staticVG, vg, reg);
-//        }
-        else{
-            throw new InvalidParameterException("Invalid ai_algorithm parameter.");
-        }
+        AbstractAINode aiNode = null;
+    	try {
+    		aiNode = newAINodeFromName(ai_alg, comm, staticVG, vg, reg);
+    	} catch (Exception e) {
+    		System.out.println("Invalid ai_algorithm parameter in scenario file: "+ai_alg);
+    		System.out.println("Must be a fully qualified class name e.g. 'epics.ai.ActiveAINodeMulti'");
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
         
         CameraController cc = new CameraController(
-                //"C"+getNextID(),
         		name,
                 x_pos, y_pos,
                 Math.toRadians(heading_degrees),
                 Math.toRadians(angle_degrees),
-                range, icam, limit, 100 - TRACKERERROR);
+                range, aiNode, limit, 100 - TRACKERERROR);
 
         if(USEGLOBAL){
         	reg.addCamera(cc);
@@ -287,6 +234,20 @@ public class SimCore {
             cc.addCamera(c1);
         }
 	}
+    
+    /** Given a node's class name, dynamically loads the class and 
+     * instantiates a new node of that type. */
+    public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
+    		int comm, boolean staticVG, Map<String, Double> vg, IRegistration r) 
+    				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
+    				IllegalArgumentException, InstantiationException, IllegalAccessException, 
+    				InvocationTargetException {
+    	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
+    	Class<?>[] constructorTypes = {int.class, boolean.class, Map.class, IRegistration.class};
+    	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
+    	AbstractAINode node = (AbstractAINode) cons.newInstance(comm, staticVG, vg, r);
+    	return node;
+    }
     
   	public void add_random_camera(){
         this.add_camera(

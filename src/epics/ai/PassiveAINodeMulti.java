@@ -7,16 +7,16 @@ import java.util.Map;
 import java.util.Random;
 
 import epics.camsim.core.Bid;
+import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
 import epics.common.IBid;
-import epics.common.ICameraAINode;
 import epics.common.ICameraController;
 import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 
-public class PassiveAINodeMulti implements ICameraAINode {
+public class PassiveAINodeMulti extends AbstractAINode {
 	
     private static final double USE_RESOURCES = 0.05; //percentages of available resources used
     private static final double MIN_RESOURCES_USED = 0.01; //how much resources have to be used at least
@@ -43,7 +43,12 @@ public class PassiveAINodeMulti implements ICameraAINode {
 	private static final int DELAY_FOUND = 0;
         
     public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
+    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    }
     	
+    @Override
+    public void instantiateAINode(int comm, boolean staticVG,
+    		Map<String, Double> vg, IRegistration r) {	
     	reg = r;
     	if(vg != null){
     		visionGraph = vg;

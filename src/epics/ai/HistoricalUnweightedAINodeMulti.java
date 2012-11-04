@@ -12,16 +12,16 @@ import java.util.Random;
 import epics.camsim.core.Bid;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
+import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
 import epics.common.IBid;
-import epics.common.ICameraAINode;
 import epics.common.ICameraController;
 import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 
-public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
+public class HistoricalUnweightedAINodeMulti extends AbstractAINode {
 	
     private static final double USE_RESOURCES = 0.05; //percentages of available resources used
     private static final double MIN_RESOURCES_USED = 0.01; //how much resources have to be used at least
@@ -54,6 +54,12 @@ public class HistoricalUnweightedAINodeMulti implements ICameraAINode {
     IRegistration reg;
     
     public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
+    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    }
+    	
+    @Override
+    public void instantiateAINode(int comm, boolean staticVG,
+    		Map<String, Double> vg, IRegistration r) {
     	reg = r;
     	if(vg != null){
     		visionGraph = vg;
