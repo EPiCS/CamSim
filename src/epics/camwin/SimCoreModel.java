@@ -96,6 +96,7 @@ public class SimCoreModel extends Observable {
 		
 	}
 
+	/** Some demo scenarios available in a drop-down menu */
 	public void loadDemo(int i) {
 		
 		sim.reset();

@@ -283,7 +283,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
 
         return result;
-
     }
 
     protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
@@ -295,7 +294,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	        Pair pair = findSimiliarObject(iTrObjectRepresentation);
 	
 	        if (pair == null) {
-	        	
 	            return 0.0;
 	        }
 	        
@@ -309,14 +307,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	        addedObjectsInThisStep ++;
 	        double test = pair.confidence;
 	        return conf; //pair.confidence;//this.calculateValue(iTrObjectRepresentation);
-	        
-//	        return pair.confidence;
-
     	}
     	else{
     		return 0.0;
     	}
-
     }
 
     protected boolean trackingPossible() {
@@ -328,7 +322,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     		else{
     			return false;
     		}
-    		
     	}
 		if(this.camController.getLimit() > this.addedObjectsInThisStep + this.tracedObjects.size()){
 			//check if enough resources
@@ -345,23 +338,19 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 
 	protected Pair findSimiliarObject(ITrObjectRepresentation pattern) {
-
         Map<ITrObjectRepresentation, Double> traced_list = this.camController.getVisibleObjects_bb();
 
         for (Map.Entry<ITrObjectRepresentation, Double> e : traced_list.entrySet()) {
-        	ITrObjectRepresentation key = e.getKey();
-            double confidence = e.getValue();
-
+	    ITrObjectRepresentation key = e.getKey();
             boolean found = checkEquality(pattern, key);
 
             if (found) {
+            	double confidence = e.getValue();
                 return new Pair(key, confidence);
             }
-
         }
 
         return null;
-
     }
 
     @Override
@@ -382,7 +371,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
             this.removeTracedObject(rto);
             callForHelp(rto, 0);
         }
-        
     }
 
     protected boolean isTraced(ITrObjectRepresentation rto) {
@@ -393,11 +381,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-//    protected void removeTracedObject_orig(ITrObjectRepresentation rto) {
-//        tracedObjects.remove(rto.getFeatures());
-//        this.freeResources(rto);
-//    }
-    
     protected void removeTracedObject(ITrObjectRepresentation rto) {
         tracedObjects.remove(rto.getFeatures());
         this.freeResources(rto);
@@ -429,35 +412,34 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //    	double totRes = resRes + this.camController.getResources();
 //    	System.out.println(this.camController.getName() + " resources reserved: " + resRes + " available: " + this.camController.getResources() + " total: " + totRes);
 
-    	String output = this.camController.getName();
-    	if(this.camController.isOffline()){
-    		output += " should be offline!! but";
-    	}
-    	output += " traces objects [real name] (identified as): ";    	
+    	if(DEBUG_CAM) {
+			String output = this.camController.getName();
+			if(this.camController.isOffline()){
+				output += " should be offline!! but";
+			}
+			output += " traces objects [real name] (identified as): ";    	
     	
-//    	ITrObjectRepresentation realITO;
-    	for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
-    		String wrong = "NONE";
-    		String real = "" + kvp.getValue().getFeatures();
-    		if(wrongIdentified.containsValue(kvp.getValue())){
-    			//kvp.getValue is not real... find real...
-    			for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvpWrong : wrongIdentified.entrySet()){
-    				if(kvpWrong.getValue().equals(kvp.getValue())){
-    					wrong = "" + kvp.getValue().getFeatures();
-    					real = "" + kvpWrong.getKey().getFeatures();
-    					break;
-    				}
-    				else{
-    					wrong = "ERROR";
-    				}
-    			}
-    		}
-			output = output + real + "(" + wrong + "); ";
+			//    	ITrObjectRepresentation realITO;
+			for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
+				String wrong = "NONE";
+				String real = "" + kvp.getValue().getFeatures();
+				if(wrongIdentified.containsValue(kvp.getValue())){
+					//kvp.getValue is not real... find real...
+					for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvpWrong : wrongIdentified.entrySet()){
+						if(kvpWrong.getValue().equals(kvp.getValue())){
+							wrong = "" + kvp.getValue().getFeatures();
+							real = "" + kvpWrong.getKey().getFeatures();
+							break;
+						}
+						else{
+							wrong = "ERROR";
+						}
+					}
+				}
+				output = output + real + "(" + wrong + "); ";
+			}
+			System.out.println(output);
 		}
-    	if(DEBUG_CAM)
-    		System.out.println(output);
-    	
-    	
     	
     	updateReceivedDelay();
     	updateAuctionDuration();
@@ -546,13 +528,15 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 
+	/** Looks at objects owned by this camera that are desired by other cameras
+	 * and evaluates bids from other cameras. Gives the object to the highest 
+	 * bidder (which can be itself). */
 	protected void checkBidsForObjects() {
     	 if (this.searchForTheseObjects.containsValue(this.camController)) { //this camera is looking for an object --> is owner of at least one object that is searched for by the network
              List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
              for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) { 
                  if (entry.getValue() != null) { // object is searched for by camera
-                	 
-                 
+                	                  
                 	 if (entry.getValue().getName().equals(this.camController.getName())) {  //this camera initiated the auction --> own value is calculated
                 		 
                 		 //TODO CHECK HERE IF AUCTION IS OVER ??
@@ -563,14 +547,15 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                         highest = this.calculateValue(entry.getKey()); //this.getConfidence(entry.getKey());
 	                         ICameraController giveTo = null;
 	
-	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
+	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor); // Bids from other cams
 	
 	                         if (bids != null) {
-	                             for (Map.Entry<ICameraController, Double> e : bids.entrySet()) { // bids came in from other cameras
+	                             for (Map.Entry<ICameraController, Double> e : bids.entrySet()) { // iterate over bids
 	                            	 if(!e.getKey().getName().equals("Offline")){
 	                            		 
 		                            	 if (e.getKey().getName().equals(this.camController.getName())) {
 		                            		 if(giveTo == null){
+		                            			 // If this cam's bid is still highest, claim object for now
 		                            		     giveTo = e.getKey();
 		                                     }
 		                                 }
@@ -584,8 +569,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	
 	                         if (giveTo != null) {
 	                             delete.add(tor);
-	
-	                             if (giveTo.getName().equals(this.camController.getName())) {
+	                             
+	                             // If this cam won auction
+	                             if (giveTo.getName().equals(this.camController.getName())) { 
 	                                 this.startTracking(tor);
 	                                 sendMessage(MessageType.StopSearch, tor);
 	                                 stepsTillBroadcast.remove(tor);
@@ -713,7 +699,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	}
     	
         if (DEBUG_CAM) {
-            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
+            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
         }
         
 //        if(index == 0){
@@ -766,8 +752,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 	protected void sendMessage(MessageType mt, Object o){
-		
-		
 		switch(COMMUNICATION){
 			case 0: broadcast(mt, o); break;
 			case 1: multicastSmooth(mt, o); break;
@@ -800,7 +784,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //		}
 	}
 	
-
 	protected void multicastSmooth(MessageType mt, Object o){
 		if(mt == MessageType.StartSearch){
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
@@ -959,98 +942,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	}
     }
    
-	
-	/**    
-	private void multicast(MessageType mt, Object o){
-    	if(mt == MessageType.StartSearch){
-    		if(MULTICAST_SMOOTH){
-    			//get max strength
-	    		double highest = 0;
-	    		for(Double d : visionGraph.values()){
-	    			if(d > highest){
-	    				highest = d;
-	    			}
-	    		}
-	    		
-	    		if(highest > 0){
-	    			double ran = Math.random();
-	    			int sent = 0;
-	    			for(ICameraController icc : this.camController.getNeighbours()){
-	    				String name = icc.getName();
-	    				double ratPart = 0.0;
-	    				if(visionGraph.containsKey(name)){
-	    					ratPart = visionGraph.get(name);
-	    				}
-	    				double ratio = (1+ratPart)/(1+highest);
-	    				if(ratio > ran){
-	    					sent ++;
-			    			this.camController.sendMessage(name, mt, o);
-			    			if(advertised.get((ITrObjectRepresentation) o) != null){
-			    				advertised.get((ITrObjectRepresentation) o).add(name);
-			    			}
-			    			else{
-			    				ArrayList<String> cams = new ArrayList<String>();
-			    				cams.add(name);
-			    				advertised.put((ITrObjectRepresentation) o, cams);
-			    			}
-	    				}
-	    			}
-	    			if(sent == 0){
-	    				broadcast(mt, o);
-	    			}
-	    		}
-	    		else{
-	    			broadcast(mt, o); 	
-	    		}
-    		}	
-	    	else{ //MULTICAST_STEP
-	    		if(mt == MessageType.StartSearch){
-	    			int sent = 0;
-	    			double ran = Math.random();
-	    			for(ICameraController icc : this.camController.getNeighbours()){
-	    				String name = icc.getName();
-	    				double prop = 0.1;
-	    				if(visionGraph.containsKey(name)){
-	    					prop = visionGraph.get(name);
-	    				}
-	    				if(prop > ran){
-	    					sent ++;
-			    			this.camController.sendMessage(name, mt, o);
-			    			if(advertised.get((ITrObjectRepresentation) o) != null){
-			    				advertised.get((ITrObjectRepresentation) o).add(name);
-			    			}
-			    			else{
-			    				ArrayList<String> cams = new ArrayList<String>();
-			    				cams.add(name);
-			    				advertised.put((ITrObjectRepresentation) o, cams);
-			    			}
-	    				}
-	    			}
-	    			
-	    			if(sent == 0){
-	    				broadcast(mt, o);
-	    			}
-	    		}
-	    	}
-    	}
-		else{
-			if(mt == MessageType.StopSearch){
-				if(advertised.isEmpty()){
-		    		broadcast(mt, o);
-		    	}
-				else{
-					if(advertised.get((ITrObjectRepresentation) o) != null){
-						for (String name : advertised.get((ITrObjectRepresentation) o)){
-							this.camController.sendMessage(name, mt, o);
-						}
-						advertised.remove(o); 
-	    			}
-				}
-			}
-		}
-    }
-**/
-   
 	protected void removeFromBiddings(ITrObjectRepresentation o) {
         this.biddings.remove(o);
     }
@@ -1109,8 +1000,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                    	this.startTracking(visible);
 	                    	found.add(visible);
 	                    	broadcast(MessageType.StopSearch, visible);
-
-//	                    	sendMessage(MessageType.StopSearch, visible);
+	                    	//sendMessage(MessageType.StopSearch, visible);
 	                    	
 //	                    	if(USE_MULTICAST_STEP){
 //	                        	multicast(MessageType.StopSearch, visible);
@@ -1195,16 +1085,13 @@ public class ActiveAINodeMulti extends AbstractAINode {
         if (bids == null) {
             bids = new HashMap<ICameraController, Double>();
         }
-      //TODO modified (removed ! befor runningAuction.containsKey) and added ELSE ! 23/05/2012 - takes over object, if noone took it
-        if(runningAuction.containsKey(target))
-        {
+        //TODO modified (removed ! befor runningAuction.containsKey) and added ELSE ! 23/05/2012 - takes over object, if noone took it
+        if(runningAuction.containsKey(target)) {
         	double value = this.calculateValue(target);
         	//runningAuction.put(target, 0);
 	        bids.put(this.camController, value);// conf);
 	        biddings.put(target, bids);
-    	}
-        
-        else{
+    	} else {
         	if(!tracedObjects.containsKey(target)){
         		startTracking(target);
         		stopSearch(target);
@@ -1255,16 +1142,16 @@ public class ActiveAINodeMulti extends AbstractAINode {
     @Override
     public double getUtility() {
         double utility = 0.0;
-        double classifier_confidence = 1;
-        double enabled = 1;  // 0/1 only
-        double visibility = 0.0;
         double resources = MIN_RESOURCES_USED;
-        for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
-
-        	visibility = this.getConfidence(obj);
-//            utility += calculateValue(obj); 
-        	resources = reservedResources.get(obj);
-            utility += visibility * classifier_confidence * enabled;// * resources;
+        double enabled = 1;  // 0/1 only
+        if (enabled == 1) {
+            double visibility = 0.0;
+            double classifier_confidence = 1;
+	        for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
+	        	visibility = this.getConfidence(obj);
+	//            utility += calculateValue(obj); 
+	            utility += visibility * classifier_confidence * enabled;// * resources;
+	        }
         }
         return utility;
     }
@@ -1289,7 +1176,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 		}
 		
-		
 		return retVal;
 	}
 	
@@ -1300,7 +1186,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	
 	public int getComm(){
 //		int retVal = 0;
-		
+//		
 //		if(USE_MULTICAST_STEP){
 //			if(MULTICAST_SMOOTH){
 //				retVal = 1;
@@ -1317,18 +1203,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 	public double calculateValue(ITrObjectRepresentation target){
-		double value = 0.0;
-		double conf = this.getConfidence(target);
+		double value = this.getConfidence(target); 
 		double res = calcResources();
-		double enabled = 1;  // 0/1 only
-		
-//		if(res != 0.0){
-////			System.err.println(this.camController.getName() + " has reserved " + reservedRes + " and would like to reserve now: " + res);
-//			this.reserveResources(target, res);
-//		}
-		
-		value = conf;// * res * enabled;
-		
 		return value;
 	}
 
@@ -1386,17 +1262,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}	
 	}
 	
-//	private boolean foundObjectIsCorrect(){
-//		Random r = new Random(System.currentTimeMillis() % 100);
-//		int random = r.nextInt(100);
-//		if(random < DETECTIONRATE){
-//			return true;
-//		}
-//		else{
-//			return false;
-//		}
-//	}
-
 	@Override
 	public int currentlyMissidentified() {
 		return this.wrongIdentified.size();
