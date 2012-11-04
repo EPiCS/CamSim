@@ -18,35 +18,42 @@ import epics.common.ITrObjectRepresentation;
 
 public class ActiveAINodeMulti extends AbstractAINode {
 	
-    private static final double USE_RESOURCES = 0.05; //percentages of available resources used
-    private static final double MIN_RESOURCES_USED = 0.01; //how much resources have to be used at least
-    private static final int DETECTIONRATE = 100;
-    private static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
-    private static final int STEPS_TILL_RESOURCES_FREED = 5;
+    public static final double USE_RESOURCES = 0.05; //percentages of available resources used
+    public static final double MIN_RESOURCES_USED = 0.01; //how much resources have to be used at least
+    public static final int DETECTIONRATE = 100;
+    public static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
+    public static final int STEPS_TILL_RESOURCES_FREED = 5;
     
-    private static final double EVAPORATIONRATE = 0.995;
+    public static final double EVAPORATIONRATE = 0.995;
 	
-	private static boolean DEBUG_CAM = false;
-    private static boolean VISION_ON_BID = false;
-    private static boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
-    private static boolean BIDIRECTIONAL_VISION = false;
-    private static boolean DECLINE_VISION_GRAPH = true;
-    //private static boolean USE_MULTICAST_STEP = false;
-    //private static boolean MULTICAST_SMOOTH = true;
-    private static int COMMUNICATION = 0;
+	public static final boolean DEBUG_CAM = false;
+	public static final boolean VISION_ON_BID = false;
+	public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
+	public static final boolean BIDIRECTIONAL_VISION = false;
+	public static final boolean DECLINE_VISION_GRAPH = true;
+    //protected static boolean USE_MULTICAST_STEP = false;
+    //protected static boolean MULTICAST_SMOOTH = true;
+	public static int COMMUNICATION = 0;
     
-    private static final int STEPS_TILL_BROADCAST = 5;
-    private static boolean USE_BROADCAST_AS_FAILSAVE = false;
+	public static final int STEPS_TILL_BROADCAST = 5;
+	public static boolean USE_BROADCAST_AS_FAILSAVE = false;
     
-    private static int DELAY_COMMUNICATION = 0;
-    private static final int DELAY_FOUND = 0;
-    private static final int AUCTION_DURATION = 0;
+	public static final int DELAY_COMMUNICATION = 0;
+	public static final int DELAY_FOUND = 0;
+	public final int AUCTION_DURATION;
     
     IRegistration reg;
     
     public ActiveAINodeMulti(int comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r) {
     	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    	AUCTION_DURATION = 0;
+    }
+    
+    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    		Map<String, Double> vg, IRegistration r, int auctionDuration) {
+    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    	AUCTION_DURATION = auctionDuration;
     }
     
     @Override
@@ -81,25 +88,25 @@ public class ActiveAINodeMulti extends AbstractAINode {
     boolean staticVG = false;
     
     Map<String, Double> visionGraph = new HashMap<String, Double>();
-    private Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
-    private Map<List<Double>, ITrObjectRepresentation> tracedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
-    private Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
+    protected Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
+    protected Map<List<Double>, ITrObjectRepresentation> tracedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
+    protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
     Map<ITrObjectRepresentation, Map<ICameraController, Double>> biddings = new HashMap<ITrObjectRepresentation, Map<ICameraController, Double>>();
-    private Map<ITrObjectRepresentation, List<String>> advertised = new HashMap<ITrObjectRepresentation, List<String>>();
-    private Map<ITrObjectRepresentation, Integer> runningAuction = new HashMap<ITrObjectRepresentation, Integer>();
-    private Map<ITrObjectRepresentation, Double> reservedResources = new HashMap<ITrObjectRepresentation, Double>();
-    private Map<ITrObjectRepresentation, Integer> stepsTillFreeResources = new HashMap<ITrObjectRepresentation, Integer>();
-	private Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = new HashMap<ITrObjectRepresentation, Integer>();
-    private Map<ITrObjectRepresentation, ITrObjectRepresentation> wrongIdentified = new HashMap<ITrObjectRepresentation, ITrObjectRepresentation>();
-    private Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
+    protected Map<ITrObjectRepresentation, List<String>> advertised = new HashMap<ITrObjectRepresentation, List<String>>();
+    protected Map<ITrObjectRepresentation, Integer> runningAuction = new HashMap<ITrObjectRepresentation, Integer>();
+    protected Map<ITrObjectRepresentation, Double> reservedResources = new HashMap<ITrObjectRepresentation, Double>();
+    protected Map<ITrObjectRepresentation, Integer> stepsTillFreeResources = new HashMap<ITrObjectRepresentation, Integer>();
+	protected Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = new HashMap<ITrObjectRepresentation, Integer>();
+    protected Map<ITrObjectRepresentation, ITrObjectRepresentation> wrongIdentified = new HashMap<ITrObjectRepresentation, ITrObjectRepresentation>();
+    protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
     
-    private int addedObjectsInThisStep = 0;
+    protected int addedObjectsInThisStep = 0;
  
-    private class Pair {
+    protected class Pair {
         ITrObjectRepresentation itro;
         double confidence;
 
-        private Pair(ITrObjectRepresentation itro, double confidence) {
+        protected Pair(ITrObjectRepresentation itro, double confidence) {
             this.itro = itro;
             this.confidence = confidence;
         }
@@ -160,7 +167,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-    private Object handle_startTracking(String from,
+    protected Object handle_startTracking(String from,
             ITrObjectRepresentation content) {
     	if(!VISION_ON_BID){
 	    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
@@ -176,21 +183,21 @@ public class ActiveAINodeMulti extends AbstractAINode {
         return null;
     }
 
-    private void startTracking(ITrObjectRepresentation target) {
+    protected void startTracking(ITrObjectRepresentation target) {
     	this.useResources(target);
         tracedObjects.put(target.getFeatures(), target);
     }
 
-    private Object handle_Found(String from, IBid content) {
+    protected Object handle_Found(String from, IBid content) {
 //    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
-    	if(VISION_ON_BID){
+    	if(VISION_ON_BID) {
     		strengthenVisionEdge(from);
     	}
         this.foundObject(content, from);
         return null;
     }
 
-    private void foundObject(IBid bid, String from) {
+    protected void foundObject(IBid bid, String from) {
     	ITrObjectRepresentation target = bid.getTrObject();
     	double conf = bid.getBid();
 //    	IMessage rst = this.camController.sendMessage(from, MessageType.AskConfidence, target);
@@ -219,21 +226,21 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //    	}
     }
 
-    private Object handle_stopSearch(String from, ITrObjectRepresentation content) {
+    protected Object handle_stopSearch(String from, ITrObjectRepresentation content) {
     	this.stopSearch(content);
         return null;
     }
 
-    private void stopSearch(ITrObjectRepresentation content) {
+    protected void stopSearch(ITrObjectRepresentation content) {
     	this.searchForTheseObjects.remove(content);
     }
 
-    private Object handle_startSearch(String from, ITrObjectRepresentation content) {
+    protected Object handle_startSearch(String from, ITrObjectRepresentation content) {
         this.searchFor(content, from);
         return null;
     }
 
-    private void searchFor(ITrObjectRepresentation content, String from) {
+    protected void searchFor(ITrObjectRepresentation content, String from) {
         if (from.equals("")) {
             searchForTheseObjects.put(content, null);
         } else {
@@ -248,7 +255,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-    private boolean checkEquality(ITrObjectRepresentation trA, ITrObjectRepresentation iTrObjectRepresentation) {
+    protected boolean checkEquality(ITrObjectRepresentation trA, ITrObjectRepresentation iTrObjectRepresentation) {
 
         boolean result = true;
         if (trA == null) {
@@ -262,6 +269,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
             assert (featuresSelf.size() == featuresOther.size());
 
+            /*
+             * TODO: Double comparison with ==. Will break as soon as we put
+             * real values inside. We need some acceptible epsilon error.
+             */
             for (int i = 0; i < featuresSelf.size(); i++) {
                 if (featuresSelf.get(i) != featuresOther.get(i)) {
                     result = false;
@@ -275,7 +286,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
     }
 
-    private double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
+    protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
     	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
     		strengthenVisionEdge(from);
     	}
@@ -308,7 +319,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
     }
 
-    private boolean trackingPossible() {
+    protected boolean trackingPossible() {
     	if(this.camController.getLimit() == 0){
     		//check if enough resources
     		if(this.enoughResourcesForOneMore()){
@@ -333,7 +344,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 
-	private Pair findSimiliarObject(ITrObjectRepresentation pattern) {
+	protected Pair findSimiliarObject(ITrObjectRepresentation pattern) {
 
         Map<ITrObjectRepresentation, Double> traced_list = this.camController.getVisibleObjects_bb();
 
@@ -374,7 +385,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         
     }
 
-    private boolean isTraced(ITrObjectRepresentation rto) {
+    protected boolean isTraced(ITrObjectRepresentation rto) {
         if (this.tracedObjects.containsKey(rto.getFeatures())) {
             return true;
         } else {
@@ -382,17 +393,17 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-//    private void removeTracedObject_orig(ITrObjectRepresentation rto) {
+//    protected void removeTracedObject_orig(ITrObjectRepresentation rto) {
 //        tracedObjects.remove(rto.getFeatures());
 //        this.freeResources(rto);
 //    }
     
-    private void removeTracedObject(ITrObjectRepresentation rto) {
+    protected void removeTracedObject(ITrObjectRepresentation rto) {
         tracedObjects.remove(rto.getFeatures());
         this.freeResources(rto);
     }
 
-    private void addSearched(ITrObjectRepresentation rto, ICameraController cam) {
+    protected void addSearched(ITrObjectRepresentation rto, ICameraController cam) {
     	this.searchForTheseObjects.put(rto, cam);
     }
 
@@ -469,7 +480,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         	updateBroadcastCountdown();	
     }
     
-    private void updateReceivedDelay(){
+    protected void updateReceivedDelay(){
     	List<IMessage> rem = new ArrayList<IMessage>();
     	for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {
     		int dur = entry.getValue();
@@ -487,7 +498,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
     }
     
-    private void updateAuctionDuration(){
+    protected void updateAuctionDuration(){
     	if(AUCTION_DURATION > 0){
     		for(Map.Entry<ITrObjectRepresentation, Integer> entry : runningAuction.entrySet()){
     			int dur = entry.getValue();
@@ -500,7 +511,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	}
     }
     
-    private void updateBroadcastCountdown(){
+    protected void updateBroadcastCountdown(){
     	List<ITrObjectRepresentation> bc = new ArrayList<ITrObjectRepresentation>();
     	for (Map.Entry<ITrObjectRepresentation, Integer> kvp : stepsTillBroadcast.entrySet()) {
 			int i = kvp.getValue();
@@ -518,7 +529,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
     }
     
-	private void updateReservedResources() {
+	protected void updateReservedResources() {
     	List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
 		for(Map.Entry<ITrObjectRepresentation, Integer> entry : stepsTillFreeResources.entrySet()){
 			int steps = entry.getValue();
@@ -535,7 +546,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 
-	private void checkBidsForObjects() {
+	protected void checkBidsForObjects() {
     	 if (this.searchForTheseObjects.containsValue(this.camController)) { //this camera is looking for an object --> is owner of at least one object that is searched for by the network
              List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
              for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) { 
@@ -640,7 +651,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
          }
 	}
 
-	private void removeRunningAuction(ITrObjectRepresentation tor) {
+	protected void removeRunningAuction(ITrObjectRepresentation tor) {
 		//int before = runningAuction.size();
 		runningAuction.remove(tor);
 		//int after = runningAuction.size();
@@ -648,7 +659,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		biddings.remove(tor);
 	}
 
-	private void checkConfidences() {
+	protected void checkConfidences() {
     	if (!this.getAllTracedObjects_bb().isEmpty()) {
             for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
             	double conf = 0.0;
@@ -673,7 +684,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
 	}
 
-	private void printBiddings(){
+	protected void printBiddings(){
 		
     	for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {
     		ITrObjectRepresentation tor = entry.getKey();
@@ -696,7 +707,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	}
     }
     
-    private void callForHelp(ITrObjectRepresentation io, int index) {
+    protected void callForHelp(ITrObjectRepresentation io, int index) {
     	if(wrongIdentified.containsKey(io)){
     		io = wrongIdentified.get(io);
     	}
@@ -729,7 +740,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //        }
 	}
 	
-	private void checkIfTracedGotLost() {
+	protected void checkIfTracedGotLost() {
 		List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
 		for(ITrObjectRepresentation itor : this.tracedObjects.values()){
 			
@@ -754,7 +765,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 	
-	private void sendMessage(MessageType mt, Object o){
+	protected void sendMessage(MessageType mt, Object o){
 		
 		
 		switch(COMMUNICATION){
@@ -765,7 +776,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 	
-	private void multicastFix(MessageType mt, Object o){
+	protected void multicastFix(MessageType mt, Object o){
 		
 		List<String> cams = new ArrayList<String>();
 		for(String name : visionGraph.keySet()){
@@ -790,7 +801,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 
-	private void multicastSmooth(MessageType mt, Object o){
+	protected void multicastSmooth(MessageType mt, Object o){
 		if(mt == MessageType.StartSearch){
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
 			if(USE_BROADCAST_AS_FAILSAVE){
@@ -832,10 +843,16 @@ public class ActiveAINodeMulti extends AbstractAINode {
 					}
 				}
 				if(sent == 0){
+					if(DEBUG_CAM){
+						System.out.println(this.camController.getName() + " tried to MC --> now BC");
+					}
 					broadcast(mt, o);
 				}
 			}
 			else{
+				if(DEBUG_CAM){
+					System.out.println(this.camController.getName() + " tried to MC --> now BC 2");
+				}
 				broadcast(mt, o); 	
 			}
 		}
@@ -857,7 +874,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 
 	
-	private void multicastStep(MessageType mt, Object o){
+	protected void multicastStep(MessageType mt, Object o){
 		if(mt == MessageType.StartSearch){
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
 			if(USE_BROADCAST_AS_FAILSAVE){
@@ -890,6 +907,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 			
 			if(sent == 0){
+				if(DEBUG_CAM){
+					System.out.println(this.camController.getName() + " tried to MC --> now BC");
+				}
 				broadcast(mt, o);
 			}
 		}
@@ -911,7 +931,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 	
-	private void broadcast(MessageType mt, Object o){
+	protected void broadcast(MessageType mt, Object o){
     	for (ICameraController icc : this.camController.getNeighbours()) {
             this.camController.sendMessage(icc.getName(), mt, o);
             if(mt == MessageType.StartSearch){
@@ -1031,20 +1051,20 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
 **/
    
-	private void removeFromBiddings(ITrObjectRepresentation o) {
+	protected void removeFromBiddings(ITrObjectRepresentation o) {
         this.biddings.remove(o);
     }
 
-    private Map<ICameraController, Double> getBiddingsFor(ITrObjectRepresentation tor) {
+	protected Map<ICameraController, Double> getBiddingsFor(ITrObjectRepresentation tor) {
         return this.biddings.get(tor);
     }
 
-    private void addLastConfidence(ITrObjectRepresentation io, double conf) {
+	protected void addLastConfidence(ITrObjectRepresentation io, double conf) {
         this.lastConfidence.put(io, conf);
 
     }
 
-    private double getLastConfidenceFor(ITrObjectRepresentation io) {
+	protected double getLastConfidenceFor(ITrObjectRepresentation io) {
         if (lastConfidence.containsKey(io)) {
             return lastConfidence.get(io);
         } else {
@@ -1052,11 +1072,11 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-    private Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
+	protected Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
         return this.tracedObjects;
     }
     
-    private void checkIfSearchedIsVisible() {
+    protected void checkIfSearchedIsVisible() {
     	ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
 
     	for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
@@ -1076,8 +1096,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
     			if(this.searchForTheseObjects.containsKey(visible)){
 	            
 	            	ICameraController searcher = this.searchForTheseObjects.get(visible);
-	            	double conf = this.calculateValue(visible); //this.getConfidence(visible);
+	            	
             		if (searcher != null) {
+            			double conf = this.calculateValue(visible); //this.getConfidence(visible);
                         if (this.camController.getName().equals(searcher.getName())) {
                             this.addOwnBidFor(visible, conf);
                         } else {
@@ -1088,7 +1109,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                    	this.startTracking(visible);
 	                    	found.add(visible);
 	                    	broadcast(MessageType.StopSearch, visible);
-	                    	//sendMessage(MessageType.StopSearch, visible);
+
+//	                    	sendMessage(MessageType.StopSearch, visible);
 	                    	
 //	                    	if(USE_MULTICAST_STEP){
 //	                        	multicast(MessageType.StopSearch, visible);
@@ -1123,7 +1145,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //		}
 //    }
 		
-	private ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
+	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
 		//object is not visible --> would send wrong bid!
 		
 		Random r = new Random(System.currentTimeMillis() % 100);
@@ -1168,7 +1190,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //    	System.out.println(searchedString);
 //    }
 	
-    private void addOwnBidFor(ITrObjectRepresentation target, double conf) {
+    protected void addOwnBidFor(ITrObjectRepresentation target, double conf) {
         Map<ICameraController, Double> bids = this.biddings.get(target);
         if (bids == null) {
             bids = new HashMap<ICameraController, Double>();
@@ -1193,7 +1215,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
     
 
-    private void updateVisionGraph() {
+    protected void updateVisionGraph() {
     	if(!staticVG){
 	    	ArrayList<String> toRemove = new ArrayList<String>();
 	        for (Map.Entry<String, Double> e : visionGraph.entrySet()) {
@@ -1211,7 +1233,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
     @Override
     public void strengthenVisionEdge(String destinationName) {
-    	
     	if(!staticVG){
 	        if (this.visionGraph.containsKey(destinationName)) {
 	            double val = this.visionGraph.get(destinationName);
@@ -1220,7 +1241,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	            this.visionGraph.put(destinationName, 1.0);
 	        }
     	}
-
     }
 
     public double getConfidence(ITrObjectRepresentation target) {
@@ -1279,7 +1299,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 	public int getComm(){
-		int retVal = 0;
+//		int retVal = 0;
 		
 //		if(USE_MULTICAST_STEP){
 //			if(MULTICAST_SMOOTH){
@@ -1312,14 +1332,14 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		return value;
 	}
 
-	private void reserveResources(ITrObjectRepresentation target, double resources) {
+	protected void reserveResources(ITrObjectRepresentation target, double resources) {
 //		double res = calcResources();
 		
 		this.reservedResources.put(target, resources);
 		this.stepsTillFreeResources.put(target, STEPS_TILL_RESOURCES_FREED);
 	}
 	
-	private boolean enoughResourcesForOneMore(){
+	protected boolean enoughResourcesForOneMore(){
 		double res = calcResources();
 		if(res > 0){
 			return true;
@@ -1329,7 +1349,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 
-	private double calcResources() {
+	protected double calcResources() {
 		double allPossibleRes = this.camController.getAllResources();
 		double reservedRes = 0.0;
 		for(Double res : reservedResources.values()){
@@ -1346,7 +1366,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		return useRes;
 	}
 	
-	private void useResources(ITrObjectRepresentation target){
+	protected void useResources(ITrObjectRepresentation target){
 		double resRes = MIN_RESOURCES_USED; //0.0;
 		if(reservedResources.containsKey(target)){
 			resRes = reservedResources.get(target);
@@ -1359,7 +1379,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		stepsTillFreeResources.remove(target);
 	}
 	
-	private void freeResources(ITrObjectRepresentation target){
+	protected void freeResources(ITrObjectRepresentation target){
 		if(this.reservedResources.containsKey(target)){
 			double resRes = reservedResources.remove(target);//reservedResources.get(target);
 			this.camController.addResources(resRes);
