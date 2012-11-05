@@ -14,17 +14,12 @@ import epics.common.ITrObjectRepresentation;
 
 public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	
-    private static boolean DEBUG_CAM = true;
-
-	/** How many historical points (x,y) to keep in order to judge 
-	 * quantity of movement, that we use to calculate bids */
-	private static final int NUM_OF_HISTORICAL_POINTS = 3;
+    /** Whether to display debug msgs about historical positions/bidding */
+    private static boolean DEBUG_HIST = true;
 
 	// Historical utility based fields
     /** Where this object has been over the last few timesteps */
     private Map<ITrObjectRepresentation, LinkedList<Point2D.Double>> historicalLocations = new HashMap<ITrObjectRepresentation, LinkedList<Point2D.Double>>();
-    /** How many timesteps this object has been visible for */
-	private Map<ITrObjectRepresentation, Integer> timestepsVisible = new HashMap<ITrObjectRepresentation, Integer>();
 	
 	/** How many timesteps in total objects are visible for (divide by counter for avg) */
 	private double totalTSVisible = 0;
@@ -99,14 +94,11 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
         if(USE_BROADCAST_AS_FAILSAVE)
         	updateBroadcastCountdown();	
     }
-
-	/** Store the current point for each visible object, and delete
-	 *  the old one in the front of the queue if necessary. This allows
+	
+	/** Store the current point for each visible object. This allows
 	 *  bids to be made later based on where the point has been. 
-	 *  Also updates how many timesteps this object has been visible. */
+	 *  Also updates how many timesteps this object has been visible for. */
 	private void updateHistoricalPoints() {
-		//List<ITrObjectRepresentation> objectsSeen = timestepsVisible.keySet().clone();
-
 		// For every object, check for points. If nothing there, create a list first.
 		for(ITrObjectRepresentation itro : this.camController.getVisibleObjects_bb().keySet()) {
 			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) itro;
@@ -119,46 +111,45 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 				historicalLocations.put(itro, pointsForObject);
 			}
 
-			if (pointsForObject.size() >= NUM_OF_HISTORICAL_POINTS) {
-				pointsForObject.removeFirst();
-			}
-			
 			Point2D.Double point = new Point2D.Double(object.getX(), object.getY());
 			pointsForObject.add(point);
 
-			System.out.println("\tPoints for object "+tor.getFeatures()+" are: ");
-			for (Point2D.Double curPoint : pointsForObject) {
-				System.out.println("\t\t"+curPoint);
-			}
-			System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
-
-			if (! timestepsVisible.containsKey(itro)) {
-				timestepsVisible.put(itro, 1); // First time seen
-			} else {
-				// Seen for one more timestep. Increment
-				timestepsVisible.put(itro, timestepsVisible.get(itro) + 1);
+			if (DEBUG_HIST) {
+				System.out.println("\tPoints for object "+tor.getFeatures()+" are: ");
+				for (Point2D.Double curPoint : pointsForObject) {
+					System.out.println("\t\t"+curPoint);
+				}
+				System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
 			}
 		}
 		
-		Iterator<ITrObjectRepresentation> iter = timestepsVisible.keySet().iterator();
+		// If previously seen objects have disappeared, count their timesteps and remove
+		Iterator<ITrObjectRepresentation> iter = historicalLocations.keySet().iterator();
 		while (iter.hasNext()) {
 			ITrObjectRepresentation itro = iter.next();
 			if (! this.camController.getVisibleObjects_bb().containsKey(itro)) {
 				// Object disappeared. Grab visible timesteps
-				int visibleTS = timestepsVisible.get(itro);
+				int visibleTS = historicalLocations.get(itro).size();
 				this.totalTSVisible += visibleTS;
 				this.tsVisibleCounter++;
-				iter.remove(); // Object is accounted for
+				iter.remove(); // Object is accounted for and not in view any more
 				
-				if (DEBUG_CAM) {
+				if (DEBUG_HIST) {
 					System.out.println("\tObject "+itro.getFeatures()+" lost by "+this.camController.getName()+". ");
-					System.out.println("\tTS visible: "+visibleTS+" and current avg: "+totalTSVisible/tsVisibleCounter
+					System.out.println("\tTS visible: "+visibleTS+" and current avg: "+getAvgVisibleTS()
 							+" ("+tsVisibleCounter+" objects seen so far)");
 				}
 			}
 		}
 	}
 
+	/** The average number of timesteps objects remain 
+	 * visible for in this camera */
+	private Double getAvgVisibleTS() {
+		Double avg = totalTSVisible/tsVisibleCounter;
+		return Double.isNaN(avg) ? null : avg;
+	}
+	
 	private Double getQuantityOfMovement(ITrObjectRepresentation itro) {
 		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 		double totalDistance = 0;
@@ -177,10 +168,18 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 		return totalDistance / ((double)pointsForObject.size()-1.0);
 	}
     
-	private Double getHistoryBasedBid(ITrObjectRepresentation itro) {
+	@Override
+	public double calculateValue(ITrObjectRepresentation target) {
 		// Formula is bid = avgTS * confidence
 		// where avgTS is the average timesteps an object is present for
-		throw new UnsupportedOperationException("Don't call this method yet!");
+		Double avgTS = this.getAvgVisibleTS();
+		double conf;
+		if (avgTS == null) {
+			// Null means we haven't seen an object leave yet, default to this
+			conf = super.calculateValue(target);
+		} else {
+			conf = super.calculateValue(target) * avgTS;
+		}
+		return conf;
 	}
-
 }
