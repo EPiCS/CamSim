@@ -14,7 +14,7 @@ if [ -n "$1" ]; then
     SCENARIOFILE=$1
     echo "Using provided ScenarioFile: $SCENARIOFILE"
 else
-    SCENARIOFILE=scenario_hist_unw.xml
+    SCENARIOFILE=scenario1_hist_unweighted.xml
     echo "Using default ScenarioFile: $SCENARIOFILE"
 fi
 
