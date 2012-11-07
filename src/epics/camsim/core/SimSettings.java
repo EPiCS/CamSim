@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -365,6 +366,7 @@ public class SimSettings {
             this.max_y = Double.parseDouble(eSimulation.getAttribute("max_y"));
 
             
+            HashSet<String> cameraNames = new HashSet<String>(); // To check name clashes
             //read cameras from xml
             NodeList nCameras = doc.getElementsByTagName("camera");
             for (int temp = 0; temp < nCameras.getLength(); temp++) {
@@ -375,6 +377,11 @@ public class SimSettings {
                 CameraSettings cs = new CameraSettings();
 
                 cs.name = eCamera.getAttribute("name");
+                // Check name clash (not required for numbers because parseDouble throws an exception)
+                if (! cameraNames.add(cs.name)) { // If already added
+                	throw new IllegalArgumentException("Two cameras with identical name: \""
+                					+cs.name+"\" in scenario file: "+filename);
+                }
                 cs.x = Double.parseDouble(eCamera.getAttribute("x"));
                 cs.y = Double.parseDouble(eCamera.getAttribute("y"));
                 cs.heading = Double.parseDouble(eCamera.getAttribute("heading"));
