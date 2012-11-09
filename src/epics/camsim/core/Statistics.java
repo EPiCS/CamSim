@@ -24,6 +24,7 @@ public class Statistics {
     private static int ident_tmp = 0;
     private static int visible_tmp = 0;
     private static double util_cumulative = 0;
+    private static double comm_cumulative = 0;
     private static Map<String, Map<String,Double>> tmp_camUtil = new HashMap<String, Map<String,Double>>();
     private static ArrayList<Integer> time = new ArrayList<Integer>();
     private static ArrayList<Double> utility = new ArrayList<Double>();
@@ -44,6 +45,7 @@ public class Statistics {
         comm_tmp = 0;
         ident_tmp = 0;
         util_cumulative = 0;
+        comm_cumulative = 0;
         time.clear();
         utility.clear();
         communication.clear();
@@ -87,9 +89,10 @@ public class Statistics {
         identification.add(ident_tmp);
         visible.add(visible_tmp);
         util_cumulative += util_tmp;
+        comm_cumulative += comm_tmp;
 
-        System.out.println("TIME, GLOBAL_UTILITY, CUMULATIVE_UTILITY, COMMUNICATION, MISIDENTIFICATION, VISIBLE:");
-        System.out.println(time_step + " , " + util_tmp + " , " + util_cumulative + " , " + comm_tmp + " , " + ident_tmp + " , " + visible_tmp);
+        System.out.println("TIME, GLOBAL_UTILITY, CUMULATIVE_UTILITY, COMMUNICATION, CUMULATIVE_COMM, MISIDENTIFICATION, VISIBLE:");
+        System.out.println(time_step + " , " + util_tmp + " , " + util_cumulative + " , " + comm_tmp + " , " + comm_cumulative + " , " + ident_tmp + " , " + visible_tmp);
         System.out.println("--------------------------------------------------------------------------");
         
         time_step++;
