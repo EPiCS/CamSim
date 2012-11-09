@@ -1,6 +1,5 @@
 #!/bin/bash
 STARTTIME=$SECONDS
-ROOTDIR=~/code/OGAMOTUMBNDSC
 BUILDDIR=build
 JARNAME=build.jar
 BUILDCLASSPATH=./gnuprologjava-0.2.6.jar
@@ -17,7 +16,10 @@ function createmanifest {
     echo "Created new manifest"
 }
 
-cd $ROOTDIR
+if [ ! -f $BUILDMAIN ]; then
+    echo "Error: could not find Main.java in $BUILDMAIN. Your current directory must be the one containing 'src'. Try again."
+    exit
+fi
 
 if [ -d $BUILDDIR ]; then
    echo $DASH
