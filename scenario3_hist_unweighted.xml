@@ -28,9 +28,9 @@
         <objects>
             
         	<object features="1.0" heading="90.0" speed="1.0" x="-30.0" y="-2.0"/>
-        	<object features="1.0" heading="-90.0" speed="1.0" x="30.0" y="-2.0"/>
-        	<object features="1.0" heading="90.0" speed="1.0" x="-10.0" y="15.0"/>
-        	<object features="1.0" heading="0.0" speed="1.0" x="-20.0" y="-20.0"/>
+        	<object features="2.0" heading="-90.0" speed="1.0" x="30.0" y="-2.0"/>
+        	<object features="3.0" heading="90.0" speed="1.0" x="-10.0" y="15.0"/>
+        	<object features="4.0" heading="0.0" speed="1.0" x="-20.0" y="-20.0"/>
         	
         </objects>
     </simulation>

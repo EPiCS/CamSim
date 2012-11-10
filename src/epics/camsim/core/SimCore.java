@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
@@ -503,17 +502,16 @@ public class SimCore {
         }
 
         // random camera select - random timespan to go offline...
-        Random r = new Random(System.currentTimeMillis() % 100);
-		int random = r.nextInt(100);
+		int random = RandomNumberGenerator.nextInt(100);
         
 		if(random <= CAMERRORRATE){
         	//select random camera and set it offline for a random number of timesteps
-			int ranCam = r.nextInt(this.cameras.size());
-        	int sleepFor = r.nextInt(10);
+			int ranCam = RandomNumberGenerator.nextInt(this.cameras.size());
+        	int sleepFor = RandomNumberGenerator.nextInt(10);
         	
         	CameraController cc = cameras.get(ranCam);
         	cc.setOffline(sleepFor);
-        	int ranReset = r.nextInt(100);
+        	int ranReset = RandomNumberGenerator.nextInt(100);
         	if(ranReset > RESETRATE){
         		cc.resetCamera();
         	}
@@ -671,8 +669,7 @@ public class SimCore {
 	}
 
 //	private boolean detectedFalseObejct() {
-//		Random r = new Random();
-//		int res = r.nextInt(100);
+//		int res = RandomNumberGenerator.nextInt(100);
 //		if(res < TRACKERERROR){
 //			return true;
 //		}

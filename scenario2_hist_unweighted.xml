@@ -13,7 +13,7 @@
 
         <objects>
             <object features="1.0" x="-30" y="-2" heading="90" speed="1"/>
-			<object features="1.0" x="30" y="-2" heading="-90" speed="1"/>
+			<object features="2.0" x="30" y="-2" heading="-90" speed="1"/>
         </objects>
     </simulation>
 </root>
