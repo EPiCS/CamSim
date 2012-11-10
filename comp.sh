@@ -2,8 +2,10 @@
 STARTTIME=$SECONDS
 BUILDDIR=build
 JARNAME=build.jar
-BUILDCLASSPATH=./gnuprologjava-0.2.6.jar
+LIBJAR=gnuprologjava-0.2.6.jar
+BUILDCLASSPATH=$LIBJAR
 BUILDMAIN=./src/epics/camwin/Main.java
+INCLUDECLASSES="$BUILDMAIN ./src/epics/ai/*.java"
 MANIFESTNAME=MANIFEST.MF
 DASH="--------------------------------------"
 
@@ -13,6 +15,7 @@ function createmanifest {
 	echo "Removed old manifest"
     fi
     echo "Main-Class: epics.camwin.Main" > $MANIFESTNAME
+	echo "Class-Path: $LIBJAR" >> $MANIFESTNAME
     echo "Created new manifest"
 }
 
@@ -25,17 +28,18 @@ if [ -d $BUILDDIR ]; then
    echo $DASH
    echo "Deleting previous build dir"
    echo $DASH
-   rm -r .$BUILDDIR
+   rm -r $BUILDDIR
 fi
 
 mkdir $BUILDDIR
-javac -sourcepath src -classpath $BUILDCLASSPATH -d $BUILDDIR $BUILDMAIN
+echo "Compiling source"
+javac -sourcepath src -classpath $BUILDCLASSPATH -d $BUILDDIR $INCLUDECLASSES
 
 if [ "$?" -eq 0 ]; then
    echo $DASH
    echo " Compile successful "
    echo $DASH
-   unzip gnuprologjava-0.2.6.jar -d build
+   #unzip $LIBJAR -d build # Used for fully-packaged jar
    cd build
    
    createmanifest
