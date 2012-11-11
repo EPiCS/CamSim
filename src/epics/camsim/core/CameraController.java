@@ -10,8 +10,8 @@ import java.util.*;
  */
 public class CameraController implements ICameraController{
 
-	private static int LIMIT = 0;
-	private static int DETECTIONRATE = 80; //percent to detect object that is there
+	private int LIMIT = 0;
+	private int DETECTIONRATE = 80; //percent to detect object that is there
 	private AbstractAINode camAINode;
 
     private String name;
@@ -29,19 +29,9 @@ public class CameraController implements ICameraController{
 
     private ArrayList<CameraController> neighbours = new ArrayList<CameraController>();
 
-    //private double last_confidence = -1;
-
-
-
     private Map<TraceableObject, Double> visible_objects
             = new HashMap<TraceableObject, Double>();
 	private boolean sleepForever = false;
-  
-
-//    public CameraController( String name, double x, double y,
-//            double heading, double viewing_angle, double range, ICameraAINode ai, int limit){
-//    	this(name, x, y , heading, viewing_angle, range, ai, limit, 100);
-//    }
     
     public CameraController( String name, double x, double y,
                 double heading, double viewing_angle, double range, AbstractAINode ai, int limit, int detectionRate){
@@ -116,11 +106,6 @@ public class CameraController implements ICameraController{
 	        }
     	}
     }
-
-
-
-
-
 
     /**
      * The main purpose of this method is to check if TraceableObject o is
@@ -415,12 +400,6 @@ public class CameraController implements ICameraController{
     	return this.viewing_angle;
     }
 
-
-    
-
-
-    // implements ICamera
-
     @Override
     public Map<ITrObjectRepresentation,Double> getVisibleObjects_bb() {
     	
@@ -437,7 +416,6 @@ public class CameraController implements ICameraController{
 	        }
         }
         return result_list;
-
     }
 
     @Override
@@ -652,5 +630,11 @@ public class CameraController implements ICameraController{
 		}
 		return res;
 	}
-
+	
+	@Override
+	public int hashCode() {
+		String s = toString()+" visibleObjects="+this.visible_objects.size() 
+				+ " neighbours=" + this.neighbours.size();
+		return s.hashCode();
+	}
 }
