@@ -1,4 +1,4 @@
-cam-sim
+CamSim
 =======
 	
 Smart Camera Simulation Environment
