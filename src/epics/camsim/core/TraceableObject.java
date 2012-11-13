@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class TraceableObject{
 
-    private ArrayList<Double> features = new ArrayList();
+    private ArrayList<Double> features = new ArrayList<Double>();
 
     private SimCore sim;
     private double x; // meters (horizontal)
@@ -53,19 +53,15 @@ public class TraceableObject{
         this.currentWaypoint = 1;
     }
 
-
-
     void update() {
 
         double x_move = 0;
         double y_move = 0;
         if ( this.waypoints != null && this.waypoints.size() > 0 ){
 
-            
-
             double dist = Point2D.distance(this.x, this.y, waypoints.get(currentWaypoint).getX(), waypoints.get(currentWaypoint).getY());
             //System.out.println("     DISTANCE     " + dist);
-            if ( Point2D.distance(this.x, this.y, waypoints.get(currentWaypoint).getX(), waypoints.get(currentWaypoint).getY()) < 1){
+            if (dist < 1){
                 //System.out.println(" CHANGING WAYPOINT !!");
                 this.currentWaypoint = this.currentWaypoint + 1;
                 if ( this.currentWaypoint >= this.waypoints.size()){
@@ -85,14 +81,10 @@ public class TraceableObject{
 
             //System.out.println( "DIR: dir_x:" + dir_x + " dir_y:" + dir_y );
 
-            /*
-             * Dot product of [0,1] vector and our direction
-             */
+            // Dot product of [0,1] vector and our direction
             double dot = 0 * dir_x + 1 * dir_y;
 
-            /*
-             * Magic way to compute our new heading :)
-             */
+            // Magic way to compute our new heading :)
             double ang = ( Math.atan2( 1, 0 ) - Math.atan2( dir_y, dir_x ) ) * 180 / Math.PI;
 
             //System.out.println( "ANG: " + ang );
@@ -101,12 +93,10 @@ public class TraceableObject{
 
             x_move = Math.sin( (heading * Math.PI) / 180 ) * speed;
             y_move = Math.cos( (heading * Math.PI) / 180 ) * speed;
-        }else{
+        } else {
             x_move = Math.sin( heading ) * speed;
             y_move = Math.cos( heading ) * speed;
         }
-
-        
 
         //System.out.println( "MOVE: x:" + x_move + " y:" + y_move );
 

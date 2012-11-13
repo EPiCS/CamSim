@@ -24,6 +24,7 @@ public class Main {
     
     static boolean useGlobal = false;
     
+    static String summaryFile = null;
     static String algo = "";
     static String comm = "";
     static int predefVG = -1;
@@ -32,10 +33,7 @@ public class Main {
     static int camReset = 50;
 
     static void print_parameters() {
-
-        /*
-         * Nice dashed line on top
-         */
+        // Nice dashed line on top
         for (int i = 0; i < 28; i++) {
             System.out.print('-');
         }
@@ -50,15 +48,11 @@ public class Main {
         System.out.println("Seed:            " + seed);
         System.out.println("Simulation time: " + simulation_time);
 
-        /*
-         * Nice dashed line on the bottom as well
-         */
+        // Nice dashed line on the bottom as well
         for (int i = 0; i < 80; i++) {
             System.out.print('-');
         }
         System.out.println();
-
-
     }
 
     public static void usage() {
@@ -68,25 +62,22 @@ public class Main {
     }
 
     public static void help() {
-
         usage();
 
-        /*
-         * TODO: implement help
-         */
         System.out.println(
-                
+        		
                 "OPTIONS:\n" +
-                " -h --help              Print this help message\n" +
-                " -o --output [STRING]   Change output file name (default: output.csv)\n" +
-                " -s --seed [INTEGER]    Used this seed (default: 0)\n" +
-                " -t --time [INTEGER]    Simulation time, in time steps (default: 100)\n" +
-                " -g --global            Uses Global Registration Component\n" +
-                " -v --vg [INTEGER]		 defines the visiongraph ((default) -1 = defined in scenario file, 0 = static as defined in scenario, 1 = dynamic - ignore scenario file, 2 = dynamic - start with scenario file \n" +
-                " -c --comm [INTEGER] 	 Defines Communication ((default) 0 = Broadcast, 1 = SMOOTH, 2 = STEP, 3 = Static) \n" +
-                " -a --algo [STRING]	 Defines the used algorithm ((default) \"active\", \"passive\") \n" +
+                " -h --help              	Print this help message\n" +
+                " -o --output [STRING]   	Change output file name (default: output.csv)\n" +
+                " -f --summaryfile [STRING]	Set a summary file to append the summary to\n" +
+                " -s --seed [INTEGER]    	Used this seed (default: 0)\n" +
+                " -t --time [INTEGER]    	Simulation time, in time steps (default: 100)\n" +
+                " -g --global            	Uses Global Registration Component\n" +
+                " -v --vg [INTEGER]		 	Defines the visiongraph ((default) -1 = defined in scenario file, 0 = static as defined in scenario, 1 = dynamic - ignore scenario file, 2 = dynamic - start with scenario file \n" +
+                " -c --comm [INTEGER] 	 	Defines Communication ((default) 0 = Broadcast, 1 = SMOOTH, 2 = STEP, 3 = Static) \n" +
+                " -a --algo [STRING]	 	Defines the used algorithm ((default) \"active\", \"passive\") \n" +
                 "\n" +
-                "    --no-gui            Will launch simulator in command line mode\n"
+                "    --no-gui            	Will launch simulator in command line mode\n"
 
                 );
     }
@@ -96,27 +87,26 @@ public class Main {
      */
     public static void main(String[] args) throws Exception {
 
-        /*
-         * Set the parameters depending on command line options.
-         */
+        // Set the parameters depending on command line options.
 
         int c;
         String arg;
-        LongOpt[] longopts = new LongOpt[12];
+        LongOpt[] longopts = new LongOpt[13];
 
         StringBuffer sb = new StringBuffer();
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
         longopts[1] = new LongOpt("output", LongOpt.REQUIRED_ARGUMENT, null, 'o');
-        longopts[2] = new LongOpt("seed", LongOpt.REQUIRED_ARGUMENT, null, 's');
-        longopts[3] = new LongOpt("time", LongOpt.REQUIRED_ARGUMENT, null, 't');
-        longopts[4] = new LongOpt("no-gui", LongOpt.NO_ARGUMENT, null, 1000);
-        longopts[5] = new LongOpt("global", LongOpt.NO_ARGUMENT, null, 'g');
-        longopts[6] = new LongOpt("algo", LongOpt.REQUIRED_ARGUMENT, null, 'a');
-        longopts[7] = new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c');
-        longopts[8] = new LongOpt("vg", LongOpt.REQUIRED_ARGUMENT, null, 'v');
-        longopts[9] = new LongOpt("deterr", LongOpt.REQUIRED_ARGUMENT, null, 'd');
-        longopts[10] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
-        longopts[11] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
+        longopts[2] = new LongOpt("summaryfile", LongOpt.REQUIRED_ARGUMENT, null, 'f');
+        longopts[3] = new LongOpt("seed", LongOpt.REQUIRED_ARGUMENT, null, 's');
+        longopts[4] = new LongOpt("time", LongOpt.REQUIRED_ARGUMENT, null, 't');
+        longopts[5] = new LongOpt("no-gui", LongOpt.NO_ARGUMENT, null, 1000);
+        longopts[6] = new LongOpt("global", LongOpt.NO_ARGUMENT, null, 'g');
+        longopts[7] = new LongOpt("algo", LongOpt.REQUIRED_ARGUMENT, null, 'a');
+        longopts[8] = new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c');
+        longopts[9] = new LongOpt("vg", LongOpt.REQUIRED_ARGUMENT, null, 'v');
+        longopts[10] = new LongOpt("deterr", LongOpt.REQUIRED_ARGUMENT, null, 'd');
+        longopts[11] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
+        longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
         
         
         Getopt g = new Getopt("guiapp", args, "a:c:v:gho:d:e:r:s:t:", longopts);
@@ -130,24 +120,28 @@ public class Main {
                             + ((arg != null) ? arg : "null"));
 
                     break;
-                //
+
                 case 1:
                     System.out.println("I see you have return in order set and that "
                             + "a non-option argv element was just found "
                             + "with the value '" + g.getOptarg() + "'");
                     break;
-                //
 
                 case 'h':
                     help();
                     System.exit(0);
                     break;
-                //
 
                 case 'o':
                     arg = g.getOptarg();
                     System.out.println("Setting output file to: " + arg);
                     output_file = arg;
+                    break;
+
+                case 'f':
+                    arg = g.getOptarg();
+                    System.out.println("Setting summary file: " + arg);
+                    summaryFile = arg;
                     break;
 
                 case 's':
@@ -258,7 +252,7 @@ public class Main {
 	        }
         }
         
-        SimCore sim = new SimCore(seed, output_file, ss, useGlobal, camErr, camReset, trackErr);
+        SimCore sim = new SimCore(seed, output_file, summaryFile, ss, useGlobal, camErr, camReset, trackErr);
         if (showgui == false) {
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();

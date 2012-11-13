@@ -6,7 +6,8 @@ import java.util.Map;
 public abstract class AbstractAINode {
 
 	/** This constructor simply calls instantiateAINode(). Overriding classes
-	 * should only call super and do real handling in instantiateAINode() */
+	 * should only call super and do real handling in instantiateAINode().
+	 * This is painful but is to enforce these arguments in the constructor. */
 	public AbstractAINode(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
     	instantiateAINode(comm, staticVG, vg, r);
     }
