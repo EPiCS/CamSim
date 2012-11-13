@@ -2,7 +2,6 @@
 <root>
     <simulation max_x="30.0" max_y="30.0" min_x="-30.0" min_y="-30.0">
         <cameras>
-		
 			<camera ai_algorithm="epics.ai.HistoricalUnweightedAINodeMulti" name="Cam_01" x="-20" y="11" heading="-180" viewing_angle="70" range="20" comm="0"/>
 			<camera ai_algorithm="epics.ai.HistoricalUnweightedAINodeMulti" name="Cam_02" x="-10" y="11" heading="-180" viewing_angle="70" range="20" comm="0"/>
 			<camera ai_algorithm="epics.ai.HistoricalUnweightedAINodeMulti" name="Cam_03" x="10" y="11" heading="-180" viewing_angle="70" range="20" comm="0"/>
@@ -22,11 +21,13 @@
 			<camera ai_algorithm="epics.ai.HistoricalUnweightedAINodeMulti" name="Cam_14" x="-11" y="-10" heading="90" viewing_angle="70" range="20" comm="0"/>
 			<camera ai_algorithm="epics.ai.HistoricalUnweightedAINodeMulti" name="Cam_15" x="-11" y="10" heading="90" viewing_angle="70" range="20" comm="0"/>
 			<camera ai_algorithm="epics.ai.HistoricalUnweightedAINodeMulti" name="Cam_16" x="-11" y="20" heading="90" viewing_angle="70" range="20" comm="0"/>
-        
         </cameras>
         
         <objects>
-        	<!-- None yet -->
+        	<object features="1.0" heading="90.0" speed="1.0" x="-30.0" y="-2.0"/>
+        	<object features="2.0" heading="-90.0" speed="1.0" x="30.0" y="-2.0"/>
+        	<object features="3.0" heading="90.0" speed="1.0" x="-10.0" y="15.0"/>
+        	<object features="4.0" heading="0.0" speed="1.0" x="-20.0" y="-20.0"/>
         </objects>
     </simulation>
 </root>
