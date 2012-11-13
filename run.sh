@@ -9,7 +9,7 @@ if [ -n "$1" ]; then
     SCENARIOFILE=$1
     echo "Using provided ScenarioFile: $SCENARIOFILE"
 else
-    SCENARIOFILE=scenarios/scenario1_hist_unweighted.xml
+    SCENARIOFILE=scenarios/scenario1_active.xml
     echo "Using default ScenarioFile: $SCENARIOFILE"
 fi
 
