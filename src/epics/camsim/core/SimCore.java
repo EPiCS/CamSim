@@ -59,54 +59,23 @@ public class SimCore {
     private ArrayList<CameraController> cameras = new ArrayList<CameraController>();
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
 	private int _comm = -1;
-
-
-//    public SimCore( long seed, double min_x, double max_x, double min_y, double max_y, boolean global){
-//    	this(seed, min_x, max_x, min_y, max_y, global, -1, 50, -1);
-//    }
-    	
-    public SimCore( long seed, double min_x, double max_x, double min_y, double max_y, boolean global, int camError, int camReset, int trackError){
-        Statistics.init(null);
-        RandomNumberGenerator.init(seed);
-        this.min_x = min_x;
-        this.max_x = max_x;
-        this.min_y = min_y;
-        this.max_y = max_y;
-        
-        this.RESETRATE = camReset;
-        this.CAMERRORRATE = camError;
-        this.TRACKERERROR = trackError;
-        
-        this.USEGLOBAL = global;
-        
-        if(USEGLOBAL){
-        	reg = new GlobalRegistration();
-        }
-        
-        init_demo();
-    }
-
-//    public SimCore( long seed, String output, SimSettings ss, boolean global){
-//    	this(seed, output, ss, global, -1, 50, -1);
-//    }
     
-    public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError) {
-    	
+    public SimCore(long seed, String output, String summaryFile, SimSettings ss, 
+    		boolean global, int camError, int camReset, int trackError) {
 	    this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
 	    this.TRACKERERROR = trackError;
 	    
     	USEGLOBAL = global;
     	    	
-        if(USEGLOBAL){
+        if (USEGLOBAL) {
         	reg = new GlobalRegistration();
         }
     	
-        Statistics.init(output);
+        Statistics.init(output, summaryFile);
         RandomNumberGenerator.init(seed);
     	this.interpretFile(ss);
     	ss.printSelfToCMD();   
-    	
     }
     
     public void interpretFile(SimSettings ss){
@@ -404,45 +373,6 @@ public class SimCore {
         }
         this.objects.remove(rnd);
 
-    }
-
-    private void init_demo(){
-    	
-        for ( int i = 0; i < 30; i++){
-            add_random_camera();
-        }
-
-        /*
-         * Object on the left, facing east, speed 0.4
-         */
-        this.getObjects().add( new TraceableObject( 
-                0.111, this, -10, 0, Math.toRadians(90), 1));
-
-
-        for ( CameraController c1 : this.cameras ){
-            for ( CameraController c2 : this.cameras ){
-                c1.addCamera(c2);
-                
-            }
-        }
-        
-        for(TraceableObject to : this.getObjects()){
-	        for(CameraController cc : this.getCameras()){
-//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //((cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
-			    	cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-//		    	}
-	    	}
-        }
-    }
-
-
-    public SimCore( double min_x, double max_x, double min_y, double max_y){
-        this.min_x = min_x;
-        this.max_x = max_x;
-        this.min_y = min_y;
-        this.max_y = max_y;
-        this.firstUpdate = true;
-        init_demo();
     }
 
     public void update_original() throws Exception{

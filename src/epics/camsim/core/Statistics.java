@@ -1,5 +1,6 @@
 package epics.camsim.core;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,7 +14,8 @@ import java.util.Map;
  */
 public class Statistics {
 
-    private static String output = null;
+	private static String output = null;
+	private static String summary = null;
     private static int time_step = 0;
 
     public static int get_time_step() {
@@ -31,14 +33,14 @@ public class Statistics {
     private static ArrayList<Double> communication = new ArrayList<Double>();
     private static ArrayList<Integer> identification = new ArrayList<Integer>();
     private static ArrayList<Integer> visible = new ArrayList<Integer>();
-    private static ArrayList<Map<String, Map<String, Double>>> utilCam = new ArrayList<Map<String,Map<String,Double>>>();
     		
     static {
-        init(null);
+        init(null, null);
     }
 
-    public static void init(String output_file) {
-        output = output_file;
+    public static void init(String outputFile, String summaryFile) {
+        output = outputFile;
+        summary = summaryFile;
         visible_tmp = 0;
         time_step = 0;
         util_tmp = 0;
@@ -56,9 +58,9 @@ public class Statistics {
     public static void close() {
         if (output != null) {
 
-            PrintWriter out = null;
+        	PrintWriter out = null;
+        	PrintWriter sumOut = null;
             try {
-
                 FileWriter outFile = new FileWriter(output);
                 out = new PrintWriter(outFile);
 
@@ -70,13 +72,26 @@ public class Statistics {
                     out.println(outString);
                 }
                 
+                if (summary != null && ! summary.equals("")) {
+                	File sumFile = new File(summary);
+                	boolean existed = sumFile.exists();
+                	FileWriter sumFileWriter = new FileWriter(sumFile, true); // Append
+                    sumOut = new PrintWriter(sumFileWriter);
 
+                    if (! existed) {
+                    	sumOut.println(getSummaryDesc(false));
+                    }
+                    sumOut.println(getSummary(false));
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
             finally{
-                if ( out != null ){
+                if (out != null) {
                     out.close();
+                }
+                if (sumOut != null) {
+                	sumOut.close();
                 }
             }
         }
@@ -91,8 +106,8 @@ public class Statistics {
         util_cumulative += util_tmp;
         comm_cumulative += comm_tmp;
 
-        System.out.println("TIME, GLOBAL_UTILITY, CUMULATIVE_UTILITY, COMMUNICATION, CUMULATIVE_COMM, MISIDENTIFICATION, VISIBLE:");
-        System.out.println(time_step + " , " + util_tmp + " , " + util_cumulative + " , " + comm_tmp + " , " + comm_cumulative + " , " + ident_tmp + " , " + visible_tmp);
+        System.out.println(getSummaryDesc(true));
+        System.out.println(getSummary(true));
         System.out.println("--------------------------------------------------------------------------");
         
         time_step++;
@@ -101,6 +116,32 @@ public class Statistics {
         ident_tmp = 0;
         visible_tmp = 0;
         tmp_camUtil = new HashMap<String, Map<String,Double>>();
+    }
+
+    /** Spaces=true inserts a space after each value for human-readable version */
+    public static String getSummary(boolean spaces) {
+    	String comma = spaces ? ", " : ",";
+    	String summary = time_step + comma 
+    			+ util_tmp + comma 
+    			+ util_cumulative + comma 
+    			+ comm_tmp + comma 
+    			+ comm_cumulative + comma 
+    			+ ident_tmp + comma 
+    			+ visible_tmp;
+    	return summary;
+    }
+    
+    /** Spaces=true inserts a space after each field name for human-readable version */
+    public static String getSummaryDesc(boolean spaces) {
+    	String comma = spaces ? ", " : ",";
+    	String desc = "TIME" + comma 
+    			+ "GLOBAL_UTILITY" + comma 
+    			+ "CUMULATIVE_UTILITY" + comma
+    			+ "COMMUNICATION" + comma 
+    			+ "CUMULATIVE_COMM" + comma 
+    			+ "MISIDENTIFICATION" + comma 
+    			+ "VISIBLE";
+    	return desc;
     }
     
     public static void addVisible(){
