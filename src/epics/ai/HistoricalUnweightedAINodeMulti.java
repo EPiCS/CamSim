@@ -15,7 +15,7 @@ import epics.common.ITrObjectRepresentation;
 public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	
     /** Whether to display debug msgs about historical positions/bidding */
-    private static boolean DEBUG_HIST = true;
+    private static boolean DEBUG_HIST = false;
 
 	// Historical utility based fields
     /** Where this object has been over the last few timesteps */
@@ -25,6 +25,14 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	private double totalTSVisible = 0;
 	/** How many objects have left our FOV (avg = totalTSVisible/tsVisibleCounter) */
 	private int tsVisibleCounter = 0;
+	
+	/** If we have never seen an object before, we don't have an avgTS, so we 
+	 * cannot calculate the bid coefficient. This is the default in that case. */
+	private final double PRE_INSTANTIATION_BID_COEFFICIENT = 1.0;
+	
+	/** If the avgTS is 5 but an object is still around after 10 TS, the bid
+	 * coefficient is not calculable by the standard formula, so use this default */
+    private final double OVERSTAY_DEFAULT_BID_COEFFICIENT = 2.0;
 	
     public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
     	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
@@ -169,17 +177,21 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	}
     
 	@Override
+	/** The bid for an object. Not the same as 'confidence' */
 	public double calculateValue(ITrObjectRepresentation target) {
-		// Formula is bid = avgTS * confidence
+		// Formula is bid = (avgTS-TSsoFar) * confidence
 		// where avgTS is the average timesteps an object is present for
+		// and TSsoFar is how many timesteps this object has been in view for
 		Double avgTS = this.getAvgVisibleTS();
-		double conf;
-		if (avgTS == null) {
+		double bidCoefficient;
+		if (avgTS == null || historicalLocations.get(target) == null) {
 			// Null means we haven't seen an object leave yet, default to this
-			conf = super.calculateValue(target);
+			bidCoefficient = PRE_INSTANTIATION_BID_COEFFICIENT;
 		} else {
-			conf = super.calculateValue(target) * avgTS;
+			double tsSoFar = historicalLocations.get(target).size();
+			// Default value in case avgTS-tsSoFar is negative. See FYP(Overstay Problem)
+			bidCoefficient = Math.max((avgTS-tsSoFar), OVERSTAY_DEFAULT_BID_COEFFICIENT);
 		}
-		return conf;
+		return super.calculateValue(target) * bidCoefficient;
 	}
 }

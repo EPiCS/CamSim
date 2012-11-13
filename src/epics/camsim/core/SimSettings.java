@@ -260,48 +260,6 @@ public class SimSettings {
     		}
     	}
     }
-    
-    public SimSettings(double min_x, double max_x, double min_y, double max_y, int staticVG) {
-    	usePredefVG = staticVG;
-
-        this.min_x = min_x;
-        this.min_y = min_y;
-        this.max_x = max_x;
-        this.max_y = max_y;
-
-        cameras.add(
-                new CameraSettings(
-                "Cam_01",
-                10, 10,
-                90,
-                60,
-                20,
-                "passive", 0, 0));
-
-        cameras.add(
-                new CameraSettings(
-                "Cam_02",
-                20, 20,
-                90,
-                60,
-                20,
-                "passive", 0, 0));
-
-        objects.add(
-                new TrObjectSettings(
-                0, 0,
-                90,
-                1,
-                1));
-
-        objects.add(
-                new TrObjectSettings(
-                10, 10,
-                90,
-                1,
-                2));
-
-    }
 
     public void printSelfToCMD(){
 
