@@ -10,8 +10,8 @@ public class RandomNumberGenerator {
     
     private static Random r = null;
 
-    public static void init( long seed ){
-        r = new Random( seed );
+    public static void init(long seed){
+        r = new Random(seed);
     }
 
     public static double nextDouble(){
@@ -22,8 +22,8 @@ public class RandomNumberGenerator {
         return r.nextInt();
     }
 
-    public static int nextInt( int n ){
-        return r.nextInt( n );
+    public static int nextInt(int n){
+        return r.nextInt(n);
     }
 
 }

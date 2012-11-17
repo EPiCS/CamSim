@@ -19,7 +19,8 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 
 	// Historical utility based fields
     /** Where this object has been over the last few timesteps */
-    private Map<ITrObjectRepresentation, LinkedList<Point2D.Double>> historicalLocations = new HashMap<ITrObjectRepresentation, LinkedList<Point2D.Double>>();
+    private Map<ITrObjectRepresentation, LinkedList<Point2D.Double>> historicalLocations = 
+    		new HashMap<ITrObjectRepresentation, LinkedList<Point2D.Double>>();
 	
 	/** How many timesteps in total objects are visible for (divide by counter for avg) */
 	private double totalTSVisible = 0;
@@ -28,14 +29,25 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
 	 * cannot calculate the bid coefficient. This is the default in that case. */
-	private final double PRE_INSTANTIATION_BID_COEFFICIENT = 1.0;
+	private static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 1.0;
+	private final double preInstantiationBidCoefficient;
 	
 	/** If the avgTS is 5 but an object is still around after 10 TS, the bid
 	 * coefficient is not calculable by the standard formula, so use this default */
-    private final double OVERSTAY_DEFAULT_BID_COEFFICIENT = 2.0;
+    private static final double DEFAULT_OVERSTAY_DEFAULT_BID_COEFFICIENT = 1.0;
+    private final double overstayDefaultBidCoefficient;
 	
+    // Overriding AbstractAINode's constructor
     public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
+    	this(comm, staticVG, vg, r, DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT,
+    			DEFAULT_OVERSTAY_DEFAULT_BID_COEFFICIENT); // Goes through to instantiateAINode()
+    }
+    
+    public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r,
+    		double preInstantiationBidCoefficient, double overstayDefaultBidCoefficient){
     	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    	this.preInstantiationBidCoefficient = preInstantiationBidCoefficient;
+    	this.overstayDefaultBidCoefficient = overstayDefaultBidCoefficient;
     }
 
     @Override
@@ -186,11 +198,11 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 		double bidCoefficient;
 		if (avgTS == null || historicalLocations.get(target) == null) {
 			// Null means we haven't seen an object leave yet, default to this
-			bidCoefficient = PRE_INSTANTIATION_BID_COEFFICIENT;
+			bidCoefficient = this.preInstantiationBidCoefficient;
 		} else {
 			double tsSoFar = historicalLocations.get(target).size();
 			// Default value in case avgTS-tsSoFar is negative. See FYP(Overstay Problem)
-			bidCoefficient = Math.max((avgTS-tsSoFar), OVERSTAY_DEFAULT_BID_COEFFICIENT);
+			bidCoefficient = Math.max((avgTS-tsSoFar), this.overstayDefaultBidCoefficient);
 		}
 		return super.calculateValue(target) * bidCoefficient;
 	}

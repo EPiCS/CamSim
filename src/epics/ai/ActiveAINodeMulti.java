@@ -44,10 +44,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
     
     IRegistration reg;
     
+    // Overriding AbstractAINode's constructor
     public ActiveAINodeMulti(int comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r) {
-    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
-    	AUCTION_DURATION = 0;
+    	this(comm, staticVG, vg, r, 0); // Goes through to instantiateAINode()
     }
     
     public ActiveAINodeMulti(int comm, boolean staticVG, 
@@ -1203,7 +1203,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	
 	public double calculateValue(ITrObjectRepresentation target){
 		double value = this.getConfidence(target); 
-		double res = calcResources(); // Probably not necessary
 		return value;
 	}
 
