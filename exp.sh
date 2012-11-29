@@ -2,7 +2,7 @@
 STARTTIME=$SECONDS
 TIMESTEPS="1000"
 SEEDS=30
-SCENARIO="hist3"
+SCENARIO="hist3_broadcast"
 SCENARIO_FILE="scenarios/scenario3_hist_unweighted.xml"
 
 # Only set if not already set

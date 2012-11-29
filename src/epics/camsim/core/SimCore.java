@@ -13,6 +13,7 @@ import java.util.Map;
 
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
+import epics.common.RunParams;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
@@ -49,6 +50,7 @@ public class SimCore {
     
     private IRegistration reg = null;
     private SimSettings settings;
+    private String paramFile;
 
     private void checkCoordInRange( double x, double y ){
         if ( x < min_x || x > max_x || y < min_y || y > max_y ){
@@ -60,8 +62,9 @@ public class SimCore {
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
 	private int _comm = -1;
     
-    public SimCore(long seed, String output, String summaryFile, SimSettings ss, 
-    		boolean global, int camError, int camReset, int trackError) {
+    public SimCore(long seed, String output, String summaryFile, String paramFile, 
+    		SimSettings ss, boolean global, int camError, int camReset, 
+    		int trackError) {
 	    this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
 	    this.TRACKERERROR = trackError;
@@ -74,6 +77,10 @@ public class SimCore {
     	
         Statistics.init(output, summaryFile);
         RandomNumberGenerator.init(seed);
+        this.paramFile = paramFile;
+
+        // Setup should be done before this call, which 
+        // constructs cameras and the vision graph
     	this.interpretFile(ss);
     	ss.printSelfToCMD();   
     }
@@ -178,6 +185,9 @@ public class SimCore {
         AbstractAINode aiNode = null;
     	try {
     		aiNode = newAINodeFromName(ai_alg, comm, staticVG, vg, reg);
+    		if (paramFile != null) {
+    			this.applyParamsToAINode(aiNode, paramFile);
+    		}
     	} catch (Exception e) {
     		System.out.println("Invalid ai_algorithm parameter in scenario file: "+ai_alg);
     		System.out.println("Must be a fully qualified class name e.g. 'epics.ai.ActiveAINodeMulti'");
@@ -215,6 +225,34 @@ public class SimCore {
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
     	AbstractAINode node = (AbstractAINode) cons.newInstance(comm, staticVG, vg, r);
     	return node;
+    }
+
+    /** Given a file which contains parameters for our run, we run through 
+     * the params and apply each one to the AI node. This is mainly to aid
+     * running of experiments, where the necessary parameters can be applied
+     * to the node for a particular run, then the params file is changed for 
+     * the next run */
+    public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
+    	RunParams.loadFromFile(paramsFilepath);
+    	Integer count = RunParams.getInt(RunParams.KEY_NUM_OF_PARAMS);
+    	if (count == null) {
+    		throw new IllegalStateException("Params file must contain a count " +
+    				"of the number of parameters under "+RunParams.KEY_NUM_OF_PARAMS);
+    	}
+    	
+    	// Iterate over the params and apply to node
+    	for (int i = 1; i <= count; i++) {
+    		// We are retrieving a key-value pair, so refer to the keys for 
+    		// the params file that correspond to they 'key' and 'value' 
+    		String key = RunParams.get(RunParams.NUMBERED_PARAM_KEY_PREFIX + i);
+    		String value = RunParams.get(RunParams.NUMBERED_PARAM_VALUE_PREFIX + i);
+    		
+    		// If it could not be applied by the node, something is wrong
+    		if (! node.setParam(key, value)) {
+    			throw new IllegalStateException("Param "+key+" could not be applied");
+    		}
+    	}
+
     }
     
   	public void add_random_camera(){

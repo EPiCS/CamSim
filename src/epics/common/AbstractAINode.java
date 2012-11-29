@@ -41,4 +41,10 @@ public abstract class AbstractAINode {
     public abstract int getComm();
 
 	public abstract int currentlyMissidentified();
+	
+	/** For specifying params of an AI node after construction time. 
+	 * For example, setting a 'debug' field to true. This method should handle
+	 * strings for keys and convert the value string to the appropriate type.
+	 * This method should return whether the param was successfully applied. */
+	public abstract boolean setParam(String key, String value);
 }

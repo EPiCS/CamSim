@@ -29,25 +29,27 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
 	 * cannot calculate the bid coefficient. This is the default in that case. */
-	private static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 1.0;
-	private final double preInstantiationBidCoefficient;
+	private static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 0.2;
+	public static final String KEY_PRE_INSTANTIATION_BID_COEFFICIENT = "PreInstantiationBidCoefficient";
+	private double preInstantiationBidCoefficient;
 	
 	/** If the avgTS is 5 but an object is still around after 10 TS, the bid
 	 * coefficient is not calculable by the standard formula, so use this default */
-    private static final double DEFAULT_OVERSTAY_DEFAULT_BID_COEFFICIENT = 1.0;
-    private final double overstayDefaultBidCoefficient;
+    private static final double DEFAULT_OVERSTAY_BID_COEFFICIENT = 2.8;
+	public static final String KEY_OVERSTAY_BID_COEFFICIENT = "OverstayBidCoefficient"; 
+    private double overstayBidCoefficient;
 	
     // Overriding AbstractAINode's constructor
     public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
     	this(comm, staticVG, vg, r, DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT,
-    			DEFAULT_OVERSTAY_DEFAULT_BID_COEFFICIENT); // Goes through to instantiateAINode()
+    			DEFAULT_OVERSTAY_BID_COEFFICIENT); // Goes through to instantiateAINode()
     }
     
     public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r,
-    		double preInstantiationBidCoefficient, double overstayDefaultBidCoefficient){
+    		double preInstantiationBidCoefficient, double overstayBidCoefficient){
     	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
     	this.preInstantiationBidCoefficient = preInstantiationBidCoefficient;
-    	this.overstayDefaultBidCoefficient = overstayDefaultBidCoefficient;
+    	this.overstayBidCoefficient = overstayBidCoefficient;
     }
 
     @Override
@@ -202,8 +204,26 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 		} else {
 			double tsSoFar = historicalLocations.get(target).size();
 			// Default value in case avgTS-tsSoFar is negative. See FYP(Overstay Problem)
-			bidCoefficient = Math.max((avgTS-tsSoFar), this.overstayDefaultBidCoefficient);
+			bidCoefficient = Math.max((avgTS-tsSoFar), this.overstayBidCoefficient);
 		}
 		return super.calculateValue(target) * bidCoefficient;
+	}
+	
+	@Override
+	public boolean setParam(String key, String value) {
+		if (super.setParam(key, value)) return true; 
+
+		if (KEY_OVERSTAY_BID_COEFFICIENT.equalsIgnoreCase(key)) {
+			overstayBidCoefficient = Double.parseDouble(value);
+			System.out.println("OverstayBidCoefficient set to: "+overstayBidCoefficient);
+			return true;
+		} else if (KEY_PRE_INSTANTIATION_BID_COEFFICIENT.equalsIgnoreCase(key)) {
+			preInstantiationBidCoefficient = Double.parseDouble(value);
+			System.out.println("PreInstantiationBidCoefficient set to: "+preInstantiationBidCoefficient);
+			return true;
+		} else {
+			System.err.println("Didn't recognise key: "+key);
+			return false;
+		}
 	}
 }

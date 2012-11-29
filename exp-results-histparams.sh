@@ -2,6 +2,7 @@
 STARTTIME=$SECONDS
 
 BASELOGDIR="./logs/current"
+SUMMARY_ALL=$BASELOGDIR/Summary/AllConfComm.csv
 
 PreInstantiationBidCoefficient=`seq 0.0 0.2 3.0`
 OverstayBidCoefficient=`seq 0.0 0.2 3.0`
@@ -30,7 +31,6 @@ function generateSummaries {
 }
 
 function generateAverageFile {
-    SUMMARY_ALL=$BASELOGDIR/Summary/AllConfComm.csv
     echo "PreInst,OverStay,AvgCumulativeConf,AvgCumulativeComm" > $SUMMARY_ALL
 
     for PreInst in $PreInstantiationBidCoefficient

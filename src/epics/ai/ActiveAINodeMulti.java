@@ -1264,4 +1264,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	public int currentlyMissidentified() {
 		return this.wrongIdentified.size();
 	}
+	
+	@Override
+	public boolean setParam(String key, String value) {
+		return false; // No params settable for this class yet
+	}
 }
