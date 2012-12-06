@@ -18,8 +18,8 @@ import epics.common.RandomNumberGenerator;
 
 public class ActiveAINodeMulti extends AbstractAINode {
 	
-    public static final double USE_RESOURCES = 0.05; //percentages of available resources used
-    public static final double MIN_RESOURCES_USED = 0.01; //how much resources have to be used at least
+    public static final double USE_RESOURCES = 0.00005; //percentages of available resources used
+    public static final double MIN_RESOURCES_USED = 0.000001; //how much resources have to be used at least
     public static final int DETECTIONRATE = 100;
     public static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
     public static final int STEPS_TILL_RESOURCES_FREED = 5;
@@ -701,29 +701,12 @@ public class ActiveAINodeMulti extends AbstractAINode {
         if (DEBUG_CAM) {
             CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
         }
-        
-//        if(index == 0){
-//        	if(DEBUG_CAM){
-//        		System.out.println("################### BROADCASTING WHICH MIGHT HAVE BEEN ADVERTISED!! ");
-//        	}
-//	        this.addSearched(io, this.camController);
-//        	broadcast(MessageType.StartSearch, io);
-//        }
-//        else{
-	        this.addSearched(io, this.camController);
-	        sendMessage(MessageType.StartSearch, io);
-//        }
-        
+        this.addSearched(io, this.camController);
+        sendMessage(MessageType.StartSearch, io);
+
         if(reg != null){
         	reg.objectIsAdvertised(io);
         }
-        
-//        if(USE_MULTICAST_STEP){
-//        	multicast(MessageType.StartSearch, io);
-//        }
-//        else{
-//        	broadcast(MessageType.StartSearch, io);
-//        }
 	}
 	
 	protected void checkIfTracedGotLost() {

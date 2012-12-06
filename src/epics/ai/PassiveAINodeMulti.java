@@ -13,12 +13,13 @@ import epics.common.ITrObjectRepresentation;
 
 public class PassiveAINodeMulti extends ActiveAINodeMulti {
 
-	private static final int DEFAULT_AUCTION_DURATION = 1;
+	private static final int DEFAULT_AUCTION_DURATION = 0;
 	
 	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
     	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION); // Goes through to instantiateAINode()
     }
 
+	/**
     @Override
     protected Object handle_startTracking(String from,
             ITrObjectRepresentation content) {
@@ -37,9 +38,9 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
         this.stopSearch(content);
         return null;
     }
+   
 
     protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
-
     	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
     		strengthenVisionEdge(from);
     	}
@@ -48,8 +49,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 	        Pair pair = findSimiliarObject(iTrObjectRepresentation);
 	
 	        if (pair == null) {
-	        	
-	            return 0;
+	            return 0.0;
 	        }
 	
 	        ITrObjectRepresentation found = pair.itro;
@@ -67,9 +67,9 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
     	else{
     		return 0.0;
     	}
-
     }
-
+ **/
+	
     @Override
     public void update() {
     	if(DECLINE_VISION_GRAPH)
@@ -230,7 +230,8 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
              }
          }
 	}
-	
+    
+	@Override
 	public void checkConfidences() {
     	if (!this.getAllTracedObjects_bb().isEmpty()) {
             for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
@@ -255,7 +256,8 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
             }
         }
 	}
-
+	
+	/**
 	@Override
 	public void printBiddings(){
     	for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {
@@ -289,21 +291,14 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
         if (DEBUG_CAM) {
             CmdLogger.println(this.camController.getName() + "->ALL: I'M LOOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
         }
-//        if(index == 0){
-//        	if(DEBUG_CAM){
-//        		System.out.println("################### BROADCASTING WHICH MIGHT HAVE BEEN ADVERTISED!! ");
-//        	}
-//        	addSearched(io, this.camController);
-//        	broadcast(MessageType.StartSearch, io);
-//        }
-//        else{
-	        this.addSearched(io, this.camController);
-	        sendMessage(MessageType.StartSearch, io);
-//        }
+        this.addSearched(io, this.camController);
+        sendMessage(MessageType.StartSearch, io);
+        
         if(reg != null){
         	reg.objectIsAdvertised(io);
         }
 	}
+    **/
     
     private void printVisionGraph(){
     	String neighs = "";
@@ -314,6 +309,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
     	System.out.println(this.camController.getName() + " has the following " + neighs);
     }
 
+    /**
     @Override
     public double getUtility() {
         double utility = 0.0;
@@ -326,7 +322,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
         	visibility = this.getConfidence(obj);
 //            utility += calculateValue(obj); 
         	resources = reservedResources.get(obj);
-            utility += visibility * classifier_confidence * enabled * resources;
+            utility += visibility * classifier_confidence * enabled;// * resources;
         }
 
         return utility;
@@ -353,4 +349,5 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 		
 		return value;
 	}
+	**/
 }

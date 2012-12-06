@@ -60,6 +60,24 @@ public class SimCore {
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
 	private int _comm = -1;
     
+	public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError) {
+	    this.RESETRATE = camReset;
+	    this.CAMERRORRATE = camError;
+	    this.TRACKERERROR = trackError;
+		
+		USEGLOBAL = global;
+		    	
+	    if(USEGLOBAL){
+	    	reg = new GlobalRegistration();
+	    }
+		
+	    Statistics.init(output, "sum_"+output);
+	    RandomNumberGenerator.init(seed);
+		this.interpretFile(ss);
+		ss.printSelfToCMD();   
+		
+	}
+	
     public SimCore(long seed, String output, String summaryFile, SimSettings ss, 
     		boolean global, int camError, int camReset, int trackError) {
 	    this.RESETRATE = camReset;
@@ -486,7 +504,7 @@ public class SimCore {
 				//process event
 				if(e.event.equals("add")){
 					if(e.participant == 1){ // camera
-						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, _comm, e.limit, null);
+						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, e.comm, e.limit, null);
 					}
 					else{ //object 
 						if(e.waypoints == null){

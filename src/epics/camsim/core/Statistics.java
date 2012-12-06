@@ -74,6 +74,10 @@ public class Statistics {
                 
                 if (summary != null && ! summary.equals("")) {
                 	File sumFile = new File(summary);
+                	File f1 = new File(sumFile.getParent());
+                	File f2 = new File(f1.getParent());
+                	boolean creat2 = f2.mkdir();
+                	boolean creat = f1.mkdir();
                 	boolean existed = sumFile.exists();
                 	FileWriter sumFileWriter = new FileWriter(sumFile, true); // Append
                     sumOut = new PrintWriter(sumFileWriter);
