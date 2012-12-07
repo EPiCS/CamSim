@@ -38,7 +38,11 @@ public class RandomNumberGenerator {
 				return ranUniversal.nextDouble();
 		}
     }
-
+    
+    public static double nextDouble(){
+    	return RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV);
+    }
+    
     public static int nextInt(RandomUse.USE u){
     	switch (u) {
 			case UNIV:
@@ -54,6 +58,10 @@ public class RandomNumberGenerator {
 			default:
 				return ranUniversal.nextInt();
 		}
+    }
+    
+    public static double nextInt(){
+    	return RandomNumberGenerator.nextInt(RandomUse.USE.UNIV);
     }
 
     public static int nextInt( int n, RandomUse.USE u ){
@@ -71,6 +79,10 @@ public class RandomNumberGenerator {
 			default:
 				return ranUniversal.nextInt(n);
 		}
+    }
+    
+    public static double nextDouble(int n){
+    	return RandomNumberGenerator.nextInt(n, RandomUse.USE.UNIV);
     }
 
 }
