@@ -1,5 +1,6 @@
 package epics.ai;
 
+import java.awt.font.NumericShaper.Range;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
 
 public class ActiveAINodeMulti extends AbstractAINode {
 	
@@ -26,7 +28,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     
     public static final double EVAPORATIONRATE = 0.995;
 	
-	public static final boolean DEBUG_CAM = true;
+	public static final boolean DEBUG_CAM = false;
 	public static final boolean VISION_ON_BID = false;
 	public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
 	public static final boolean BIDIRECTIONAL_VISION = false;
@@ -784,7 +786,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 			
 			if(highest > 0){
-				double ran = RandomNumberGenerator.nextDouble();
+				double ran = RandomNumberGenerator.nextDouble(RandomUse.USE.COMM);
 				int sent = 0;
 				for(ICameraController icc : this.camController.getNeighbours()){
 					String name = icc.getName();
@@ -849,7 +851,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 				}
 			}
 			int sent = 0;
-			double ran = RandomNumberGenerator.nextDouble();
+			double ran = RandomNumberGenerator.nextDouble(RandomUse.USE.COMM);
 			for(ICameraController icc : this.camController.getNeighbours()){
 				String name = icc.getName();
 				double prop = 0.1;
@@ -1021,10 +1023,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
 		//object is not visible --> would send wrong bid!
 		
-		int random = RandomNumberGenerator.nextInt(100);
+		int random = RandomNumberGenerator.nextInt(100, RandomUse.USE.FALSEOBJ);
 		if(random <= MISIDENTIFICATION){
 			if(this.searchForTheseObjects.size() > 0){
-				random = RandomNumberGenerator.nextInt(this.searchForTheseObjects.size());
+				random = RandomNumberGenerator.nextInt(this.searchForTheseObjects.size(), RandomUse.USE.FALSEOBJ);
 				int x = 0;
 				for (ITrObjectRepresentation tr : this.searchForTheseObjects.keySet()) {
 					if(x == random){

@@ -285,7 +285,7 @@ public class CameraController implements ICameraController{
 
     private boolean gotDetection() {
     	if(!isOffline()){//isOfflineFor <= 0){
-			int res = RandomNumberGenerator.nextInt(100);
+			int res = RandomNumberGenerator.nextInt(100, RandomUse.USE.UNIV);
 			if(res > DETECTIONRATE){
 				return false;
 			}

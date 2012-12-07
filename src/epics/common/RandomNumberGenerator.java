@@ -8,22 +8,69 @@ import java.util.Random;
  */
 public class RandomNumberGenerator {
     
-    private static Random r = null;
+    private static Random ranUniversal = null;
+    private static Random ranFalseObj = null;
+    private static Random ranTurn = null;
+    private static Random ranComm = null;
+    private static Random ranError = null;
 
     public static void init( long seed ){
-        r = new Random( seed );
+    	ranUniversal = new Random( seed );
+    	ranFalseObj = new Random(seed);
+    	ranTurn = new Random(seed);
+    	ranComm = new Random(seed);
+    	ranError = new Random(seed);
     }
 
-    public static double nextDouble(){
-        return r.nextDouble();
+    public static double nextDouble(RandomUse.USE u){
+    	switch (u) {
+			case UNIV:
+				return ranUniversal.nextDouble();
+			case FALSEOBJ:
+				return ranFalseObj.nextDouble();
+			case TURN: 
+				return ranTurn.nextDouble();
+			case COMM:
+				return ranComm.nextDouble();
+			case ERROR:
+				return ranError.nextDouble();
+			default:
+				return ranUniversal.nextDouble();
+		}
     }
 
-    public static int nextInt(){
-        return r.nextInt();
+    public static int nextInt(RandomUse.USE u){
+    	switch (u) {
+			case UNIV:
+				return ranUniversal.nextInt();
+			case FALSEOBJ:
+				return ranFalseObj.nextInt();
+			case TURN: 
+				return ranTurn.nextInt();
+			case COMM:
+				return ranComm.nextInt();
+			case ERROR:
+				return ranError.nextInt();
+			default:
+				return ranUniversal.nextInt();
+		}
     }
 
-    public static int nextInt( int n ){
-        return r.nextInt( n );
+    public static int nextInt( int n, RandomUse.USE u ){
+    	switch (u) {
+			case UNIV:
+				return ranUniversal.nextInt(n);
+			case FALSEOBJ:
+				return ranFalseObj.nextInt(n);
+			case TURN: 
+				return ranTurn.nextInt(n);
+			case COMM:
+				return ranComm.nextInt(n);
+			case ERROR:
+				return ranError.nextInt(n);
+			default:
+				return ranUniversal.nextInt(n);
+		}
     }
 
 }

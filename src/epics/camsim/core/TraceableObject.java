@@ -1,6 +1,8 @@
 package epics.camsim.core;
 
 import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
+
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,7 +127,7 @@ public class TraceableObject{
     /** Gets an angle to turn around by with some partial added randomness */
     public double getTurnaroundAngle() {
     	// Turn around 180 degrees, add a bit of angle for randomness
-    	return Math.PI + RandomNumberGenerator.nextDouble() * Math.PI / 6.0;
+    	return Math.PI + RandomNumberGenerator.nextDouble(RandomUse.USE.TURN) * Math.PI / 6.0;
     }
     
     /*
