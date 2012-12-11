@@ -13,6 +13,7 @@ import java.util.Map;
 
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
+import epics.common.RandomUse;
 import epics.common.RunParams;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
@@ -62,6 +63,24 @@ public class SimCore {
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
 	private int _comm = -1;
     
+	public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError) {
+	    this.RESETRATE = camReset;
+	    this.CAMERRORRATE = camError;
+	    this.TRACKERERROR = trackError;
+		
+		USEGLOBAL = global;
+		    	
+	    if(USEGLOBAL){
+	    	reg = new GlobalRegistration();
+	    }
+		
+	    Statistics.init(output, "sum_"+output);
+	    RandomNumberGenerator.init(seed);
+		this.interpretFile(ss);
+		ss.printSelfToCMD();   
+		
+	}
+	
     public SimCore(long seed, String output, String summaryFile, String paramFile, 
     		SimSettings ss, boolean global, int camError, int camReset, 
     		int trackError) {
@@ -258,11 +277,11 @@ public class SimCore {
   	public void add_random_camera(){
         this.add_camera(
         		"C"+getNextID(),
-                RandomNumberGenerator.nextDouble() * (max_x - min_x) + min_x,
-                RandomNumberGenerator.nextDouble() * (max_y - min_y) + min_y,
-                RandomNumberGenerator.nextDouble() * 360,
-                RandomNumberGenerator.nextDouble() * 90 + 15,
-                RandomNumberGenerator.nextDouble() * 20 + 10, 
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 360,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 90 + 15,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 20 + 10, 
                 0, 
                 0, null);//RandomNumberGenerator.nextInt(5));
     }
@@ -302,7 +321,7 @@ public class SimCore {
         if ( this.cameras.isEmpty()){
             return;
         }
-        int rnd_int = RandomNumberGenerator.nextInt( this.cameras.size() );
+        int rnd_int = RandomNumberGenerator.nextInt( this.cameras.size(), RandomUse.USE.UNIV );
         CameraController cam_to_remove = this.cameras.get(rnd_int);
         for ( CameraController c : this.cameras ){
             c.removeCamera( cam_to_remove );
@@ -390,10 +409,10 @@ public class SimCore {
 
     public void add_random_object(){
         add_object(
-                RandomNumberGenerator.nextDouble() * (max_x - min_x) + min_x,
-                RandomNumberGenerator.nextDouble() * (max_y - min_y) + min_y,
-                RandomNumberGenerator.nextDouble() * 360,
-                RandomNumberGenerator.nextDouble() * 0.6 + 0.4);
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 360,
+                RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4);
     }
 
     public void remove_random_object(){
@@ -401,7 +420,7 @@ public class SimCore {
     		return;
     	}
     	
-        int rnd = RandomNumberGenerator.nextInt( objects.size() );
+        int rnd = RandomNumberGenerator.nextInt( objects.size() , RandomUse.USE.UNIV);
         
         TraceableObject obj_to_remove = this.objects.get(rnd);
 
@@ -470,16 +489,16 @@ public class SimCore {
         }
 
         // random camera select - random timespan to go offline...
-		int random = RandomNumberGenerator.nextInt(100);
+		int random = RandomNumberGenerator.nextInt(100, RandomUse.USE.ERROR);
         
 		if(random <= CAMERRORRATE){
         	//select random camera and set it offline for a random number of timesteps
-			int ranCam = RandomNumberGenerator.nextInt(this.cameras.size());
-        	int sleepFor = RandomNumberGenerator.nextInt(10);
+			int ranCam = RandomNumberGenerator.nextInt(this.cameras.size(), RandomUse.USE.ERROR);
+        	int sleepFor = RandomNumberGenerator.nextInt(10, RandomUse.USE.ERROR);
         	
         	CameraController cc = cameras.get(ranCam);
         	cc.setOffline(sleepFor);
-        	int ranReset = RandomNumberGenerator.nextInt(100);
+        	int ranReset = RandomNumberGenerator.nextInt(100, RandomUse.USE.ERROR);
         	if(ranReset > RESETRATE){
         		cc.resetCamera();
         	}
@@ -524,7 +543,7 @@ public class SimCore {
 				//process event
 				if(e.event.equals("add")){
 					if(e.participant == 1){ // camera
-						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, _comm, e.limit, null);
+						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, e.comm, e.limit, null);
 					}
 					else{ //object 
 						if(e.waypoints == null){
@@ -630,8 +649,8 @@ public class SimCore {
         double pos_x = c.getX() + 10 * vcx; //tmp_heading;
         double pos_y = c.getY() + 10 * vcy; //tmp_heading;
 
-    	double heading_degrees = RandomNumberGenerator.nextDouble() * 360;
-    	double speed = RandomNumberGenerator.nextDouble() * 0.6 + 0.4;
+    	double heading_degrees = RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 360;
+    	double speed = RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4;
     	TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed);
     	
 	}

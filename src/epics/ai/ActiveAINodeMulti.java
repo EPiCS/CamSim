@@ -1,5 +1,6 @@
 package epics.ai;
 
+import java.awt.font.NumericShaper.Range;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,18 +16,19 @@ import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
 
 public class ActiveAINodeMulti extends AbstractAINode {
 	
-    public static final double USE_RESOURCES = 0.05; //percentages of available resources used
-    public static final double MIN_RESOURCES_USED = 0.01; //how much resources have to be used at least
+    public static final double USE_RESOURCES = 0.00005; //percentages of available resources used
+    public static final double MIN_RESOURCES_USED = 0.000001; //how much resources have to be used at least
     public static final int DETECTIONRATE = 100;
     public static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
     public static final int STEPS_TILL_RESOURCES_FREED = 5;
     
     public static final double EVAPORATIONRATE = 0.995;
 	
-	public static final boolean DEBUG_CAM = true;
+	public static final boolean DEBUG_CAM = false;
 	public static final boolean VISION_ON_BID = false;
 	public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
 	public static final boolean BIDIRECTIONAL_VISION = false;
@@ -701,29 +703,12 @@ public class ActiveAINodeMulti extends AbstractAINode {
         if (DEBUG_CAM) {
             CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
         }
-        
-//        if(index == 0){
-//        	if(DEBUG_CAM){
-//        		System.out.println("################### BROADCASTING WHICH MIGHT HAVE BEEN ADVERTISED!! ");
-//        	}
-//	        this.addSearched(io, this.camController);
-//        	broadcast(MessageType.StartSearch, io);
-//        }
-//        else{
-	        this.addSearched(io, this.camController);
-	        sendMessage(MessageType.StartSearch, io);
-//        }
-        
+        this.addSearched(io, this.camController);
+        sendMessage(MessageType.StartSearch, io);
+
         if(reg != null){
         	reg.objectIsAdvertised(io);
         }
-        
-//        if(USE_MULTICAST_STEP){
-//        	multicast(MessageType.StartSearch, io);
-//        }
-//        else{
-//        	broadcast(MessageType.StartSearch, io);
-//        }
 	}
 	
 	protected void checkIfTracedGotLost() {
@@ -801,7 +786,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 			
 			if(highest > 0){
-				double ran = RandomNumberGenerator.nextDouble();
+				double ran = RandomNumberGenerator.nextDouble(RandomUse.USE.COMM);
 				int sent = 0;
 				for(ICameraController icc : this.camController.getNeighbours()){
 					String name = icc.getName();
@@ -866,7 +851,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 				}
 			}
 			int sent = 0;
-			double ran = RandomNumberGenerator.nextDouble();
+			double ran = RandomNumberGenerator.nextDouble(RandomUse.USE.COMM);
 			for(ICameraController icc : this.camController.getNeighbours()){
 				String name = icc.getName();
 				double prop = 0.1;
@@ -1038,10 +1023,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
 		//object is not visible --> would send wrong bid!
 		
-		int random = RandomNumberGenerator.nextInt(100);
+		int random = RandomNumberGenerator.nextInt(100, RandomUse.USE.FALSEOBJ);
 		if(random <= MISIDENTIFICATION){
 			if(this.searchForTheseObjects.size() > 0){
-				random = RandomNumberGenerator.nextInt(this.searchForTheseObjects.size());
+				random = RandomNumberGenerator.nextInt(this.searchForTheseObjects.size(), RandomUse.USE.FALSEOBJ);
 				int x = 0;
 				for (ITrObjectRepresentation tr : this.searchForTheseObjects.keySet()) {
 					if(x == random){
