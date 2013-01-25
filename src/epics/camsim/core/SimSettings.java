@@ -102,8 +102,6 @@ public class SimSettings {
          */
         public Double features;
 
-        TrObjectSettings(){}
-
         TrObjectSettings(
                 double x, double y,
                 double heading,
@@ -122,6 +120,30 @@ public class SimSettings {
             System.out.println("  y: " + y );
             System.out.println("  heading: " + heading );
             System.out.println("  speed: " + speed + " }");
+        }
+    }
+    
+    public class TrObjectWithWaypoints {
+    	
+    	public Double speed;
+    	public Double features;
+    	public ArrayList<Point2D> waypoints;
+    	
+    	public TrObjectWithWaypoints(double speed, double features, 
+    			ArrayList<Point2D> waypoints) {
+    		this.speed = speed;
+    		this.features = features;
+    		this.waypoints = waypoints;
+		}
+    	
+    	public void printSelfToCMD(){
+            System.out.println("{ speed: " + speed );
+            System.out.println("  features: " + features );
+            System.out.println("  waypoints: [");
+            for (Point2D point : waypoints) {
+            	System.out.println("    ("+point.getX()+", "+point.getY()+")");
+            }
+            System.out.println("  ]\n}");
         }
     }
     
@@ -235,6 +257,7 @@ public class SimSettings {
     public Double max_y;
     public ArrayList<CameraSettings> cameras = new ArrayList<CameraSettings>();
     public ArrayList<TrObjectSettings> objects = new ArrayList<TrObjectSettings>();
+    public ArrayList<TrObjectWithWaypoints> objectsWithWaypoints = new ArrayList<TrObjectWithWaypoints>();
     public ArrayList<Event> events = new ArrayList<Event>();
     public StaticVisionGraph visionGraph;
     
@@ -278,6 +301,10 @@ public class SimSettings {
             tros.printSelfToCMD();
         }
         
+        System.out.println("ObjectsWithWaypoints:");
+        for (TrObjectWithWaypoints trObjWithWP : this.objectsWithWaypoints){
+            trObjWithWP.printSelfToCMD();
+        }
         
         System.out.println("\nVisionGraph:");
         if(visionGraph != null){
@@ -375,16 +402,37 @@ public class SimSettings {
                 Node nObject = nObjects.item(temp);
                 Element eObject = (Element)nObject;
 
-                TrObjectSettings tros = new TrObjectSettings();
+                Double x = Double.parseDouble(eObject.getAttribute("x"));
+                Double y = Double.parseDouble(eObject.getAttribute("y"));
+                Double heading = Double.parseDouble(eObject.getAttribute("heading"));
+                Double speed = Double.parseDouble(eObject.getAttribute("speed"));
+                Double features = Double.parseDouble(eObject.getAttribute("features"));
 
-                tros.x = Double.parseDouble(eObject.getAttribute("x"));
-                tros.y = Double.parseDouble(eObject.getAttribute("y"));
-                tros.heading = Double.parseDouble(eObject.getAttribute("heading"));
-                tros.speed = Double.parseDouble(eObject.getAttribute("speed"));
-                tros.features = Double.parseDouble(eObject.getAttribute("features"));
-
+                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features);
                 this.objects.add(tros);
+            }
+            
+            //read waypoint-style objects from xml
+            NodeList nWaypointObjects = doc.getElementsByTagName("object_with_waypoints");
+            for (int temp = 0; temp < nWaypointObjects.getLength(); temp++) {
 
+                Node nObject = nWaypointObjects.item(temp);
+                Element eObject = (Element)nObject;
+
+                Double speed = Double.parseDouble(eObject.getAttribute("speed"));
+                Double features = Double.parseDouble(eObject.getAttribute("features"));
+
+                NodeList waypointNodes = eObject.getElementsByTagName("waypoint");
+                ArrayList<Point2D> waypoints = new ArrayList<Point2D>();
+                for (int w = 0; w < waypointNodes.getLength(); w++) {
+                	Element wElement = (Element)waypointNodes.item(w);
+                	Double x = Double.parseDouble(wElement.getAttribute("x"));
+                	Double y = Double.parseDouble(wElement.getAttribute("y"));
+                	waypoints.add(new Point2D.Double(x, y));
+                }
+                
+                TrObjectWithWaypoints trObjWithWP = new TrObjectWithWaypoints(speed, features, waypoints);
+                this.objectsWithWaypoints.add(trObjWithWP);
             }
             
             //read vision graph from xml

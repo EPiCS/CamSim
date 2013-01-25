@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
 import epics.common.RandomUse;
@@ -165,8 +166,12 @@ public class SimCore {
         }
     	
 
-        for ( SimSettings.TrObjectSettings tro : ss.objects ){
+        for (SimSettings.TrObjectSettings tro : ss.objects){
             this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features);
+        }
+        
+        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {
+        	this.add_object(objWithWP.speed, objWithWP.waypoints, objWithWP.features);
         }
         
         events = ss.events;
