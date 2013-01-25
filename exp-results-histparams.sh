@@ -2,7 +2,8 @@
 STARTTIME=$SECONDS
 
 BASELOGDIR="./logs/current"
-SUMMARY_ALL=$BASELOGDIR/Summary/AllConfComm.csv
+SUMMARY_DIR=$BASELOGDIR/Summary
+SUMMARY_ALL=$SUMMARY_DIR/AllConfComm.csv
 
 PreInstantiationBidCoefficient=`seq 0.0 0.2 3.0`
 OverstayBidCoefficient=`seq 0.0 0.2 3.0`
@@ -20,7 +21,7 @@ function generateSummaries {
 		exit
 	    fi
 	    
-	    cat $LOGDIR/*summary.txt | grep -v TIME > $BASELOGDIR"/Summary/$PreInst-$OverStay-summary.txt"
+	    cat $LOGDIR/*summary.txt | grep -v TIME > $SUMMARY_DIR"/$PreInst-$OverStay-summary.txt"
 
 	    COUNT=$((COUNT+1))
 	done
@@ -60,6 +61,9 @@ function generateAverageFile {
     done
 }
 
+mkdir $SUMMARY_DIR
+
+generateSummaries
 generateAverageFile
 
 echo Done
