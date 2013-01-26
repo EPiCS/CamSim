@@ -45,7 +45,7 @@ public class CameraController implements ICameraController{
         this.name = name;
         this.camAINode = ai;
         this.resources = new Resources();
-        ai.setController( this );
+        ai.setController(this);
     }
     
     public double getAvailableResources(){
@@ -111,91 +111,9 @@ public class CameraController implements ICameraController{
      * The main purpose of this method is to check if TraceableObject o is
      * visible to camera, if yes, then calculate confidence and further call
      * addVisibleObject or removeVisibleObject.
-     * @param o
-     * @return
      */
-    public double update_confidence_original( TraceableObject o ) {
-    	
-        double result_confidence;
-
-        double cx = this.getX();
-        double cy = this.getY();
-        double ox = o.getX();
-        double oy = o.getY();
-
-        double dist = Math.sqrt((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy));
-
-        if (dist > this.getRange()) {
-            // Object out of range
-            result_confidence = 0;
-        } else {
-
-            double tmp_x = 0;
-            double tmp_y = -1;
-
-            double tmp_heading = this.getHeading();
-
-            double vcx = tmp_x * Math.cos(tmp_heading) - tmp_y * Math.sin(tmp_heading);
-            double vcy = tmp_x * Math.sin(tmp_heading) - tmp_y * Math.cos(tmp_heading);
-
-            double vox = ox - cx;
-            double voy = oy - cy;
-
-            double vo_len = Math.sqrt(vox * vox + voy * voy);
-
-            vox = vox / vo_len;
-            voy = voy / vo_len;
-
-            double dot = vcx * vox + vcy * voy;
-
-            double angle = Math.acos(dot);
-
-            if (angle < this.getAngle() / 2) {
-
-
-                // ------------
-
-                /*
-                 * !!! SWITCH HERE !!!
-                 */
-
-                double dist_conf = (this.getRange() - dist) / this.getRange();
-
-                //dist_conf = dist_conf * 5; // so we use more of atan
-                //dist_conf = Math.atan( 1 / dist_conf );
-
-                // -------------
-
-                double ang_conf = (this.getAngle() / 2 - angle) / (this.getAngle() / 2);
-
-                double total_conf = dist_conf * ang_conf;
-
-
-                //System.out.println( "result " + total_conf + " = " + dist_conf + " * " + ang_conf + " // total = dist * ang");
-
-                // Object in range and in front of camera
-                
-                result_confidence = total_conf;
-
-            } else {
-                // Object in range, but not in front of camera
-                result_confidence = 0;
-            }
-
-
-        }
-
-        if (result_confidence > 0 ){
-            this.addVisibleObject(o, result_confidence);
-        }else{
-            this.removeVisibleObject(o);
-        }
-
-        return result_confidence;
-    }
-
-    public double update_confidence( TraceableObject o ) {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    public double update_confidence(TraceableObject o) {
+    	if (!isOffline()) {//isOfflineFor <= 0){
 	        double result_confidence = 0;
 	
 	        double cx = this.getX();
@@ -205,7 +123,7 @@ public class CameraController implements ICameraController{
 	
 	        double dist = Math.sqrt((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy));
 	
-	        if(gotDetection()){
+	        if (gotDetection()) {
 		        if (dist > this.getRange()) {
 		            // Object out of range
 		            result_confidence = 0;
@@ -250,35 +168,29 @@ public class CameraController implements ICameraController{
 		                double ang_conf = (this.getAngle() / 2 - angle) / (this.getAngle() / 2);
 		
 		                double total_conf = dist_conf * ang_conf;
-		
-		
+
 		                //System.out.println( "result " + total_conf + " = " + dist_conf + " * " + ang_conf + " // total = dist * ang");
 		
 		                // Object in range and in front of camera
-		                
 		                result_confidence = total_conf;
 		
 		            } else {
 		                // Object in range, but not in front of camera
 		                result_confidence = 0;
 		            }
-		
-		
 		        }
-	        }
-	        else{
+	        } else {
 	        	result_confidence = 0;
 	        }
 	
-	        if (result_confidence > 0 ){
+	        if (result_confidence > 0 ) {
 	            this.addVisibleObject(o, result_confidence);
-	        }else{
+	        } else {
 	            this.removeVisibleObject(o);
 	        }
 	        
 	        return result_confidence;
-    	}
-    	else{
+    	} else {
     		return 0;
     	}
     }
@@ -540,18 +452,10 @@ public class CameraController implements ICameraController{
     @Override
     public String toString(){
     	String retVal = "<camera ai_algorithm=\"";
-    	if(getAINode() instanceof epics.ai.PassiveAINodeMulti){
-    		retVal += "passive\" ";
-    	}
-    	else{
-    		retVal += "active\" ";
-    	}
-    	
-    	retVal += "heading=\"" + this.heading * Math.toRadians(3600) + "\" name=\"" + this.name + "\" range=\""+ this.range + "\" viewing_angle=\"" + this.viewing_angle * Math.toRadians(3000) + "\" x=\"" + this.x +"\" y=\"" + this.y + "\" comm=\"0\"/>"; 
+    	retVal += getAINode().getClass().getCanonicalName() + "\" ";
+    	retVal += "heading=\"" + Math.toDegrees(this.heading) + "\" name=\"" + this.name + "\" range=\""+ this.range + "\" viewing_angle=\"" + Math.toDegrees(this.viewing_angle) + "\" x=\"" + this.x +"\" y=\"" + this.y + "\" comm=\"0\"/>"; 
     	return retVal;
     }
-
-
 
 	@Override
 	public int getLimit() {

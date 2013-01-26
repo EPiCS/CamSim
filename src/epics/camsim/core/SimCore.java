@@ -803,24 +803,27 @@ public class SimCore {
         return objects;
     }
 
+    /** Save the scenario currently active in the simulation to an XML file.
+     * Note that this does not fully support scenario XML features such as 
+     * objects with waypoints. It also does not represent angles 100% correctly. */
 	public void save_to_xml(String absolutePath) {
 		File f = new File(absolutePath + ".xml");
 		
 		FileWriter fw;
 		try {
 			fw = new FileWriter(f);
-			String s = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"+System.getProperty( "line.separator" )+"		<root>"+System.getProperty( "line.separator" )+"	    " +
+			String s = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"+System.getProperty( "line.separator" )+"<root>"+System.getProperty( "line.separator" )+"	    " +
 				"<simulation max_x=\"" + max_x + "\" max_y=\"" + max_y + "\" min_x=\"" + min_x + "\" min_y=\"" + min_y + "\">"+ System.getProperty( "line.separator" )+ "	        <cameras>"+ System.getProperty( "line.separator" );
 			fw.write(s);
 			
 			for (CameraController cam : cameras) {
-				fw.write("	        	     "+ cam.toString() + System.getProperty( "line.separator" ));
+				fw.write("	        	     "+ cam.toString() + System.getProperty("line.separator"));
 			}
 			fw.write("	        </cameras>"+System.getProperty( "line.separator" )+"        <objects>"+System.getProperty( "line.separator" ));
 			for(TraceableObject to : objects){
-				fw.write("	        	     "+ to.toXMLString() + System.getProperty( "line.separator" ));
+				fw.write("	        	     "+ to.toXMLString("	        	     ") + System.getProperty("line.separator"));
 			}
-			fw.write("        </objects>"+System.getProperty( "line.separator" )+"    </simulation>"+System.getProperty( "line.separator" )+"</root>");
+			fw.write("        </objects>"+System.getProperty("line.separator")+"    </simulation>"+System.getProperty("line.separator")+"</root>");
 			fw.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

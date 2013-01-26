@@ -59,7 +59,7 @@ public class TraceableObject{
 
         double x_move = 0;
         double y_move = 0;
-        if ( this.waypoints != null && this.waypoints.size() > 0 ){
+        if (hasWaypoints()){
 
             double dist = Point2D.distance(this.x, this.y, waypoints.get(currentWaypoint).getX(), waypoints.get(currentWaypoint).getY());
             //System.out.println("     DISTANCE     " + dist);
@@ -130,35 +130,57 @@ public class TraceableObject{
     	return Math.PI + RandomNumberGenerator.nextDouble(RandomUse.USE.TURN) * Math.PI / 6.0;
     }
     
-    /*
-     * After this point, default and GETTERS - SETTERS only
-     */
-     public double getX(){
-         return this.x;
-     }
-     public double getY(){
-         return this.y;
-     }
-     
-     public double getHeading(){
-         return this.heading;
+    public double getX(){
+    	return this.x;
+    }
+    public double getY(){
+    	return this.y;
+    }
+
+    public double getHeading(){
+    	return this.heading;
     }
 
     List<Double> getFeatures() {
-        return this.features;
+    	return this.features;
+    }
+
+    public boolean hasWaypoints() {
+    	return this.waypoints != null && this.waypoints.size() > 0;
     }
     
-    
+    public List<Point2D> getWaypoints() {
+    	return waypoints;
+    }
+
     @Override
     public String toString(){
     	return this.features.toString();
     }
 
-
-	public String toXMLString() {
+    /** Provides the XML string representing this object. Requires the 
+     * indentation string as an argument in order to indent multi-line 
+     * entries (i.e. objects with waypoints) */
+	public String toXMLString(String indent) {
 		String feat = "" + this.features;
     	feat = feat.substring(1, feat.length()-1);
-    	String retVal = "<object features=\"" + feat + "\" heading=\"" + this.heading * Math.toRadians(3600) + "\" speed=\"" + this.speed + "\" x=\"" + this.x + "\" y=\"" + this.y + "\"/>";
+    	String name = hasWaypoints() ? "object_with_waypoints" : "object";
+    	String retVal = "<" + name + " features=\"" + feat + "\" speed=\"" + this.speed;
+    	
+    	/*
+    	 * <object_with_waypoints features="2.0" speed="1.0">
+                <waypoint x="-28.0" y="2.0"/>
+            </object_with_waypoints>
+    	 */
+    	if (hasWaypoints()) {
+    		retVal += "\">";
+    		for (Point2D waypoint : this.getWaypoints()) {
+    			retVal += "\n"+indent+"<waypoint x=\"" + waypoint.getX() + "\" y=\"" + waypoint.getY() + "\"/>";
+    		}
+    		retVal += "\n"+indent+"</object_with_waypoints>";
+    	} else {
+    		retVal += "\" heading=\"" + this.heading * Math.toRadians(3600) + "\" x=\"" + this.x + "\" y=\"" + this.y + "\"/>";
+    	}
     	return retVal;
 	}
 
