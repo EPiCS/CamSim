@@ -8,14 +8,11 @@
 		</cameras>
 
         <objects>
-            <object_with_waypoints features="2.0" speed="1.0">
+            <object_with_waypoints features="1.0" speed="1.0">
                 <waypoint x="-28.0" y="2.0"/>
                 <waypoint x="-28.0" y="-2.0"/>
                 <waypoint x="0.0" y="-2.0"/>
                 <waypoint x="0.0" y="0.0"/>
-                <waypoint x="-27.0" y="0.0"/>
-                <waypoint x="-27.0" y="5.0"/>
-                <waypoint x="-28.0" y="5.0"/>
             </object_with_waypoints>
         </objects>
     </simulation>
