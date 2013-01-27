@@ -413,14 +413,13 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //    	double totRes = resRes + this.camController.getResources();
 //    	System.out.println(this.camController.getName() + " resources reserved: " + resRes + " available: " + this.camController.getResources() + " total: " + totRes);
 
-    	if(DEBUG_CAM) {
+    	if(DEBUG_CAM && ! tracedObjects.entrySet().isEmpty()) {
 			String output = this.camController.getName();
 			if(this.camController.isOffline()){
 				output += " should be offline!! but";
 			}
 			output += " traces objects [real name] (identified as): ";    	
     	
-			//    	ITrObjectRepresentation realITO;
 			for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
 				String wrong = "NONE";
 				String real = "" + kvp.getValue().getFeatures();
@@ -973,11 +972,11 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	            	ICameraController searcher = this.searchForTheseObjects.get(visible);
 	            	
             		if (searcher != null) {
-            			double conf = this.calculateValue(visible); //this.getConfidence(visible);
+            			double bidValue = this.calculateValue(visible); //this.getConfidence(visible);
                         if (this.camController.getName().equals(searcher.getName())) {
-                            this.addOwnBidFor(visible, conf);
+                            this.addOwnBidFor(visible, bidValue);
                         } else {
-                        	this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, conf));
+                        	this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, bidValue));
                         }
                     } else {
                     	if(trackingPossible()){
@@ -1063,16 +1062,15 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //    	System.out.println(searchedString);
 //    }
 	
-    protected void addOwnBidFor(ITrObjectRepresentation target, double conf) {
+    protected void addOwnBidFor(ITrObjectRepresentation target, double bidValue) {
         Map<ICameraController, Double> bids = this.biddings.get(target);
         if (bids == null) {
             bids = new HashMap<ICameraController, Double>();
         }
         //TODO modified (removed ! befor runningAuction.containsKey) and added ELSE ! 23/05/2012 - takes over object, if noone took it
         if(runningAuction.containsKey(target)) {
-        	double value = this.calculateValue(target);
         	//runningAuction.put(target, 0);
-	        bids.put(this.camController, value);// conf);
+	        bids.put(this.camController, bidValue);// conf);
 	        biddings.put(target, bids);
     	} else {
         	if(!tracedObjects.containsKey(target)){
