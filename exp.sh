@@ -2,22 +2,17 @@
 STARTTIME=$SECONDS
 TIMESTEPS="1000"
 SEEDS=30
-SCENARIO="hist3_broadcast"
-SCENARIO_FILE="scenarios/scenario3_hist_unweighted.xml"
 
 # Only set if not already set
 [ -z $LOGDIR ] && LOGDIR="./logs/current"
 
-PREFIX="$LOGDIR/$SCENARIO-$TIMESTEPS"
+[ -z $ScenarioName ] && echo "ScenarioName not set by parent" && exit
+
+PREFIX="$LOGDIR/$ScenarioName-$TIMESTEPS"
 EXTRA_ARGS=$*
 
 if [ ! -d "$LOGDIR" ]; then
-    echo "Error: $LOGDIR does not exist"
-    exit
-fi
-
-if [ ! -f "$SCENARIO_FILE" ]; then
-    echo "Error: $SCENARIO_FILE does not exist"
+    echo "Error: Logdir $LOGDIR does not exist"
     exit
 fi
 
@@ -25,9 +20,16 @@ fi
 for SEED in `seq 1 $SEEDS`
 do
     OUTPUT_FILE="$PREFIX-$SEED.csv"
+
+    # If file exists and is greater than 0 size
+    if [ -s $OUTPUT_FILE ]; then
+	echo "File exists: $OUTPUT_FILE. Skipping..."
+	continue
+    fi
+
     SUMMARY_FILE="$PREFIX-$SEED-summary.txt"
     STDOUT_FILE="/dev/null" #"$PREFIX-$SEED-stdout.txt"
-    ARGS="$SCENARIO_FILE --no-gui -t $TIMESTEPS -o $OUTPUT_FILE --summaryfile $SUMMARY_FILE --seed $SEED"
+    ARGS="--no-gui -t $TIMESTEPS -o $OUTPUT_FILE --summaryfile $SUMMARY_FILE --seed $SEED"
     echo "Running with args: $ARGS $EXTRA_ARGS"
 
     ./run.sh $ARGS" "$EXTRA_ARGS > $STDOUT_FILE

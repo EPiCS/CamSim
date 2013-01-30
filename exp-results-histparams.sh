@@ -1,12 +1,10 @@
 #!/bin/sh
 STARTTIME=$SECONDS
 
-BASELOGDIR="./logs/current"
-SUMMARY_DIR=$BASELOGDIR/Summary
-SUMMARY_ALL=$SUMMARY_DIR/AllConfComm.csv
-
-PreInstantiationBidCoefficient=`seq 0.0 0.2 3.0`
-OverstayBidCoefficient=`seq 0.0 0.2 3.0`
+ScenarioFiles=`ls scenarios/*`
+PreInstantiationBidCoefficient=`seq 0.0 2.0 10.0`
+OverstayBidCoefficient=`seq 0.0 2.0 10.0`
+CommTypes=`seq 0 1 2` # Broadcast, smooth, step
 
 function generateSummaries {
     COUNT=0
@@ -48,23 +46,43 @@ function generateAverageFile {
 	    ORIG_IFS=$IFS
 	    IFS=','
 	    while IFS=, read a b c d e f g; do 
-		TOTAL_CONF_FOR_FILE=`calc.sh $TOTAL_CONF_FOR_FILE+$c`
-		TOTAL_COMM_FOR_FILE=`calc.sh $TOTAL_COMM_FOR_FILE+$e`
+		TOTAL_CONF_FOR_FILE=`echo "scale=10; $TOTAL_CONF_FOR_FILE+$c" | bc`
+		TOTAL_COMM_FOR_FILE=`echo "scale=10; $TOTAL_COMM_FOR_FILE+$e" | bc`
+
 		COUNT=$((COUNT+1))
 	    done < $FILENAME
 	    IFS=$ORIG_IFS
 
-	    AVG_CONF=`calc.sh $TOTAL_CONF_FOR_FILE/$COUNT`
-	    AVG_COMM=`calc.sh $TOTAL_COMM_FOR_FILE/$COUNT`
+	    AVG_CONF=`echo "scale=10; $TOTAL_CONF_FOR_FILE/$COUNT" | bc`
+	    AVG_COMM=`echo "scale=10; $TOTAL_COMM_FOR_FILE/$COUNT" | bc`
+
 	    echo "$PreInst,$OverStay,$AVG_CONF,$AVG_COMM" >> $SUMMARY_ALL
 	done
     done
 }
 
-mkdir $SUMMARY_DIR
+STARTDATE=$(date)
 
-generateSummaries
-generateAverageFile
+DIRS=`find ./logs/current -mindepth 1 -maxdepth 1 -type d`
+for BASELOGDIR in $DIRS
+do
+    echo "Summarising $BASELOGDIR"
+    SUMMARY_DIR=$BASELOGDIR/Summary
+    SUMMARY_ALL=$SUMMARY_DIR/AllConfComm.csv
+
+    if [ -d $SUMMARY_DIR ]; then
+	echo "Summary exists. Skipping $BASELOGDIR"
+	continue
+    fi
+
+    mkdir $SUMMARY_DIR
+
+    generateSummaries
+    generateAverageFile
+
+    echo "Started at $STARTDATE"
+    echo "Finished at "$(date)
+done
 
 echo Done
 
