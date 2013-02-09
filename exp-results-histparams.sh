@@ -28,9 +28,9 @@ function generateSummaries {
 
 function generateAverageFile {
     if $ComputeStandardDev ; then
-	    HEADER="PreInst,OverStay,AvgCumulativeConf,AvgCumulativeComm,ConfStdDev,CommStdDev"
+	    HEADER="Scenario,PreInst,OverStay,AvgCumulativeConf,AvgCumulativeComm,ConfStdDev,CommStdDev"
     else
-	    HEADER="PreInst,OverStay,AvgCumulativeConf,AvgCumulativeComm"
+	    HEADER="Scenario,PreInst,OverStay,AvgCumulativeConf,AvgCumulativeComm"
     fi
     echo $HEADER > $SUMMARY_ALL
 
@@ -67,9 +67,9 @@ function generateAverageFile {
 		        done < $FILENAME
 		        CONF_STDEV=`echo "scale=10; sqrt(($CONF_SQUARED_ERROR)/$COUNT)" | bc`
 		        COMM_STDEV=`echo "scale=10; sqrt(($COMM_SQUARED_ERROR)/$COUNT)" | bc`
-		        ENTRY="$PreInst,$OverStay,$AVG_CONF,$AVG_COMM,$CONF_STDEV,$COMM_STDEV"
+		        ENTRY="$SCENARIO_NAME,$PreInst,$OverStay,$AVG_CONF,$AVG_COMM,$CONF_STDEV,$COMM_STDEV"
 	        else 
-		        ENTRY="$PreInst,$OverStay,$AVG_CONF,$AVG_COMM"
+		        ENTRY="$SCENARIO_NAME,$PreInst,$OverStay,$AVG_CONF,$AVG_COMM"
 	        fi
 	        echo $ENTRY >> $SUMMARY_ALL;
 	    done
@@ -84,6 +84,7 @@ DIRS=`find ./logs/current -mindepth 1 -maxdepth 1 -type d -name "scenario*"`
 for BASELOGDIR in $DIRS
 do
     echo "Summarising $BASELOGDIR"
+    SCENARIO_NAME=`basename $BASELOGDIR`
     SUMMARY_DIR=$BASELOGDIR/Summary
     if $ComputeStandardDev ; then
 	    SUMMARY_ALL=$SUMMARY_DIR/AllConfCommStdDev.csv
