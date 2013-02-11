@@ -10,7 +10,7 @@ MANIFESTNAME=MANIFEST.MF
 DASH="--------------------------------------"
 
 NEWER=`find ./src -newer ./build.jar -name "*.java"`
-if [ -z "$newer" ]; then 
+if [ -z "$NEWER" ]; then 
     while true; do 
 	read -p "There are no new source files since last compilation. Continue compilation? [y/n] " yn
 	case $yn in 
