@@ -80,6 +80,11 @@ STARTTIME=$SECONDS
 STARTDATE=$(date)
 echo "Started at $STARTDATE"
 
+ALL_SUMMARIES="./logs/current/summaries"
+if [ ! -d $ALL_SUMMARIES ]; then
+    mkdir $ALL_SUMMARIES
+fi
+
 DIRS=`find ./logs/current -mindepth 1 -maxdepth 1 -type d -name "scenario*"`
 for BASELOGDIR in $DIRS
 do
@@ -105,6 +110,8 @@ do
     generateSummaries
 
     generateAverageFile
+
+    cp $SUMMARY_ALL "$ALL_SUMMARIES/$SCENARIO_NAME.csv"
 
     echo "Started at $STARTDATE"
     echo "Finished at "$(date)

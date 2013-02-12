@@ -130,8 +130,13 @@ public class HistoricalNodeHelper {
 			bidCoefficient = this.preInstantiationBidCoefficient;
 		} else {
 			double tsSoFar = historicalLocations.get(target).size();
-			// Default value in case avgTS-tsSoFar is negative. See FYP(Overstay Problem)
-			bidCoefficient = Math.max((avgTS-tsSoFar), this.overstayBidCoefficient);
+			double diff = avgTS-tsSoFar;
+			if (diff > 0) {
+				bidCoefficient = diff;
+			} else {
+				// Default value in case avgTS-tsSoFar is negative. See FYP(Overstay Problem)
+				bidCoefficient = this.overstayBidCoefficient;
+			}
 		}
 		
 		return superValue * bidCoefficient;
