@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import epics.camsim.core.CameraController;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.ICameraController;
@@ -37,6 +38,15 @@ public class HistoricalNodeHelper {
 	public static final String KEY_OVERSTAY_BID_COEFFICIENT = "OverstayBidCoefficient"; 
     private double overstayBidCoefficient;
 	
+    /** Categories are split into evenly sized segments of angle from south (-180 degrees),
+     * clockwise, all the way round back to south (180 degrees). So with two 
+     * categories anything from -180 degrees to 0 degrees is category 1, anything 
+     * 0 to 180 is category 2.
+     * With three categories, anything -180 to -60 is category 1, anything -60 to 60
+     * is category 2, anything 60 to 180 is category 3.  */
+    public static final int OBJ_CATEGORIES = 2;
+
+    
 	public HistoricalNodeHelper(double preInstantiationBidCoefficient, 
 			double overstayBidCoefficient) {
 		this.preInstantiationBidCoefficient = preInstantiationBidCoefficient;
@@ -68,6 +78,8 @@ public class HistoricalNodeHelper {
 					System.out.println("\t\t"+curPoint);
 				}
 				System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
+				
+				getCategoryForObject(itro, (CameraController)camController);
 			}
 		}
 		
@@ -140,6 +152,59 @@ public class HistoricalNodeHelper {
 		}
 		
 		return superValue * bidCoefficient;
+	}
+	
+	/** Given an object, look at past two time steps of movement and 
+	 * categorise based on the object's direction.
+	 * See information around the categories field for information on what
+	 * each category means.  */
+	public int getCategoryForObject(ITrObjectRepresentation obj, CameraController camController) {
+		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(obj);
+
+		// If new object
+		if (pointsForObject == null || pointsForObject.size() < 2) {
+			return 0;
+		}
+
+		if (OBJ_CATEGORIES != 2) {
+			throw new UnsupportedOperationException("Cannot do more than 2 obj categories yet");
+		}
+
+		Point2D.Double p1 = pointsForObject.get(pointsForObject.size()-2);
+		Point2D.Double p2 = pointsForObject.get(pointsForObject.size()-1);
+		double camHeadingDegrees = Math.toDegrees(camController.getHeading());
+		double heading = getObjectHeading(p1, p2, camHeadingDegrees);
+		int category = 0; // No category
+		if (heading < 0) {
+			category = 1;
+		} else {
+			category = 2;
+		}
+		System.out.println("Heading for object: "+heading+", category: "+category);
+		return category;
+	}
+	
+	/** Given two points representing the positions of the object over the 
+	 * last two time steps, get the heading of the object's trajectory (in degrees).
+	 * This is relative to the camera with the given angle (in degrees) */
+	public static double getObjectHeading(Point2D.Double p1, Point2D.Double p2, 
+			double cameraHeading) {
+		double heading = getAngleFromOtherPoint(p1.x, p1.y, p2.x, p2.y);
+		//heading += cameraHeading; // Make angle relative to camera
+		if (heading > 180) {
+			heading = -180 + (heading % 180); 
+		} else if (heading < -180) {
+			heading += 360;
+		}
+		return heading;
+	}
+	
+	/** Computes the angle (degrees) of x2,y2 using x1,y1 as the origin. This uses
+	 * the arctangent, so angle goes from -180 to 180 */
+	public static double getAngleFromOtherPoint(double x1, double y1, double x2, double y2) {
+		double radians = Math.atan2(x2-x1, y2-y1);
+		double degrees = Math.toDegrees(radians);
+		return degrees;
 	}
 	
 	public boolean setParam(String key, String value) {
