@@ -12,8 +12,8 @@
 
         <objects>
             <object_with_waypoints features="1.0" speed="1.0">
-                <waypoint x="-29.0" y="0.0"/>
-                <waypoint x="29.0" y="0.0"/>
+                <waypoint x="-29.0" y="-1.0"/>
+                <waypoint x="29.0" y="-1.0"/>
             </object_with_waypoints>
         </objects>
     </simulation>

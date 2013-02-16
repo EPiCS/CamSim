@@ -2,11 +2,11 @@
 <root>
     <simulation max_x="30.0" max_y="30.0" min_x="-30.0" min_y="-30.0">
         <cameras>
-            <camera ai_algorithm="epics.ai.HistoricalAINodeActive" name="Cam_01" x="-15" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
-			<camera ai_algorithm="epics.ai.HistoricalAINodeActive" name="Cam_02" x="-5" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
-			<camera ai_algorithm="epics.ai.HistoricalAINodeActive" name="Cam_03" x="5" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
-			<camera ai_algorithm="epics.ai.HistoricalAINodeActive" name="Cam_04" x="15" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
-			<camera ai_algorithm="epics.ai.HistoricalAINodeActive" name="Cam_05" x="26" y="8" heading="-135" viewing_angle="70" range="20" comm="0"/>
+            <camera ai_algorithm="epics.ai.HistoricalAINode$Active" name="Cam_01" x="-15" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
+			<camera ai_algorithm="epics.ai.HistoricalAINode$Active" name="Cam_02" x="-5" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
+			<camera ai_algorithm="epics.ai.HistoricalAINode$Active" name="Cam_03" x="5" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
+			<camera ai_algorithm="epics.ai.HistoricalAINode$Active" name="Cam_04" x="15" y="10" heading="-180" viewing_angle="70" range="20" comm="0"/>
+			<camera ai_algorithm="epics.ai.HistoricalAINode$Active" name="Cam_05" x="26" y="8" heading="-135" viewing_angle="70" range="20" comm="0"/>
         </cameras>
 
         <objects>
