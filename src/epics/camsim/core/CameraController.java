@@ -438,11 +438,10 @@ public class CameraController implements ICameraController{
     	}
     }
 
-    public Map<String,Double> getVisionGraph(){
+    public Map<String,Double> getDrawableVisionGraph(){
     	if(!isOffline()){//isOfflineFor <= 0){
-    		return this.camAINode.getVisionGraph();
-    	}
-    	else{
+    		return this.camAINode.getDrawableVisionGraph();
+    	} else {
     		return new HashMap<String, Double>();
     	}
     }

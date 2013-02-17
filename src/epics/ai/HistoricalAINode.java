@@ -1,12 +1,14 @@
 package epics.ai;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
-import epics.camsim.core.CameraController;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.AbstractAINode;
@@ -47,10 +49,26 @@ public class HistoricalAINode {
 	public static final String KEY_OVERSTAY_BID_COEFFICIENT = "OverstayBidCoefficient"; 
     private double overstayBidCoefficient;
 	
+    public static final boolean DEFAULT_CLASSIFICATION_ENABLED = false;
+	public static final String KEY_CLASSIFICATION_ENABLED = "ClassificationEnabled"; 
+    private boolean classificationEnabled;
+	
+    /** 
+     * Classification must be enabled for this to have effect.
+     * Categories are split into evenly sized segments of angle from south (-180 degrees),
+     * clockwise, all the way round back to south (180 degrees). So with two 
+     * categories anything from -180 degrees to 0 degrees is category 1, anything 
+     * 0 to 180 is category 2.
+     * With three categories, anything -180 to -60 is category 1, anything -60 to 60
+     * is category 2, anything 60 to 180 is category 3.  */
+    public static final int DEFAULT_OBJ_CATEGORIES = 4;
+    public static final String KEY_OBJ_CATEGORIES = "ObjectCategories";
+    public int objCategories = DEFAULT_OBJ_CATEGORIES;
+    
 	public static class Active extends ActiveAINodeMulti {
 		private HistoricalAINode histNode;
 		
-	    // Overriding AbstractAINode's constructor
+		// Overriding AbstractAINode's constructor
 	    public Active(int comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r){
 	    	this(comm, staticVG, vg, r, 
@@ -86,6 +104,69 @@ public class HistoricalAINode {
 			if (super.setParam(key, value)) return true; 
 			return histNode.setParam(key, value);
 		}
+		
+		@Override
+		public Map<String, Double> getDrawableVisionGraph() {
+			if (histNode.classificationEnabled) {
+				return histNode.getDrawableVisionGraph();
+			} else {
+				return super.getDrawableVisionGraph();
+			}
+		}
+		
+	    @Override
+	    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgContainsKey(camName, itro);	
+			} else {
+				return super.vgContainsKey(camName, itro);
+			}
+	    }
+	    
+	    @Override
+	    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgGetValues(itro);
+	    	} else {
+	    		return super.vgGetValues(itro);
+	    	}
+	    }
+	    
+	    @Override
+	    public Set<String> vgGetCamSet() {
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgGetCamSet();
+	    	} else {
+	    		return super.vgGetCamSet();
+	    	}
+	    }
+	    
+	    @Override
+	    public Double vgGet(String camName, ITrObjectRepresentation itro) {
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgGet(camName, itro);
+	    	} else {
+	    		return super.vgGet(camName, itro);
+	    	}
+	    }
+	    
+	    @Override
+	    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
+	    	if (histNode.classificationEnabled) {
+	    		histNode.strengthenVisionEdge(destinationName, itro);
+	    	} else {
+	    		super.strengthenVisionEdge(destinationName, itro);
+	    	}
+	    }
+	    
+	    @Override
+	    public void updateVisionGraph() {
+	    	if (histNode.classificationEnabled) {
+	    		histNode.updateVisionGraph(EVAPORATIONRATE);
+	    	} else {
+	    		super.updateVisionGraph();
+	    	}
+	    }
 	}
 	
 	public static class Passive extends PassiveAINodeMulti {
@@ -127,6 +208,69 @@ public class HistoricalAINode {
 			if (super.setParam(key, value)) return true; 
 			return histNode.setParam(key, value);
 		}
+		
+		@Override
+		public Map<String, Double> getDrawableVisionGraph() {
+			if (histNode.classificationEnabled) {
+				return histNode.getDrawableVisionGraph();
+			} else {
+				return super.getDrawableVisionGraph();
+			}
+		}
+		
+	    @Override
+	    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgContainsKey(camName, itro);	
+			} else {
+				return super.vgContainsKey(camName, itro);
+			}
+	    }
+	    
+	    @Override
+	    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgGetValues(itro);
+	    	} else {
+	    		return super.vgGetValues(itro);
+	    	}
+	    }
+	    
+	    @Override
+	    public Set<String> vgGetCamSet() {
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgGetCamSet();
+	    	} else {
+	    		return super.vgGetCamSet();
+	    	}
+	    }
+	    
+	    @Override
+	    public Double vgGet(String camName, ITrObjectRepresentation itro) {
+	    	if (histNode.classificationEnabled) {
+	    		return histNode.vgGet(camName, itro);
+	    	} else {
+	    		return super.vgGet(camName, itro);
+	    	}
+	    }
+	    
+	    @Override
+	    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
+	    	if (histNode.classificationEnabled) {
+	    		histNode.strengthenVisionEdge(destinationName, itro);
+	    	} else {
+	    		super.strengthenVisionEdge(destinationName, itro);
+	    	}
+	    }
+	    
+	    @Override
+	    public void updateVisionGraph() {
+	    	if (histNode.classificationEnabled) {
+	    		histNode.updateVisionGraph(EVAPORATIONRATE);
+	    	} else {
+	    		super.updateVisionGraph();
+	    	}
+	    }
 	}
 	
 	/** Where this object has been over the last few timesteps */
@@ -138,14 +282,8 @@ public class HistoricalAINode {
 	/** How many objects have left our FOV (avg = totalTSVisible/tsVisibleCounter) */
 	private int tsVisibleCounter = 0;
 
-    /** Categories are split into evenly sized segments of angle from south (-180 degrees),
-     * clockwise, all the way round back to south (180 degrees). So with two 
-     * categories anything from -180 degrees to 0 degrees is category 1, anything 
-     * 0 to 180 is category 2.
-     * With three categories, anything -180 to -60 is category 1, anything -60 to 60
-     * is category 2, anything 60 to 180 is category 3.  */
-    public static final int OBJ_CATEGORIES = 2;
-    
+	private Map<String, Map<Integer, Double>> visionGraph = new HashMap<String, Map<Integer, Double>>();
+	
 	public HistoricalAINode(double preInstantiationBidCoefficient, 
 			double overstayBidCoefficient) {
 		this.preInstantiationBidCoefficient = preInstantiationBidCoefficient;
@@ -178,7 +316,7 @@ public class HistoricalAINode {
 				}
 				System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
 				
-				getCategoryForObject(itro, (CameraController)camController);
+				getCategoryForObject(itro);
 			}
 		}
 		
@@ -253,11 +391,11 @@ public class HistoricalAINode {
 		return superValue * bidCoefficient;
 	}
 	
-	/** Given an object, look at past two time steps of movement and 
+	/** Given an object, look at first two time steps of movement and 
 	 * categorise based on the object's direction.
 	 * See information around the categories field for information on what
 	 * each category means.  */
-	public int getCategoryForObject(ITrObjectRepresentation obj, CameraController camController) {
+	public int getCategoryForObject(ITrObjectRepresentation obj) {
 		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(obj);
 
 		// If new object
@@ -265,12 +403,12 @@ public class HistoricalAINode {
 			return 0;
 		}
 
-		Point2D.Double p1 = pointsForObject.get(pointsForObject.size()-2);
-		Point2D.Double p2 = pointsForObject.get(pointsForObject.size()-1);
-		double camHeadingDegrees = Math.toDegrees(camController.getHeading());
-		double heading = getObjectHeading(p1, p2, camHeadingDegrees);
+		Point2D.Double p1 = pointsForObject.get(0);
+		Point2D.Double p2 = pointsForObject.get(1);
+		//double camHeadingDegrees = Math.toDegrees(camController.getHeading());
+		double heading = getObjectHeading(p1, p2);
 		
-		double degPerCategory = 360.0/(double)OBJ_CATEGORIES;
+		double degPerCategory = 360.0/(double)objCategories;
 		double posHeading = heading + 180.0;
 		int category = (int)(posHeading / degPerCategory) + 1;
 		
@@ -278,9 +416,9 @@ public class HistoricalAINode {
 		// are put in the same category
 		if (posHeading == 360.0) { category = 1; }
 		
-		if (category < 1 || category > OBJ_CATEGORIES) {
+		if (category < 1 || category > objCategories) {
 			throw new IllegalStateException("Categorisation failed."+
-					"There were "+OBJ_CATEGORIES+" categories, and "+degPerCategory+
+					"There were "+objCategories+" categories, and "+degPerCategory+
 					" degrees per category. Heading was "+heading+" and category"+
 					" was computed as: "+category);
 		}
@@ -292,8 +430,7 @@ public class HistoricalAINode {
 	/** Given two points representing the positions of the object over the 
 	 * last two time steps, get the heading of the object's trajectory (in degrees).
 	 * This is relative to the camera with the given angle (in degrees) */
-	public static double getObjectHeading(Point2D.Double p1, Point2D.Double p2, 
-			double cameraHeading) {
+	public static double getObjectHeading(Point2D.Double p1, Point2D.Double p2) {
 		double heading = getAngleFromOtherPoint(p1.x, p1.y, p2.x, p2.y);
 		//heading += cameraHeading; // Make angle relative to camera
 		if (heading > 180) {
@@ -327,9 +464,139 @@ public class HistoricalAINode {
 			DEBUG_HIST = Boolean.parseBoolean(value);
 			System.out.println("DebugHist set to: "+DEBUG_HIST);
 			return true;
+		} else if (KEY_CLASSIFICATION_ENABLED.equalsIgnoreCase(key)) {
+			classificationEnabled = Boolean.parseBoolean(value);
+			System.out.println("ClassificationEnabled set to: "+classificationEnabled);
+			return true;
+		} else if (KEY_OBJ_CATEGORIES.equalsIgnoreCase(key)) {
+			objCategories = Integer.parseInt(value);
+			System.out.println("ObjectCategories set to: "+objCategories);
+			return true;
 		} else {
 			System.err.println("Didn't recognise key: "+key);
 			return false;
 		}
 	}
+
+	/** Returns whether object classification is enabled for this AI node */
+	public boolean classificationEnabled() {
+		return classificationEnabled;
+	}
+	
+	/** Since we have separate pheromones for each category, the best we can do is 
+	 * average out the value for each pheromone so that it can be drawn in the
+	 * simulator window. */
+	public Map<String, Double> getDrawableVisionGraph() {
+		Map<String, Double> dvg = new HashMap<String, Double>();
+		
+		for (Map.Entry<String,Map<Integer,Double>> camToItros : getVisionGraph().entrySet()) {
+			double total = 0.0;
+			int count = 0;
+    		for (Map.Entry<Integer, Double> itro : camToItros.getValue().entrySet()) {
+    			total += itro.getValue();
+    			count++;
+    		}
+    		if (count > 0) {
+    			dvg.put(camToItros.getKey(), (total/(double)count));
+    		}
+		}
+		return dvg;
+	}
+	
+	/** The actual vision graph object, with representation according
+	 * to object categories. Note that this should not (and cannot yet) be used
+	 * by the WorldView to draw links between cameras, since there are multiple,
+	 * asymmetric lines between cameras. 
+	 * Use {@link HistoricalAINode#getDrawableVisionGraph()} for a drawable 
+	 * representation. */
+    private Map<String, Map<Integer, Double>> getVisionGraph() {
+        return visionGraph;
+    }
+    
+    /** Whether the vision graph has previously entered a value for this 
+     * camera-object pair (in reality, the object's category rather than the object) */
+    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
+    	return getVisionGraph().containsKey(camName) && 
+    			getVisionGraph().get(camName).containsKey(itro);
+    }
+    
+    /** Get all pheromone values for this object, for all cameras (in reality, 
+     * the object's category rather than the object itself). This is
+     * to be used for averaging, finding the highest, etc., but makes little 
+     * sense otherwise (since one object category can exist in the map under 
+     * multiple cameras) */
+    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
+    	ArrayList<Double> allValuesForItro = new ArrayList<Double>();
+    	for (Map<Integer, Double> map : getVisionGraph().values()) {
+    		for (Double value : map.values()) {
+    			allValuesForItro.add(value);
+    		}
+    	}
+    	return allValuesForItro;
+    }
+    
+    /** Get all the cameras with pheromone links from this AINode */
+    public Set<String> vgGetCamSet() {
+    	return getVisionGraph().keySet();
+    }
+    
+    /** Get the pheromone value for this camera-object pair (in reality, 
+     * the object's category rather than the object) */
+    public Double vgGet(String camName, ITrObjectRepresentation itro) {
+    	if (getVisionGraph().get(camName) != null) {
+    		return getVisionGraph().get(camName).get(itro);
+    	} else {
+    		return null;
+    	}
+    }
+    
+    /** Called once per time step per AI node in order to maintain the vision
+     * graph. Mainly to be used for evaporating the links over time. */
+    public void updateVisionGraph(double evaporationRate) {
+    	for (Map<Integer, Double> mapOfItroToPheromone : getVisionGraph().values()) {
+    		ArrayList<Integer> toRemove = new ArrayList<Integer>();
+    		
+    		for (Map.Entry<Integer, Double> entry : mapOfItroToPheromone.entrySet()) {
+    			double val = entry.getValue();
+    			entry.setValue(entry.getValue() * evaporationRate);
+    			if (val < 0) {
+    				toRemove.add(entry.getKey());
+    			}
+    		}
+    		for (int i = 0; i < toRemove.size(); i++) {
+        		mapOfItroToPheromone.remove(toRemove.get(i));
+        	}
+    	}
+    }
+
+    /** Strengthen the pheromone link for this camera-object pair. That is, 
+     * add some value to the pheromone in order to strengthen the probability
+     * of communication with this camera in future (for some communication 
+     * strategies) */
+    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
+    	double val;
+    	if (vgContainsKey(destinationName, itro)) {
+    		val = vgGet(destinationName, itro);
+    		val = val + 1.0;
+    	} else {
+    		val = 1.0;
+    	}
+    	vgPut(destinationName, itro, val);
+    }
+    
+    /** Put a value in the vision graph for this camera-object pair (in reality,  
+     * the object's category rather than the object iself). */
+    public Double vgPut(String camName, ITrObjectRepresentation itro, Double value) {
+    	int category = getCategoryForObject(itro);
+    	Map<Integer, Double> catToVal = getVisionGraph().get(camName);
+    	if (catToVal == null) {
+    		catToVal = new HashMap<Integer, Double>();
+    		getVisionGraph().put(camName, catToVal);
+    	}
+    	return catToVal.put(category, value);
+    }
+    
+    public Set<Map.Entry<String, Map<Integer, Double>>> vgEntrySet() {
+    	return getVisionGraph().entrySet();
+    }	
 }

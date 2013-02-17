@@ -1,9 +1,11 @@
 package epics.ai;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import epics.camsim.core.Bid;
 import epics.common.AbstractAINode;
@@ -88,7 +90,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     
     boolean staticVG = false;
     
-    Map<String, Double> visionGraph = new HashMap<String, Double>();
+    private Map<String, Double> visionGraph = new HashMap<String, Double>(); // Use getVisionGraph() to access
     protected Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
     protected Map<List<Double>, ITrObjectRepresentation> tracedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
     protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
@@ -173,7 +175,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	if(!VISION_ON_BID){
 	    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
 	//    	if(!VISION_ON_FOUND) //strengthen link at handover
-	    		strengthenVisionEdge(from);
+	    		strengthenVisionEdge(from, content);
 	    	}
     	}
     	if(DEBUG_CAM)
@@ -192,7 +194,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     protected Object handle_Found(String from, IBid content) {
 //    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
     	if(VISION_ON_BID) {
-    		strengthenVisionEdge(from);
+    		strengthenVisionEdge(from, content.getTrObject());
     	}
         this.foundObject(content, from);
         return null;
@@ -286,19 +288,19 @@ public class ActiveAINodeMulti extends AbstractAINode {
         return result;
     }
 
-    protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
+    protected double handle_askConfidence(String from, ITrObjectRepresentation itro) {
     	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
-    		strengthenVisionEdge(from);
+    		strengthenVisionEdge(from, itro);
     	}
     	
     	if(trackingPossible()){
-	        Pair pair = findSimiliarObject(iTrObjectRepresentation);
+	        Pair pair = findSimiliarObject(itro);
 	
 	        if (pair == null) {
 	            return 0.0;
 	        }
 	        
-	        double conf = this.calculateValue(iTrObjectRepresentation);
+	        double conf = this.calculateValue(itro);
 	
 	        ITrObjectRepresentation found = pair.itro;
 	        if (DEBUG_CAM) {
@@ -392,10 +394,45 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
 
     @Override
-    public Map<String, Double> getVisionGraph() {
-        return this.visionGraph;
+    public Map<String, Double> getDrawableVisionGraph() {
+        return getVisionGraph();
     }
-
+    
+    public Map<String, Double> getVisionGraph() {
+    	return this.visionGraph;
+    }
+    
+    @Override
+    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
+    	return getVisionGraph().containsKey(camName);
+    }
+    
+	@Override
+    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
+    	return getVisionGraph().values();
+    }
+    
+	@Override
+    public Set<String> vgGetCamSet() {
+    	return getVisionGraph().keySet();
+    }
+    
+    public Double vgGet(String camName, ITrObjectRepresentation itro) {
+    	return getVisionGraph().get(camName);
+    }
+    
+    public Double vgPut(String camName, ITrObjectRepresentation itro, Double value) {
+    	return getVisionGraph().put(camName, value);
+    }
+    
+    public Set<Map.Entry<String, Double>> vgEntrySet() {
+    	return getVisionGraph().entrySet();
+    }
+    
+    public Double vgRemove(String name) {
+    	return getVisionGraph().remove(name);
+    }
+    
     @Override
     public void setController(ICameraController controller) {
         this.camController = controller;
@@ -599,7 +636,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                                 else{
 	                                	 if(!VISION_ON_BID){
 		                                	 if(BIDIRECTIONAL_VISION || (!VISION_RCVER_BOUND))
-		                                		 strengthenVisionEdge(giveTo.getName());
+		                                		 strengthenVisionEdge(giveTo.getName(), tor);
 	                                	 }
 	                                	 this.removeTracedObject(tor);
 	                                	 
@@ -744,18 +781,17 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 	protected void multicastFix(MessageType mt, Object o){
-		
 		List<String> cams = new ArrayList<String>();
-		for(String name : visionGraph.keySet()){
+		for (String name : vgGetCamSet()) {
 			this.camController.sendMessage(name, mt, o);
 			cams.add(name);
 		}
 		
-		if(mt == MessageType.StartSearch){
+		if (mt == MessageType.StartSearch) {
 			advertised.put((ITrObjectRepresentation) o, cams);
 		}
 		
-		if(mt == MessageType.StopSearch){
+		if (mt == MessageType.StopSearch) {
 			advertised.remove((ITrObjectRepresentation) o);
 		}
 		
@@ -777,7 +813,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 			//get max strength
 			double highest = 0;
-			for(Double d : visionGraph.values()){
+			for(Double d : vgGetValues(io)){
 				if(d > highest){
 					highest = d;
 				}
@@ -789,8 +825,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 				for(ICameraController icc : this.camController.getNeighbours()){
 					String name = icc.getName();
 					double ratPart = 0.0;
-					if(visionGraph.containsKey(name)){
-						ratPart = visionGraph.get(name);
+					if(vgContainsKey(name, io)){
+						ratPart = vgGet(name, io);
 					}
 					double ratio = (1+ratPart)/(1+highest);
 					if(ratio > ran){
@@ -853,8 +889,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			for(ICameraController icc : this.camController.getNeighbours()){
 				String name = icc.getName();
 				double prop = 0.1;
-				if(visionGraph.containsKey(name)){
-					prop = visionGraph.get(name);
+				if(vgContainsKey(name, io)){
+					prop = vgGet(name, io);
 				}
 				if(prop > ran){
 					sent ++;
@@ -1082,11 +1118,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
     
-
-    protected void updateVisionGraph() {
+    public void updateVisionGraph() {
     	if(!staticVG){
 	    	ArrayList<String> toRemove = new ArrayList<String>();
-	        for (Map.Entry<String, Double> e : visionGraph.entrySet()) {
+	        for (Map.Entry<String, Double> e : vgEntrySet()) {
 	            double val = e.getValue();
 	            e.setValue( e.getValue() * EVAPORATIONRATE); //0.995);
 	            if (val < 0) {
@@ -1094,20 +1129,22 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	            }
 	        }
 	        for (int i = 0; i < toRemove.size(); i++) {
-	            visionGraph.remove(toRemove.get(i));
+	            vgRemove(toRemove.get(i));
 	        }
     	}
     }
 
     @Override
-    public void strengthenVisionEdge(String destinationName) {
+    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
     	if(!staticVG){
-	        if (this.visionGraph.containsKey(destinationName)) {
-	            double val = this.visionGraph.get(destinationName);
-	            this.visionGraph.put(destinationName, val + 1);
+    		double val;
+	        if (vgContainsKey(destinationName, itro)) {
+	            val = vgGet(destinationName, itro);
+	            val = val + 1.0;
 	        } else {
-	            this.visionGraph.put(destinationName, 1.0);
+	            val = 1.0;
 	        }
+	        vgPut(destinationName, itro, val);
     	}
     }
 

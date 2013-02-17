@@ -24,7 +24,7 @@ import epics.camsim.core.TraceableObject;
  * Draws a spatial network on a panel
  */
 public class WorldView extends JPanel implements Observer {
-    private static final boolean SHOW_LABELS = false;
+    private static final boolean SHOW_LABELS = true;
     private static final boolean SHOW_RES_LABELS = false;
 	private SimCoreModel sim_model;
     private CoordinateSystemTransformer cst;
@@ -125,7 +125,7 @@ public class WorldView extends JPanel implements Observer {
              * Vision graph here
              */
 
-            Map<String,Double> vg = c.getVisionGraph();
+            Map<String,Double> vg = c.getDrawableVisionGraph();
             for (Map.Entry<String,Double> e : vg.entrySet()){
 
                 CameraController cc = sim_model.getCameraByName(e.getKey());

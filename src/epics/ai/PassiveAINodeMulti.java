@@ -78,7 +78,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 	                                 else{
 	                                	 if(!VISION_ON_BID){
 		                                	 if(BIDIRECTIONAL_VISION || (!VISION_RCVER_BOUND))
-		                                		 strengthenVisionEdge(giveTo.getName());
+		                                		 strengthenVisionEdge(giveTo.getName(), tor);
 	                                	 }
 	                                	 this.removeTracedObject(tor);
 	                                	 
