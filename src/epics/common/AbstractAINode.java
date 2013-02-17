@@ -40,16 +40,26 @@ public abstract class AbstractAINode {
 
 	public abstract int currentlyMissidentified();
 	
+	/** Get a mapping between camera names and values for the pheromone links
+	 * between the AI node and those cameras. This is used for drawing the 
+	 * vision graph. */
 	public abstract Map<String, Double> getDrawableVisionGraph();
     
+	/** Whether the vision graph contains a value for this key */
     public abstract boolean vgContainsKey(String camName, ITrObjectRepresentation itro); 
     
+    /** Get all values in the vision graph for this object */
     public abstract Collection<Double> vgGetValues(ITrObjectRepresentation itro);
     
+    /** Get the set of cameras existent in the vision graph */
     public abstract Set<String> vgGetCamSet();
     
+    /** Get the pheromone value for the given camera name and object.
+     * It is not required to use both parameters in implementing classes. */
     public abstract Double vgGet(String camName, ITrObjectRepresentation itro);
     
+    /** Called when communication is made with the given camera about the 
+     * given object, in order to strengthen the pheromone link. */
     public abstract void strengthenVisionEdge(String name, ITrObjectRepresentation itro);
 	
 	/** For specifying params of an AI node after construction time. 

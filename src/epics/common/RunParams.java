@@ -3,24 +3,15 @@ package epics.common;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 /** See Javadoc at constructor for more on params/properties.
  * This is a singleton and can only be instantiated by using
  * setPropertiesFile() and accessed with the static getters. */
 public class RunParams {
 
-	/** When specifying numbered params, this is the count of expected params */
-	public static final String KEY_NUM_OF_PARAMS = "NumOfParams";
-	
-	/** When specifying numbered params, each key's key should have this 
-	 * prefix before the param number */
-	public static final String NUMBERED_PARAM_KEY_PREFIX = "ParamKey_";
-	
-	/** When specifying numbered params, each value's key should have this 
-	 * prefix before the param number */	
-	public static final String NUMBERED_PARAM_VALUE_PREFIX = "ParamValue_";
-	
     // --------------------- Static ------------------------------
     private static RunParams INSTANCE = null;
     private static RunParams getInstance() {
@@ -32,9 +23,20 @@ public class RunParams {
         return INSTANCE;
     }
 
+    /** Load all parameters from this properties file and dump all previous
+     * properties (no current support for loading properties from multiple files). */
     public static void loadFromFile(String filepath) throws IOException {
         setPropertiesFile(filepath);
         System.out.println("Params File loaded");
+    }
+    
+    /** Loads the given file if no params have been loaded from any file at all */
+    public static boolean loadIfNotLoaded(String filepath) throws IOException {
+    	if (INSTANCE == null) {
+    		loadFromFile(filepath);
+    		return true;
+    	}
+    	return false;
     }
 
     public static RunParams setPropertiesFile(String filepath) throws IOException {
@@ -71,6 +73,12 @@ public class RunParams {
         return getInstance().prop.toString();
     }
 
+    /** Returns set of entries with type 'Object, Object', but keys  
+     * should be cast to Strings and values to their appropriate type */
+    public static Set<Entry<Object, Object>> getAllProperties() {
+    	return getInstance().prop.entrySet();
+    }
+    
     /** Sets a property. Returns previous property if existed */
     public static String overrideProperty(String key, String value) {
         return (String) getInstance().prop.setProperty(key, value);

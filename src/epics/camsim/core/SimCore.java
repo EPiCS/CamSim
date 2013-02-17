@@ -10,15 +10,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
-import epics.common.RandomUse;
-import epics.common.RunParams;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
+import epics.common.RunParams;
 
 /**
  *
@@ -257,26 +259,16 @@ public class SimCore {
      * to the node for a particular run, then the params file is changed for 
      * the next run */
     public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
-    	RunParams.loadFromFile(paramsFilepath);
-    	Integer count = RunParams.getInt(RunParams.KEY_NUM_OF_PARAMS);
-    	if (count == null) {
-    		throw new IllegalStateException("Params file must contain a count " +
-    				"of the number of parameters under "+RunParams.KEY_NUM_OF_PARAMS);
-    	}
+    	RunParams.loadIfNotLoaded(paramsFilepath);
     	
-    	// Iterate over the params and apply to node
-    	for (int i = 1; i <= count; i++) {
-    		// We are retrieving a key-value pair, so refer to the keys for 
-    		// the params file that correspond to they 'key' and 'value' 
-    		String key = RunParams.get(RunParams.NUMBERED_PARAM_KEY_PREFIX + i);
-    		String value = RunParams.get(RunParams.NUMBERED_PARAM_VALUE_PREFIX + i);
-    		
-    		// If it could not be applied by the node, something is wrong
+    	Set<Entry<Object,Object>> props = RunParams.getAllProperties();
+    	for (Entry<Object, Object> prop : props) {
+    		String key = (String) prop.getKey();
+    		String value = (String) prop.getValue();
     		if (! node.setParam(key, value)) {
     			throw new IllegalStateException("Param "+key+" could not be applied");
     		}
     	}
-
     }
     
   	public void add_random_camera(){
@@ -759,26 +751,16 @@ public class SimCore {
 //    			}
 //    		}
     	}
-    	
-    	
-    	
     }
 
     public double computeUtility(){
-
         double utility_sum = 0;
-        for ( CameraController c : this.cameras){
+        for (CameraController c : this.cameras){
         	if(!c.isOffline())
         		utility_sum += c.getAINode().getUtility();
         }
-
         return utility_sum;
-
     }
-
-    /*
-     * After this point, default and GETTERS - SETTERS only
-     */
 
     /**
      * @return the cameras
@@ -837,5 +819,4 @@ public class SimCore {
 		this.min_y = -70;
 		this.max_y = 70;	
 	}
-
 }

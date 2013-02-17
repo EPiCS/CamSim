@@ -17,12 +17,9 @@ echo "Looping through OverStay: $OverstayBidCoefficient"
 
 function writeParamFile {
     echo "# Comments look like this" > $PARAM_FILE
-    echo "NumOfParams=2" >> $PARAM_FILE
     echo >> $PARAM_FILE
-    echo "ParamKey_1=PreInstantiationBidCoefficient" >> $PARAM_FILE
-    echo "ParamValue_1=$1" >> $PARAM_FILE
-    echo "ParamKey_2=OverstayBidCoefficient" >> $PARAM_FILE
-    echo "ParamValue_2=$2" >> $PARAM_FILE
+    echo "PreInstantiationBidCoefficient=$1" >> $PARAM_FILE
+    echo "OverstayBidCoefficient=$2" >> $PARAM_FILE
 }
 
 function getCommTypeName {

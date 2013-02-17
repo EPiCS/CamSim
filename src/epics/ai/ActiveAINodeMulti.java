@@ -394,6 +394,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
 
     @Override
+    /** Same as the actual vision graph */
     public Map<String, Double> getDrawableVisionGraph() {
         return getVisionGraph();
     }
@@ -403,32 +404,40 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
     
     @Override
+    /** Whether the key exists for this cam name (ignoring object here) */
     public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
     	return getVisionGraph().containsKey(camName);
     }
     
 	@Override
+	/** Get all values in the vision graph (ignoring object here) */
     public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
     	return getVisionGraph().values();
     }
     
 	@Override
+	/** Get all cameras with values in the vision graph */
     public Set<String> vgGetCamSet() {
     	return getVisionGraph().keySet();
     }
     
+	/** Get the pheromone value for this camera name (ignoring object here) */
     public Double vgGet(String camName, ITrObjectRepresentation itro) {
     	return getVisionGraph().get(camName);
     }
     
+    /** Put a value in the vision graph under this camera name (ignoring 
+     * object here) */
     public Double vgPut(String camName, ITrObjectRepresentation itro, Double value) {
     	return getVisionGraph().put(camName, value);
     }
     
+    /** Get all entries (key-value pairs) in the vision graph */
     public Set<Map.Entry<String, Double>> vgEntrySet() {
     	return getVisionGraph().entrySet();
     }
     
+    /** Remove from the vision graph the key-value pair for the given key */
     public Double vgRemove(String name) {
     	return getVisionGraph().remove(name);
     }

@@ -596,6 +596,7 @@ public class HistoricalAINode {
     	return catToVal.put(category, value);
     }
     
+    /** All entries in the vision graph */
     public Set<Map.Entry<String, Map<Integer, Double>>> vgEntrySet() {
     	return getVisionGraph().entrySet();
     }	
