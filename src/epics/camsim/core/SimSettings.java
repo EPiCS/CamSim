@@ -2,6 +2,7 @@ package epics.camsim.core;
 
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -286,10 +288,10 @@ public class SimSettings {
 
     public void printSelfToCMD(){
 
-        System.out.println("min_x" + min_x);
-        System.out.println("max_x" + max_x);
-        System.out.println("min_y" + min_y);
-        System.out.println("max_y" + max_y);
+        System.out.println("min_x: " + min_x);
+        System.out.println("max_x: " + max_x);
+        System.out.println("min_y: " + min_y);
+        System.out.println("max_y: " + max_y);
 
         System.out.println("Cameras:");
         for ( CameraSettings cs : this.cameras ){
@@ -409,6 +411,11 @@ public class SimSettings {
                 Double features = Double.parseDouble(eObject.getAttribute("features"));
 
                 TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features);
+                for (TrObjectSettings current : objects) {
+                	if (current.features.equals(tros.features)) {
+                		throw new IllegalStateException("Two objects with same features added");
+                	}
+                }
                 this.objects.add(tros);
             }
             
@@ -432,6 +439,11 @@ public class SimSettings {
                 }
                 
                 TrObjectWithWaypoints trObjWithWP = new TrObjectWithWaypoints(speed, features, waypoints);
+                for (TrObjectWithWaypoints current : objectsWithWaypoints) {
+                	if (current.features.equals(trObjWithWP.features)) {
+                		throw new IllegalStateException("Two objects with same features added");
+                	}
+                }
                 this.objectsWithWaypoints.add(trObjWithWP);
             }
             
@@ -573,11 +585,14 @@ public class SimSettings {
             return true;
 
             
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
-            return false;
-        }
-
+        } catch (ParserConfigurationException pce) {
+        	pce.printStackTrace();
+        } catch (SAXException se) {
+        	se.printStackTrace();
+        } 
+        return false;
     }
 
     private String getTagValue(String sTag, Element eElement) {
