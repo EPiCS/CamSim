@@ -34,24 +34,24 @@ import epics.common.ITrObjectRepresentation;
 public class HistoricalAINode {
 
 	/** Whether to display debug msgs about historical positions/bidding */
-    private static boolean DEBUG_HIST = true;
+    private static boolean DEBUG_HIST = false;
     public static final String KEY_DEBUG_HIST = "DebugHist";
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
 	 * cannot calculate the bid coefficient. This is the default in that case. */
 	public static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 4.0;
 	public static final String KEY_PRE_INSTANTIATION_BID_COEFFICIENT = "PreInstantiationBidCoefficient";
-	private double preInstantiationBidCoefficient;
+	private double preInstantiationBidCoefficient = DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT;
 	
 	/** If the avgTS is 5 but an object is still around after 10 TS, the bid
 	 * coefficient is not calculable by the standard formula, so use this default */
     public static final double DEFAULT_OVERSTAY_BID_COEFFICIENT = 8.0;
 	public static final String KEY_OVERSTAY_BID_COEFFICIENT = "OverstayBidCoefficient"; 
-    private double overstayBidCoefficient;
+    private double overstayBidCoefficient = DEFAULT_OVERSTAY_BID_COEFFICIENT;
 	
-    public static final boolean DEFAULT_CLASSIFICATION_ENABLED = false;
+    public static final boolean DEFAULT_CLASSIFICATION_ENABLED = true;
 	public static final String KEY_CLASSIFICATION_ENABLED = "ClassificationEnabled"; 
-    private boolean classificationEnabled;
+    private boolean classificationEnabled = DEFAULT_CLASSIFICATION_ENABLED;
 	
     /** 
      * Classification must be enabled for this to have effect.
@@ -64,6 +64,15 @@ public class HistoricalAINode {
     public static final int DEFAULT_OBJ_CATEGORIES = 4;
     public static final String KEY_OBJ_CATEGORIES = "ObjectCategories";
     public int objCategories = DEFAULT_OBJ_CATEGORIES;
+	
+    /** Whether history is taken on a per-category basis for each camera 
+     * (rather than a per-camera basis). This means, for example, that we 
+     * keep separate values for average number of time steps for objects 
+     * depending on the category the object is in. 
+     * Note that classification must be enabled for this feature to work */
+    public static final boolean DEFAULT_HIST_PER_CATEGORY = true;
+	public static final String KEY_HIST_PER_CATEGORY_ENABLED = "HistPerCategoryEnabled"; 
+    private boolean histPerCategoryEnabled = DEFAULT_HIST_PER_CATEGORY;
     
 	public static class Active extends ActiveAINodeMulti {
 		private HistoricalAINode histNode;
@@ -71,17 +80,8 @@ public class HistoricalAINode {
 		// Overriding AbstractAINode's constructor
 	    public Active(int comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r){
-	    	this(comm, staticVG, vg, r, 
-	    			DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT,
-	    			DEFAULT_OVERSTAY_BID_COEFFICIENT); // Goes through to instantiateAINode()
-	    }
-	    
-	    public Active(int comm, boolean staticVG, 
-	    		Map<String, Double> vg, IRegistration r,
-	    		double preInstantiationBidCoefficient, double overstayBidCoefficient){
 	    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
-	    	histNode = new HistoricalAINode(
-	    			preInstantiationBidCoefficient, overstayBidCoefficient);
+	    	histNode = new HistoricalAINode();
 	    }
 
 	    @Override
@@ -93,9 +93,9 @@ public class HistoricalAINode {
 		
 		@Override
 		/** The bid for an object. Not the same as 'confidence' */
-		public double calculateValue(ITrObjectRepresentation target) {
-			double superValue = super.calculateValue(target);
-			return histNode.calculateValue(target, superValue);
+		public double calculateValue(ITrObjectRepresentation itro) {
+			double superValue = super.calculateValue(itro);
+			return histNode.calculateValue(itro, superValue);
 		}
 		
 		@Override
@@ -175,19 +175,10 @@ public class HistoricalAINode {
 		// Overriding AbstractAINode's constructor
 	    public Passive(int comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r){
-	    	this(comm, staticVG, vg, r,
-	    			DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT,
-	    			DEFAULT_OVERSTAY_BID_COEFFICIENT); // Goes through to instantiateAINode()
+	    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+	    	histNode = new HistoricalAINode();
 	    }
 	    
-	    public Passive(int comm, boolean staticVG, 
-	    		Map<String, Double> vg, IRegistration r,
-	    		double preInstantiationBidCoefficient, double overstayBidCoefficient){
-	    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
-	    	histNode = new HistoricalAINode(
-	    			preInstantiationBidCoefficient, overstayBidCoefficient);
-	    }
-
 	    @Override
 	    public void update() {
 	    	// Store current point and get rid of an old one if necessary
@@ -197,9 +188,9 @@ public class HistoricalAINode {
 		
 		@Override
 		/** The bid for an object. Not the same as 'confidence' */
-		public double calculateValue(ITrObjectRepresentation target) {
-			double superValue = super.calculateValue(target);
-			return histNode.calculateValue(target, superValue);
+		public double calculateValue(ITrObjectRepresentation itro) {
+			double superValue = super.calculateValue(itro);
+			return histNode.calculateValue(itro, superValue);
 		}
 		
 		@Override
@@ -282,13 +273,16 @@ public class HistoricalAINode {
 	/** How many objects have left our FOV (avg = totalTSVisible/tsVisibleCounter) */
 	private int tsVisibleCounter = 0;
 
+	/** How many timesteps in total for which objects in this category are 
+	 * visible (divide by counter for avg) */
+	private HashMap<Integer, Double> totalTSVisibleForCat = new HashMap<Integer, Double>();
+	/** How many objects in this cat have left our FOV 
+	 * (avg = totalTSVisible/tsVisibleCounter) */
+	private HashMap<Integer, Integer> tsVisibleCounterForCat = new HashMap<Integer, Integer>();
+	
 	private Map<String, Map<Integer, Double>> visionGraph = new HashMap<String, Map<Integer, Double>>();
 	
-	public HistoricalAINode(double preInstantiationBidCoefficient, 
-			double overstayBidCoefficient) {
-		this.preInstantiationBidCoefficient = preInstantiationBidCoefficient;
-		this.overstayBidCoefficient = overstayBidCoefficient;
-	}
+	public HistoricalAINode() { /* Nothing here */ }
 	
 	/** Store the current point for each visible object. This allows
 	 *  bids to be made later based on where the point has been. 
@@ -300,7 +294,7 @@ public class HistoricalAINode {
 			TraceableObject object = tor.getTraceableObject();
 			LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 
-			// If new object
+			// If new object, start tracking its co-ordinates
 			if (pointsForObject == null) {
 				pointsForObject = new LinkedList<Point2D.Double>();
 				historicalLocations.put(itro, pointsForObject);
@@ -312,9 +306,9 @@ public class HistoricalAINode {
 			if (DEBUG_HIST) {
 				System.out.println("\tPoints for object "+tor.getFeatures()+" are: ");
 				for (Point2D.Double curPoint : pointsForObject) {
-					System.out.println("\t\t"+curPoint);
+					System.out.printf("\t\t[%.3f, %.3f]\n",curPoint.x,curPoint.y);
 				}
-				System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
+				//System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
 				
 				getCategoryForObject(itro);
 			}
@@ -327,26 +321,81 @@ public class HistoricalAINode {
 			if (! camController.getVisibleObjects_bb().containsKey(itro)) {
 				// Object disappeared. Grab visible timesteps
 				int visibleTS = historicalLocations.get(itro).size();
+				
+				// Totals for cam overall
 				this.totalTSVisible += visibleTS;
 				this.tsVisibleCounter++;
-				iter.remove(); // Object is accounted for and not in view any more
 				
+				// Totals for category
+				if (histPerCategoryEnabled) {
+					int category = getCategoryForObject(itro);
+					Double curTSVisibleForCat = this.totalTSVisibleForCat.get(category);
+					if (curTSVisibleForCat == null) {
+						curTSVisibleForCat = 0.0;
+					}
+					curTSVisibleForCat += visibleTS;
+					this.totalTSVisibleForCat.put(category, curTSVisibleForCat);
+
+					Integer curTSVisibleCounterForCat = tsVisibleCounterForCat.get(category);
+					if (curTSVisibleCounterForCat == null) {
+						curTSVisibleCounterForCat = 0;
+					}
+					curTSVisibleCounterForCat++;
+					this.tsVisibleCounterForCat.put(category, curTSVisibleCounterForCat);
+					
+					if (DEBUG_HIST) {
+						System.out.println("\tTS visible for cat "+category+": "+curTSVisibleForCat+
+								" and current avg for cat: "+getAvgVisibleTSForCat(category));
+					}
+				} else {
+					if (DEBUG_HIST) {
+						System.out.println("\tTS visible: "+visibleTS+" and current avg: "+getAvgVisibleTS()
+								+" ("+tsVisibleCounter+" objects seen so far)");
+					}					
+				}
 				if (DEBUG_HIST) {
 					System.out.println("\tObject "+itro.getFeatures()+" lost by "+camController.getName()+". ");
-					System.out.println("\tTS visible: "+visibleTS+" and current avg: "+getAvgVisibleTS()
-							+" ("+tsVisibleCounter+" objects seen so far)");
 				}
+				
+				iter.remove(); // Object is accounted for and not in view any more
 			}
 		}
 	}
 
 	/** The average number of timesteps objects remain 
-	 * visible for in this camera */
+	 * visible for in this camera
+	 * If no objects have been seen, returns null. */
 	private Double getAvgVisibleTS() {
 		Double avg = totalTSVisible/tsVisibleCounter;
 		return Double.isNaN(avg) ? null : avg;
 	}
 	
+	/** The average number of timesteps for which objects in this category 
+	 * have remained visible in this camera.
+	 * If no objects have been seen in this category, returns null. */
+	private Double getAvgVisibleTSForCat(int category) {
+		if (! this.histPerCategoryEnabled){
+			throw new IllegalStateException("Trying to get avgVisibleTSForCat " +
+					"without enabling the histPerCategory feature");
+		}
+		Double curTSVisibleForCat = this.totalTSVisibleForCat.get(category);
+		Integer curTSVisibleCounterForCat = tsVisibleCounterForCat.get(category);
+		if (curTSVisibleForCat == null || curTSVisibleCounterForCat == null) {
+			return null;
+		}
+
+		Double avg = curTSVisibleForCat/curTSVisibleCounterForCat;
+		return Double.isNaN(avg) ? null : avg;
+	}
+	
+	/** Convenience method for {@link this#getAvgVisibleTSForCat(int)} 
+	 * which retrieves the category from the ITRO. */
+	private Double getAvgVisibleTSForObject(ITrObjectRepresentation itro) {
+		int cat = this.getCategoryForObject(itro);
+		return getAvgVisibleTSForCat(cat);
+	}
+	
+	@SuppressWarnings("unused")
 	private Double getQuantityOfMovement(ITrObjectRepresentation itro) {
 		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 		double totalDistance = 0;
@@ -368,17 +417,22 @@ public class HistoricalAINode {
 	/** The bid for an object. Not the same as 'confidence'.
 	 * @param superValue The value obtained from the base node's 
 	 * 					 parent class when calling calculateValue() */
-	public double calculateValue(ITrObjectRepresentation target, double superValue) {
+	public double calculateValue(ITrObjectRepresentation itro, double superValue) {
 		// Formula is bid = (avgTS-TSsoFar) * confidence
 		// where avgTS is the average timesteps an object is present for
 		// and TSsoFar is how many timesteps this object has been in view for
-		Double avgTS = this.getAvgVisibleTS();
+		Double avgTS = null;
+		if (histPerCategoryEnabled) {
+			avgTS = this.getAvgVisibleTSForObject(itro);
+		} else {
+			avgTS = this.getAvgVisibleTS();
+		}
 		double bidCoefficient;
-		if (avgTS == null || historicalLocations.get(target) == null) {
+		if (avgTS == null || historicalLocations.get(itro) == null) {
 			// Null means we haven't seen an object leave yet, default to this
 			bidCoefficient = this.preInstantiationBidCoefficient;
 		} else {
-			double tsSoFar = historicalLocations.get(target).size();
+			double tsSoFar = historicalLocations.get(itro).size();
 			double diff = avgTS-tsSoFar;
 			if (diff > 0) {
 				bidCoefficient = diff;
@@ -395,8 +449,8 @@ public class HistoricalAINode {
 	 * categorise based on the object's direction.
 	 * See information around the categories field for information on what
 	 * each category means.  */
-	public int getCategoryForObject(ITrObjectRepresentation obj) {
-		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(obj);
+	public int getCategoryForObject(ITrObjectRepresentation itro) {
+		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 
 		// If new object
 		if (pointsForObject == null || pointsForObject.size() < 2) {
@@ -423,7 +477,10 @@ public class HistoricalAINode {
 					" was computed as: "+category);
 		}
 		
-		System.out.println("Heading for object: "+heading+", category: "+category);
+		if (DEBUG_HIST) {
+			System.out.printf("Heading for object %s: %.2f, category: %d\n",
+					itro.getFeatures(),heading,category);
+		}
 		return category;
 	}
 	
@@ -472,6 +529,14 @@ public class HistoricalAINode {
 			objCategories = Integer.parseInt(value);
 			System.out.println("ObjectCategories set to: "+objCategories);
 			return true;
+		} else if (KEY_HIST_PER_CATEGORY_ENABLED.equalsIgnoreCase(key)) {
+			histPerCategoryEnabled = Boolean.parseBoolean(value);
+			if (histPerCategoryEnabled && ! classificationEnabled) {
+				throw new IllegalArgumentException("Cannot enable histPerCategory " +
+						"without first setting classificationEnabled to true");
+			}
+			System.out.println("HistPerCategoryEnabled set to: "+histPerCategoryEnabled);
+			return true;
 		} else {
 			System.err.println("Didn't recognise key: "+key);
 			return false;
@@ -481,6 +546,12 @@ public class HistoricalAINode {
 	/** Returns whether object classification is enabled for this AI node */
 	public boolean classificationEnabled() {
 		return classificationEnabled;
+	}
+	
+	/** Returns whether history is recorded on a per-category basis for each
+	 * camera (rather than on a per-camera basis). */
+	public boolean histPerCategoryEnabled() {
+		return histPerCategoryEnabled;
 	}
 	
 	/** Since we have separate pheromones for each category, the best we can do is 

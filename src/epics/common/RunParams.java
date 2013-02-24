@@ -74,7 +74,8 @@ public class RunParams {
     }
 
     /** Returns set of entries with type 'Object, Object', but keys  
-     * should be cast to Strings and values to their appropriate type */
+     * should be cast to Strings and values to their appropriate type.
+     * Order not guaranteed! */
     public static Set<Entry<Object, Object>> getAllProperties() {
     	return getInstance().prop.entrySet();
     }
