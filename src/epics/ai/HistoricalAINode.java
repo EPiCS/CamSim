@@ -39,13 +39,13 @@ public class HistoricalAINode {
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
 	 * cannot calculate the bid coefficient. This is the default in that case. */
-	public static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 4.0;
+	public static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 20.0;
 	public static final String KEY_PRE_INSTANTIATION_BID_COEFFICIENT = "PreInstantiationBidCoefficient";
 	private double preInstantiationBidCoefficient = DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT;
 	
 	/** If the avgTS is 5 but an object is still around after 10 TS, the bid
 	 * coefficient is not calculable by the standard formula, so use this default */
-    public static final double DEFAULT_OVERSTAY_BID_COEFFICIENT = 8.0;
+    public static final double DEFAULT_OVERSTAY_BID_COEFFICIENT = 0.0;
 	public static final String KEY_OVERSTAY_BID_COEFFICIENT = "OverstayBidCoefficient"; 
     private double overstayBidCoefficient = DEFAULT_OVERSTAY_BID_COEFFICIENT;
 	
@@ -72,8 +72,13 @@ public class HistoricalAINode {
      * Note that classification must be enabled for this feature to work */
     public static final boolean DEFAULT_HIST_PER_CATEGORY = true;
 	public static final String KEY_HIST_PER_CATEGORY_ENABLED = "HistPerCategoryEnabled"; 
-    private boolean histPerCategoryEnabled = DEFAULT_HIST_PER_CATEGORY;
-    
+	private boolean histPerCategoryEnabled = DEFAULT_HIST_PER_CATEGORY;
+	
+	/** Whether hist-based bidding is used */ 
+    public static final boolean DEFAULT_HIST_ENABLED = true; 
+	public static final String KEY_HIST_ENABLED = "HistEnabled"; 
+	private boolean histEnabled = DEFAULT_HIST_ENABLED;
+	    
 	public static class Active extends ActiveAINodeMulti {
 		private HistoricalAINode histNode;
 		
@@ -442,7 +447,11 @@ public class HistoricalAINode {
 			}
 		}
 		
-		return superValue * bidCoefficient;
+		if (histEnabled) {
+			return superValue * bidCoefficient;
+		} else {
+			return superValue;
+		}
 	}
 	
 	/** Given an object, look at first two time steps of movement and 
@@ -536,6 +545,10 @@ public class HistoricalAINode {
 						"without first setting classificationEnabled to true");
 			}
 			System.out.println("HistPerCategoryEnabled set to: "+histPerCategoryEnabled);
+			return true;
+		} else if (KEY_HIST_ENABLED.equalsIgnoreCase(key)) {
+			histEnabled = Boolean.parseBoolean(value);
+			System.out.println("HistEnabled set to: "+histEnabled);
 			return true;
 		} else {
 			System.err.println("Didn't recognise key: "+key);
