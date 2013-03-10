@@ -34,7 +34,7 @@ import epics.common.ITrObjectRepresentation;
 public class HistoricalAINode {
 
 	/** Whether to display debug msgs about historical positions/bidding */
-    private static boolean DEBUG_HIST = false;
+    private static boolean DEBUG_HIST = true;
     public static final String KEY_DEBUG_HIST = "DebugHist";
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
@@ -112,7 +112,7 @@ public class HistoricalAINode {
 		
 		@Override
 		public Map<String, Double> getDrawableVisionGraph() {
-			if (histNode.classificationEnabled) {
+			if (histNode.classificationEnabled()) {
 				return histNode.getDrawableVisionGraph();
 			} else {
 				return super.getDrawableVisionGraph();
@@ -121,7 +121,7 @@ public class HistoricalAINode {
 		
 	    @Override
 	    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgContainsKey(camName, itro);	
 			} else {
 				return super.vgContainsKey(camName, itro);
@@ -130,7 +130,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgGetValues(itro);
 	    	} else {
 	    		return super.vgGetValues(itro);
@@ -139,7 +139,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public Set<String> vgGetCamSet() {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgGetCamSet();
 	    	} else {
 	    		return super.vgGetCamSet();
@@ -148,7 +148,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public Double vgGet(String camName, ITrObjectRepresentation itro) {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgGet(camName, itro);
 	    	} else {
 	    		return super.vgGet(camName, itro);
@@ -157,7 +157,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		histNode.strengthenVisionEdge(destinationName, itro);
 	    	} else {
 	    		super.strengthenVisionEdge(destinationName, itro);
@@ -166,7 +166,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public void updateVisionGraph() {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		histNode.updateVisionGraph(EVAPORATIONRATE);
 	    	} else {
 	    		super.updateVisionGraph();
@@ -207,7 +207,7 @@ public class HistoricalAINode {
 		
 		@Override
 		public Map<String, Double> getDrawableVisionGraph() {
-			if (histNode.classificationEnabled) {
+			if (histNode.classificationEnabled()) {
 				return histNode.getDrawableVisionGraph();
 			} else {
 				return super.getDrawableVisionGraph();
@@ -216,7 +216,7 @@ public class HistoricalAINode {
 		
 	    @Override
 	    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgContainsKey(camName, itro);	
 			} else {
 				return super.vgContainsKey(camName, itro);
@@ -225,7 +225,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgGetValues(itro);
 	    	} else {
 	    		return super.vgGetValues(itro);
@@ -234,7 +234,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public Set<String> vgGetCamSet() {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgGetCamSet();
 	    	} else {
 	    		return super.vgGetCamSet();
@@ -243,7 +243,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public Double vgGet(String camName, ITrObjectRepresentation itro) {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		return histNode.vgGet(camName, itro);
 	    	} else {
 	    		return super.vgGet(camName, itro);
@@ -252,7 +252,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		histNode.strengthenVisionEdge(destinationName, itro);
 	    	} else {
 	    		super.strengthenVisionEdge(destinationName, itro);
@@ -261,7 +261,7 @@ public class HistoricalAINode {
 	    
 	    @Override
 	    public void updateVisionGraph() {
-	    	if (histNode.classificationEnabled) {
+	    	if (histNode.classificationEnabled()) {
 	    		histNode.updateVisionGraph(EVAPORATIONRATE);
 	    	} else {
 	    		super.updateVisionGraph();
@@ -272,6 +272,15 @@ public class HistoricalAINode {
 	/** Where this object has been over the last few timesteps */
     private Map<ITrObjectRepresentation, LinkedList<Point2D.Double>> historicalLocations = 
     		new HashMap<ITrObjectRepresentation, LinkedList<Point2D.Double>>();
+    
+    /** If we lose an object, we erase its historicalLocation, which means we forget
+     * its trajectory when it comes to handing over. Thus we have no way of knowing
+     * which category of pheromone to strengthen when we hand over to another camera.
+     * This map holds the last remembered category for the object as it left the
+     * scene, but should be erased once handover is done, or the object reappears. */
+    private Map<ITrObjectRepresentation, Integer> lastSeenCategoryForObj = 
+    		new HashMap<ITrObjectRepresentation, Integer>();
+    
     
 	/** How many timesteps in total objects are visible for (divide by counter for avg) */
 	private double totalTSVisible = 0;
@@ -303,6 +312,9 @@ public class HistoricalAINode {
 			if (pointsForObject == null) {
 				pointsForObject = new LinkedList<Point2D.Double>();
 				historicalLocations.put(itro, pointsForObject);
+				
+				// Object has reappeared so no need for this entry
+				lastSeenCategoryForObj.remove(itro); 
 			}
 
 			Point2D.Double point = new Point2D.Double(object.getX(), object.getY());
@@ -331,9 +343,10 @@ public class HistoricalAINode {
 				this.totalTSVisible += visibleTS;
 				this.tsVisibleCounter++;
 				
+				int category = 0;
 				// Totals for category
-				if (histPerCategoryEnabled) {
-					int category = getCategoryForObject(itro);
+				if (histPerCategoryEnabled &&
+						(category = getCategoryForObject(itro)) != 0) {
 					Double curTSVisibleForCat = this.totalTSVisibleForCat.get(category);
 					if (curTSVisibleForCat == null) {
 						curTSVisibleForCat = 0.0;
@@ -363,6 +376,12 @@ public class HistoricalAINode {
 				}
 				
 				iter.remove(); // Object is accounted for and not in view any more
+				if (category != 0) {
+					// We remove the object's points but remember its category so that
+					// when we hand over we know which category to strengthen the 
+					// pheromone for
+					lastSeenCategoryForObj.put(itro, category);
+				}
 			}
 		}
 	}
@@ -427,7 +446,7 @@ public class HistoricalAINode {
 		// where avgTS is the average timesteps an object is present for
 		// and TSsoFar is how many timesteps this object has been in view for
 		Double avgTS = null;
-		if (histPerCategoryEnabled) {
+		if (histEnabled() && classificationEnabled() && histPerCategoryEnabled()) {
 			avgTS = this.getAvgVisibleTSForObject(itro);
 		} else {
 			avgTS = this.getAvgVisibleTS();
@@ -461,8 +480,15 @@ public class HistoricalAINode {
 	public int getCategoryForObject(ITrObjectRepresentation itro) {
 		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 
-		// If new object
-		if (pointsForObject == null || pointsForObject.size() < 2) {
+		// If object is new or was lost
+		if (pointsForObject == null) {
+			if (lastSeenCategoryForObj.containsKey(itro)) {
+				return lastSeenCategoryForObj.get(itro);
+			} else {
+				// No idea
+				return 0;
+			}
+		} else if (pointsForObject.size() < 2) {
 			return 0;
 		}
 
@@ -533,6 +559,9 @@ public class HistoricalAINode {
 		} else if (KEY_CLASSIFICATION_ENABLED.equalsIgnoreCase(key)) {
 			classificationEnabled = Boolean.parseBoolean(value);
 			System.out.println("ClassificationEnabled set to: "+classificationEnabled);
+			if (! classificationEnabled) {
+				histPerCategoryEnabled = false;
+			}
 			return true;
 		} else if (KEY_OBJ_CATEGORIES.equalsIgnoreCase(key)) {
 			objCategories = Integer.parseInt(value);
@@ -565,6 +594,11 @@ public class HistoricalAINode {
 	 * camera (rather than on a per-camera basis). */
 	public boolean histPerCategoryEnabled() {
 		return histPerCategoryEnabled;
+	}
+	
+	/** Returns whether history of objects is recorded by cameras. */
+	public boolean histEnabled() {
+		return histEnabled;
 	}
 	
 	/** Since we have separate pheromones for each category, the best we can do is 
@@ -600,8 +634,9 @@ public class HistoricalAINode {
     /** Whether the vision graph has previously entered a value for this 
      * camera-object pair (in reality, the object's category rather than the object) */
     public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
+    	int category = getCategoryForObject(itro);
     	return getVisionGraph().containsKey(camName) && 
-    			getVisionGraph().get(camName).containsKey(itro);
+    			getVisionGraph().get(camName).containsKey(category);
     }
     
     /** Get all pheromone values for this object, for all cameras (in reality, 
@@ -610,10 +645,15 @@ public class HistoricalAINode {
      * sense otherwise (since one object category can exist in the map under 
      * multiple cameras) */
     public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
+    	int category = getCategoryForObject(itro);
+	
     	ArrayList<Double> allValuesForItro = new ArrayList<Double>();
+    	if (category == 0) {
+    		return allValuesForItro;
+    	}
     	for (Map<Integer, Double> map : getVisionGraph().values()) {
-    		for (Double value : map.values()) {
-    			allValuesForItro.add(value);
+    		if (map.containsKey(category)) {
+    			allValuesForItro.add(map.get(category));
     		}
     	}
     	return allValuesForItro;
@@ -628,7 +668,8 @@ public class HistoricalAINode {
      * the object's category rather than the object) */
     public Double vgGet(String camName, ITrObjectRepresentation itro) {
     	if (getVisionGraph().get(camName) != null) {
-    		return getVisionGraph().get(camName).get(itro);
+    		int category = getCategoryForObject(itro);
+    		return getVisionGraph().get(camName).get(category);
     	} else {
     		return null;
     	}
@@ -672,6 +713,10 @@ public class HistoricalAINode {
      * the object's category rather than the object iself). */
     public Double vgPut(String camName, ITrObjectRepresentation itro, Double value) {
     	int category = getCategoryForObject(itro);
+    	if (category == 0) {
+    		// No category
+    		return null;
+    	}
     	Map<Integer, Double> catToVal = getVisionGraph().get(camName);
     	if (catToVal == null) {
     		catToVal = new HashMap<Integer, Double>();
