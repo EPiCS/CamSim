@@ -118,12 +118,13 @@ STARTTIME=$SECONDS
 STARTDATE=$(date)
 echo "Started at $STARTDATE"
 
-ALL_SUMMARIES="./logs/current/summaries"
+BASEDIR="./logs/histclass"
+ALL_SUMMARIES="$BASEDIR/summaries"
 if [ ! -d $ALL_SUMMARIES ]; then
     mkdir $ALL_SUMMARIES
 fi
 
-DIRS=`find ./logs/current -mindepth 1 -maxdepth 1 -type d -name "scenario*"`
+DIRS=`find $BASEDIR -mindepth 1 -maxdepth 1 -type d -name "scenario*"`
 for BASELOGDIR in $DIRS
 do
     echo "Summarising $BASELOGDIR"
@@ -155,5 +156,5 @@ do
     echo "Finished at "$(date)
 done
 
-echo "Done in "$(($SECONDS-$SUMMARY_STARTTIME))" seconds"
+echo "Done in "$((SECONDS-SUMMARY_STARTTIME))" seconds"
 

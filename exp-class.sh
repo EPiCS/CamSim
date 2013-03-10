@@ -2,7 +2,7 @@
 STARTTIME=$SECONDS
 COUNT=0
 PARAM_FILE="ExperimentParams.properties"
-BASELOGDIR="./logs/current/histclass"
+BASELOGDIR="./logs/histclass"
 
 ScenarioFiles=`ls scenarios/scenario[789]*`
 PreInstantiationBidCoefficient=`seq 0.0 20.0 20.0`
@@ -53,6 +53,10 @@ function checkFileExists {
 	    exit
     fi
 }
+
+if [ ! -d $BASELOGDIR ]; then
+    mkdir $BASELOGDIR
+fi
 
 # To make the format of the files clear
 touch $BASELOGDIR"/PreInst-OverStay"
