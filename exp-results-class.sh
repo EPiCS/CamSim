@@ -156,5 +156,15 @@ do
     echo "Finished at "$(date)
 done
 
+
+if [ ! -z $HEADER ]; then
+    echo $HEADER >> $ALL_SUMMARIES/AllResults.csv
+fi
+SUMFILES=`find $ALL_SUMMARIES -mindepth 1 -maxdepth 1 -type f -name "*.csv"`
+for SUMFILE in $SUMFILES
+do
+    cat $SUMFILE | grep -v Scenario >> $ALL_SUMMARIES/AllResults.csv
+done
+
 echo "Done in "$((SECONDS-SUMMARY_STARTTIME))" seconds"
 

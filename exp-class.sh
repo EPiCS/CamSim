@@ -12,6 +12,8 @@ CommTypes=`seq 0 1 2` # Broadcast, smooth, step
 Hists="true false"
 Classes="true false"
 
+ObjCategories=2
+
 date
 
 echo "Looping through ScenarioFiles: $ScenarioFiles"
@@ -32,7 +34,7 @@ function writeParamFile {
     echo "ClassificationEnabled=$4" >> $PARAM_FILE
     echo "HistPerCategoryEnabled=true" >> $PARAM_FILE
 
-    echo "ObjectCategories=2" >> $PARAM_FILE
+    echo "ObjectCategories=$ObjCategories" >> $PARAM_FILE
     echo "DebugHist=false" >> $PARAM_FILE
 }
 
