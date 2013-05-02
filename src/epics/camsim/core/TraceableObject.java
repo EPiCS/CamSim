@@ -23,6 +23,8 @@ public class TraceableObject{
     private double heading; // radians ( 0 is north, PI/2 is east )
     private double speed; // meters per second
 
+	private RandomNumberGenerator randomGen;
+
     /**
      * Constructor
      * @param id Unique identifier for an object, that is how object
@@ -32,19 +34,20 @@ public class TraceableObject{
      * @param heading Object heading, 0 is north, PI/2 is east )
      * @param speed
      */
-    public TraceableObject( double id, SimCore sim, double x, double y, double heading, double speed ){
+    public TraceableObject( double id, SimCore sim, double x, double y, double heading, double speed, RandomNumberGenerator rg ){
         this.sim = sim;
         this.x = x;
         this.y = y;
         this.heading = heading;
         this.speed = speed;
         this.features.add(id);
+        this.randomGen = rg;
     }
     
     private List<Point2D> waypoints;
     private int currentWaypoint = 0;
 
-    public TraceableObject( double id, SimCore sim, double speed, List<Point2D> waypoints ){
+    public TraceableObject( double id, SimCore sim, double speed, List<Point2D> waypoints, RandomNumberGenerator rg){
         assert( waypoints.size() >= 2 );
         this.sim = sim;
         this.features.add(id);
@@ -53,6 +56,7 @@ public class TraceableObject{
         this.x = waypoints.get(0).getX();
         this.y = waypoints.get(0).getY();
         this.currentWaypoint = 1;
+        this.randomGen = rg;
     }
 
     void update() {
@@ -127,7 +131,7 @@ public class TraceableObject{
     /** Gets an angle to turn around by with some partial added randomness */
     public double getTurnaroundAngle() {
     	// Turn around 180 degrees, add a bit of angle for randomness
-    	return Math.PI + RandomNumberGenerator.nextDouble(RandomUse.USE.TURN) * Math.PI / 6.0;
+    	return Math.PI + randomGen.nextDouble(RandomUse.USE.TURN) * Math.PI / 6.0;
     }
     
     /*

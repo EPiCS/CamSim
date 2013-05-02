@@ -4,21 +4,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
+import epics.common.IBanditSolver;
 import epics.common.ICameraController;
 import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
+import epics.common.RandomNumberGenerator;
 
 public class PassiveAINodeMulti extends ActiveAINodeMulti {
 
 	private static final int DEFAULT_AUCTION_DURATION = 0;
 	
-	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
-    	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION); // Goes through to instantiateAINode()
+	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+    	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION, rg); // Goes through to instantiateAINode()    	
+    }
+	
+	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
+    	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION, rg, bs); // Goes through to instantiateAINode()    	
     }
 
+	public PassiveAINodeMulti(AbstractAINode ai){
+		super(ai);
+	}
+	
 	/**
     @Override
     protected Object handle_startTracking(String from,
@@ -72,6 +83,10 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 	
     @Override
     public void update() {
+    	sentMessages = 0;
+    	_nrBids = 0;
+    	_receivedUtility = 0.0;
+    	_paidUtility = 0.0;
     	if(DECLINE_VISION_GRAPH)
     		this.updateVisionGraph();
     	
@@ -126,12 +141,18 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
         
         printBiddings();
         
+        for (Map.Entry<ITrObjectRepresentation, Map<ICameraController, Double>> bids : biddings.entrySet()) {
+			_nrBids += bids.getValue().size();
+		}
+        
         checkBidsForObjects();       
         
         updateReservedResources();
         
         if(USE_BROADCAST_AS_FAILSAVE)
         	updateBroadcastCountdown();	
+        
+        updateTotalUtilComm();
     }
 
     protected void checkBidsForObjects() {
@@ -146,8 +167,9 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
                     	 if((AUCTION_DURATION <= 0) || (runningAuction.containsKey(entry.getKey()) && (runningAuction.get(entry.getKey()) <= 0))){
 	                         ITrObjectRepresentation tor = entry.getKey();
 	                         double highest = 0;
-	
+	                         double secondHighest = 0;
 	                         highest = this.getConfidence(entry.getKey());
+	                         secondHighest = highest;
 	                         ICameraController giveTo = null;
 	
 	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
@@ -162,6 +184,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 		                                     }
 		                                 }
 		                                 if (e.getValue() > highest) {
+		                                	 secondHighest = highest;
 		                                     highest = e.getValue();
 		                                     giveTo = e.getKey();
 		                                 }
@@ -173,7 +196,9 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 	                             delete.add(tor);
 	                             
 	                             if (giveTo.getName().equals(this.camController.getName())) {
+	                            	 tor.setPrice(secondHighest);
 	                                 this.startTracking(tor);
+	                                 _receivedUtility += secondHighest;
 	                                 sendMessage(MessageType.StopSearch, tor);
 	                                 stepsTillBroadcast.remove(tor);
 	                                 
@@ -185,8 +210,9 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 	//                                 }
 	                                 
 	                             } else {
-	                            	 IMessage reply = this.camController.sendMessage(giveTo.getName(), MessageType.StartTracking, tor);
-	                            	 
+	                            	 tor.setPrice(secondHighest);
+	                                 IMessage reply = this.camController.sendMessage(giveTo.getName(), MessageType.StartTracking, tor);
+	                                 _receivedUtility += secondHighest;
 	                                 if(reply != null){
 	                                	 delete.remove(tor);
 	                                	 this.getBiddingsFor(tor).remove(giveTo);
@@ -249,9 +275,19 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 	                conf = this.getConfidence(io);
 	                lastConf = this.getLastConfidenceFor(io);
             	}
-                if (conf < 0.1 && conf < lastConf) {               	
-                	callForHelp(io, 2);	
-                }
+            	
+            	if(this.camController.realObjectsUsed()){
+	            	if(this.camController.objectIsVisible(io) == 1){
+	            		callForHelp(io, 2);	
+	            	}
+            	}
+            	else{
+            		if(this.camController.objectIsVisible(io) == -1){
+		                if (conf < 0.1 && conf < lastConf) {               	
+		                	callForHelp(io, 2);	
+		                }
+            		}
+            	}
                 this.addLastConfidence(io, conf);
             }
         }

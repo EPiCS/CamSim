@@ -252,7 +252,7 @@ public class Main {
 	        }
         }
         
-        SimCore sim = new SimCore(seed, output_file, summaryFile, ss, useGlobal, camErr, camReset, trackErr);
+        SimCore sim = new SimCore(seed, output_file, summaryFile, ss, useGlobal, camErr, camReset, trackErr, false, true);
         if (showgui == false) {
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();

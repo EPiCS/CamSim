@@ -9,5 +9,6 @@ import java.util.List;
 public interface ITrObjectRepresentation {
 
     public List<Double> getFeatures();
-
+    public void setPrice(double price);
+    public double getPrice();
 }

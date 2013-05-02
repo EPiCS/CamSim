@@ -6,6 +6,7 @@ public class RandomUse {
 		FALSEOBJ,
 		TURN,
 		COMM,
-		ERROR
+		ERROR,
+		BANDIT
 	}
 }

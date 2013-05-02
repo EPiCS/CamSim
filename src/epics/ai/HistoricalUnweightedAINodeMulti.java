@@ -11,6 +11,7 @@ import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
+import epics.common.RandomNumberGenerator;
 
 public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	
@@ -34,8 +35,8 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 	 * coefficient is not calculable by the standard formula, so use this default */
     private final double OVERSTAY_DEFAULT_BID_COEFFICIENT = 2.0;
 	
-    public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r){
-    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    public HistoricalUnweightedAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+    	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
     }
 
     @Override

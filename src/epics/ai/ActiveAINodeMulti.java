@@ -9,6 +9,7 @@ import java.util.Map;
 import epics.camsim.core.Bid;
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
+import epics.common.IBanditSolver;
 import epics.common.IBid;
 import epics.common.ICameraController;
 import epics.common.IMessage;
@@ -35,7 +36,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	public static final boolean DECLINE_VISION_GRAPH = true;
     //protected static boolean USE_MULTICAST_STEP = false;
     //protected static boolean MULTICAST_SMOOTH = true;
-	public static int COMMUNICATION = 0;
+	private int communication;
     
 	public static final int STEPS_TILL_BROADCAST = 5;
 	public static boolean USE_BROADCAST_AS_FAILSAVE = false;
@@ -47,20 +48,41 @@ public class ActiveAINodeMulti extends AbstractAINode {
     IRegistration reg;
     
     public ActiveAINodeMulti(int comm, boolean staticVG, 
-    		Map<String, Double> vg, IRegistration r) {
-    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
+    	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
+    	communication = comm;
     	AUCTION_DURATION = 0;
     }
     
     public ActiveAINodeMulti(int comm, boolean staticVG, 
-    		Map<String, Double> vg, IRegistration r, int auctionDuration) {
-    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
+    	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
+    	communication = comm;
     	AUCTION_DURATION = auctionDuration;
+    }
+    
+    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+    	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
+    	communication = comm;
+    	AUCTION_DURATION = 0;
+    }
+    
+    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+    	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
+    	communication = comm;
+    	AUCTION_DURATION = auctionDuration;
+    }
+    
+    public ActiveAINodeMulti(AbstractAINode ai){
+    	super(ai);
+    	AUCTION_DURATION = 0;
     }
     
     @Override
     public void instantiateAINode(int comm, boolean staticVG,
-    		Map<String, Double> vg, IRegistration r) {
+    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 
     	reg = r;
     	if(vg != null){
@@ -76,7 +98,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	if(comm == 3){
     		USE_BROADCAST_AS_FAILSAVE = false;
     	}
-    	COMMUNICATION = comm;
+//    	communication = comm;
+    	randomGen = rg;
     	
 //	    	switch(comm){
 //	    	case 0: USE_MULTICAST_STEP = false; break;
@@ -88,22 +111,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
     
     boolean staticVG = false;
-    
-    Map<String, Double> visionGraph = new HashMap<String, Double>();
-    protected Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
-    protected Map<List<Double>, ITrObjectRepresentation> tracedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
-    protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
-    Map<ITrObjectRepresentation, Map<ICameraController, Double>> biddings = new HashMap<ITrObjectRepresentation, Map<ICameraController, Double>>();
-    protected Map<ITrObjectRepresentation, List<String>> advertised = new HashMap<ITrObjectRepresentation, List<String>>();
-    protected Map<ITrObjectRepresentation, Integer> runningAuction = new HashMap<ITrObjectRepresentation, Integer>();
-    protected Map<ITrObjectRepresentation, Double> reservedResources = new HashMap<ITrObjectRepresentation, Double>();
-    protected Map<ITrObjectRepresentation, Integer> stepsTillFreeResources = new HashMap<ITrObjectRepresentation, Integer>();
-	protected Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = new HashMap<ITrObjectRepresentation, Integer>();
-    protected Map<ITrObjectRepresentation, ITrObjectRepresentation> wrongIdentified = new HashMap<ITrObjectRepresentation, ITrObjectRepresentation>();
-    protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
-    
-    protected int addedObjectsInThisStep = 0;
- 
+	
+     
     protected class Pair {
         ITrObjectRepresentation itro;
         double confidence;
@@ -113,9 +122,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
             this.confidence = confidence;
         }
     }
-    ICameraController camController;
-    ITrObjectRepresentation trObject;
-    double last_confidence = 0;
 
     @Deprecated
     @Override
@@ -123,7 +129,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
         return this.trObject;
     }
 
-    @Override
+    @SuppressWarnings("unused")
+	@Override
     public IMessage receiveMessage(IMessage message) {
     	
     	if(DELAY_COMMUNICATION > 0){
@@ -169,7 +176,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-    protected Object handle_startTracking(String from,
+    @SuppressWarnings("unused")
+	protected Object handle_startTracking(String from,
             ITrObjectRepresentation content) {
     	if(!VISION_ON_BID){
 	    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
@@ -187,6 +195,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
     protected void startTracking(ITrObjectRepresentation target) {
     	this.useResources(target);
+    	_paidUtility = target.getPrice();
+    	
         tracedObjects.put(target.getFeatures(), target);
     }
 
@@ -272,7 +282,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
             assert (featuresSelf.size() == featuresOther.size());
 
             /*
-             * TODO: Double comparison with ==. Will break as soon as we put
+             * Double comparison with ==. Will break as soon as we put
              * real values inside. We need some acceptible epsilon error.
              */
             for (int i = 0; i < featuresSelf.size(); i++) {
@@ -287,7 +297,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
         return result;
     }
 
-    protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
+    @SuppressWarnings("unused")
+	protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
     	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
     		strengthenVisionEdge(from);
     	}
@@ -404,6 +415,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
     @Override
     public void update() {
+    	sentMessages = 0;
+    	_nrBids = 0;
+    	_receivedUtility = 0.0;
+    	_paidUtility = 0.0;
     	if(DECLINE_VISION_GRAPH)
     		this.updateVisionGraph();
     	
@@ -456,15 +471,29 @@ public class ActiveAINodeMulti extends AbstractAINode {
         
         printBiddings();
         
+        for (Map.Entry<ITrObjectRepresentation, Map<ICameraController, Double>> bids : biddings.entrySet()) {
+			_nrBids += bids.getValue().size();
+		}
+        
         checkBidsForObjects();       
         
         updateReservedResources();
         
         if(USE_BROADCAST_AS_FAILSAVE)
         	updateBroadcastCountdown();	
+        
+        updateTotalUtilComm();
     }
     
-    protected void updateReceivedDelay(){
+    protected void updateTotalUtilComm() {
+		this.tmpTotalComm += getComm();
+		this.tmpTotalUtil += getUtility();
+		this.tmpTotalRcvdPay += getReceivedUtility();
+		this.tmpTotalPaid += getPaidUtility();
+		this.tmpTotalBids += getNrOfBids();
+	}
+
+	protected void updateReceivedDelay(){
     	List<IMessage> rem = new ArrayList<IMessage>();
     	for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {
     		int dur = entry.getValue();
@@ -541,16 +570,17 @@ public class ActiveAINodeMulti extends AbstractAINode {
                 	                  
                 	 if (entry.getValue().getName().equals(this.camController.getName())) {  //this camera initiated the auction --> own value is calculated
                 		 
-                		 //TODO CHECK HERE IF AUCTION IS OVER ??
+                		 //CHECK HERE IF AUCTION IS OVER 
                     	 if((AUCTION_DURATION <= 0) || (runningAuction.containsKey(entry.getKey()) && (runningAuction.get(entry.getKey()) <= 0))){
 	                         ITrObjectRepresentation tor = entry.getKey();
 	                         double highest = 0;
-	
+	                         double secondHighest = 0;
 	                         highest = this.calculateValue(entry.getKey()); //this.getConfidence(entry.getKey());
+	                         secondHighest = highest;
 	                         ICameraController giveTo = null;
 	
 	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor); // Bids from other cams
-	
+	                         
 	                         if (bids != null) {
 	                             for (Map.Entry<ICameraController, Double> e : bids.entrySet()) { // iterate over bids
 	                            	 if(!e.getKey().getName().equals("Offline")){
@@ -562,6 +592,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		                                     }
 		                                 }
 		                                 if (e.getValue() > highest) {
+		                                	 secondHighest = highest;
 		                                     highest = e.getValue();
 		                                     giveTo = e.getKey();
 		                                 }
@@ -574,7 +605,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                             
 	                             // If this cam won auction
 	                             if (giveTo.getName().equals(this.camController.getName())) { 
+	                            	 tor.setPrice(secondHighest);
 	                                 this.startTracking(tor);
+	                                 _receivedUtility += secondHighest;
+	                                 //_paidUtility += secondHighest;
 	                                 sendMessage(MessageType.StopSearch, tor);
 	                                 stepsTillBroadcast.remove(tor);
 	                                 //runningAuction.remove(tor);
@@ -585,8 +619,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	//                                	 broadcast(MessageType.StopSearch, tor);
 	//                                 }
 	                             } else {
+	                            	 tor.setPrice(secondHighest);
 	                                 IMessage reply = this.camController.sendMessage(giveTo.getName(), MessageType.StartTracking, tor);
-	                                 
+	                                 _receivedUtility += secondHighest; //highest;
 	                                 if(DEBUG_CAM)
 	                             		CmdLogger.println(this.camController.getName() + " sent StartTracking msg to: " + giveTo.getName() + " for object " + tor.getFeatures());
 	                                 
@@ -651,7 +686,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	if (!this.getAllTracedObjects_bb().isEmpty()) {
             for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
             	double conf = 0.0;
-            	double lastConf = 0.0;
+            	@SuppressWarnings("unused")
+				double lastConf = 0.0;
             	if(wrongIdentified.containsValue(io)){
             		for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvp : wrongIdentified.entrySet()){
             			if (kvp.getValue().equals(io)){
@@ -678,14 +714,15 @@ public class ActiveAINodeMulti extends AbstractAINode {
     		ITrObjectRepresentation tor = entry.getKey();
     		Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
     		if(bids != null){
-		    	String bidString = this.camController.getName() + " biddings for object " + tor.getFeatures() + ": ";
+		    	@SuppressWarnings("unused")
+				String bidString = this.camController.getName() + " biddings for object " + tor.getFeatures() + ": ";
 		        for (Map.Entry<ICameraController, Double> e : bids.entrySet()) {
 		        	if(!e.getKey().getName().equals("Offline")){
 		        		bidString += e.getKey().getName() + ": " + e.getValue() + "; ";
 		        	}
 		        }
 		        if(runningAuction.get(tor) == null){
-		        	System.out.println("bid exists but no auction is running... how can that happen?? active " + COMMUNICATION + " element " + tor.getFeatures());
+		        	System.out.println("bid exists but no auction is running... how can that happen?? active " + communication + " element " + tor.getFeatures());
 		        }
 		        
 		        bidString += " -- AUCTION DURATION LEFT: " + runningAuction.get(tor);
@@ -737,7 +774,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 	
 	protected void sendMessage(MessageType mt, Object o){
-		switch(COMMUNICATION){
+		switch(this.communication){
 			case 0: broadcast(mt, o); break;
 			case 1: multicastSmooth(mt, o); break;
 			case 2: multicastStep(mt, o); break;
@@ -786,7 +823,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 			
 			if(highest > 0){
-				double ran = RandomNumberGenerator.nextDouble(RandomUse.USE.COMM);
+				double ran = randomGen.nextDouble(RandomUse.USE.COMM);
 				int sent = 0;
 				for(ICameraController icc : this.camController.getNeighbours()){
 					String name = icc.getName();
@@ -797,6 +834,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 					double ratio = (1+ratPart)/(1+highest);
 					if(ratio > ran){
 						sent ++;
+						sentMessages++;
 		    			this.camController.sendMessage(name, mt, o);
 		    			List<String> cams = advertised.get((ITrObjectRepresentation) o);
 		    			if(cams != null){
@@ -851,7 +889,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 				}
 			}
 			int sent = 0;
-			double ran = RandomNumberGenerator.nextDouble(RandomUse.USE.COMM);
+			double ran = randomGen.nextDouble(RandomUse.USE.COMM);
 			for(ICameraController icc : this.camController.getNeighbours()){
 				String name = icc.getName();
 				double prop = 0.1;
@@ -860,6 +898,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 				}
 				if(prop > ran){
 					sent ++;
+					sentMessages++;
 	    			this.camController.sendMessage(name, mt, o);
 	    			List<String> cams = advertised.get((ITrObjectRepresentation) o);
 	    			if(cams != null){
@@ -904,6 +943,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
             this.camController.sendMessage(icc.getName(), mt, o);
             if(mt == MessageType.StartSearch){
             	List<String> cams = advertised.get((ITrObjectRepresentation) o);
+            	sentMessages++;
 	            if(cams != null){
 	            	if(!cams.contains(icc.getName()))
 	            		cams.add(icc.getName());
@@ -1023,10 +1063,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
 		//object is not visible --> would send wrong bid!
 		
-		int random = RandomNumberGenerator.nextInt(100, RandomUse.USE.FALSEOBJ);
+		int random = randomGen.nextInt(100, RandomUse.USE.FALSEOBJ);
 		if(random <= MISIDENTIFICATION){
 			if(this.searchForTheseObjects.size() > 0){
-				random = RandomNumberGenerator.nextInt(this.searchForTheseObjects.size(), RandomUse.USE.FALSEOBJ);
+				random = randomGen.nextInt(this.searchForTheseObjects.size(), RandomUse.USE.FALSEOBJ);
 				int x = 0;
 				for (ITrObjectRepresentation tr : this.searchForTheseObjects.keySet()) {
 					if(x == random){
@@ -1069,7 +1109,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         if (bids == null) {
             bids = new HashMap<ICameraController, Double>();
         }
-        //TODO modified (removed ! befor runningAuction.containsKey) and added ELSE ! 23/05/2012 - takes over object, if noone took it
+        //modified (removed ! befor runningAuction.containsKey) and added ELSE ! 23/05/2012 - takes over object, if noone took it
         if(runningAuction.containsKey(target)) {
         	double value = this.calculateValue(target);
         	//runningAuction.put(target, 0);
@@ -1123,7 +1163,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
     }
 
-    @Override
+    @SuppressWarnings("unused")
+	@Override
     public double getUtility() {
         double utility = 0.0;
         double resources = MIN_RESOURCES_USED;
@@ -1143,7 +1184,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	@Override
 	public Map<List<Double>, ITrObjectRepresentation> getTracedObjects() {
 		
-		//TODO make sure all traced objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
+		//make sure all traced objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
 		
 		Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
 		for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()){
@@ -1183,9 +1224,10 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //			retVal = 0;
 //		}
 		
-		return COMMUNICATION;
+		return communication;
 	}
 	
+	@SuppressWarnings("unused")
 	public double calculateValue(ITrObjectRepresentation target){
 		double value = this.getConfidence(target); 
 		double res = calcResources(); // Probably not necessary
@@ -1250,4 +1292,60 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	public int currentlyMissidentified() {
 		return this.wrongIdentified.size();
 	}
+
+	@Override
+	public void setComm(int com) {
+		communication = com;		
+	}
+
+	@Override
+	public double getReceivedUtility() {
+		return _receivedUtility;
+	}
+	
+	@Override
+	public double getPaidUtility() {
+		return _paidUtility;
+	}
+
+	@Override
+	public int getNrOfBids() {
+		return _nrBids;
+	}
+	
+	@Override
+	public double getTmpTotalUtility(){
+		double tot = tmpTotalUtil;
+		tmpTotalUtil = 0.0;
+		return tot;
+	}
+	
+	@Override
+	public double getTmpTotalPaid(){
+		double tot = tmpTotalPaid;
+		tmpTotalPaid = 0.0;
+		return tot;
+	}
+	
+	@Override
+	public double getTmpTotalRcvPay(){
+		double tot = tmpTotalRcvdPay;
+		tmpTotalRcvdPay = 0.0;
+		return tot;
+	}
+	
+	@Override
+	public int getTmpTotalComm(){
+		int tot = tmpTotalComm;
+		tmpTotalComm = 0;
+		return tot;
+	}
+	
+	@Override
+	public int getTmpTotalBids(){
+		int tot = tmpTotalBids;
+		tmpTotalBids = 0;
+		return tot;
+	}
+	
 }
