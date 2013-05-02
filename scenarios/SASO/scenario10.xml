@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <simulation max_x="30.0" max_y="30.0" min_x="-30.0" min_y="-30.0">
+        <cameras>
+            <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="-180.0" name="Cam_01" range="20.0" viewing_angle="70.0" x="-15.0" y="18.0" comm="0"/>
+            <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="-180.0" name="Cam_02" range="20.0" viewing_angle="70.0" x="-5.0" y="18.0" comm="0"/>
+	    <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="-180.0" name="Cam_03" range="20.0" viewing_angle="70.0" x="5.0" y="18.0" comm="0"/>
+            <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="-180.0" name="Cam_04" range="20.0" viewing_angle="70.0" x="15.0" y="18.0" comm="0"/>
+	    <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="-90.0" name="Cam_05" range="20.0" viewing_angle="70.0" x="26.5" y="4.0" comm="0"/>
+
+	    <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="0.0" name="Cam_06" range="20.0" viewing_angle="70.0" x="-15.0" y="-10.0" comm="0"/>
+            <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="0.0" name="Cam_07" range="20.0" viewing_angle="70.0" x="-5.0" y="-10.0" comm="0"/>
+	    <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="0.0" name="Cam_08" range="20.0" viewing_angle="70.0" x="5.0" y="-10.0" comm="0"/>
+            <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="0.0" name="Cam_09" range="20.0" viewing_angle="70.0" x="15.0" y="-10.0" comm="0"/>
+	    
+
+        </cameras>
+        <objects>
+            <!-- <object features="1.0" heading="90.0" speed="1.0" x="-30.0" y="4.0"/> -->
+        </objects>
+	<events>
+	    <event timestep="1" participant="object" name="1.0" event="add" heading="90.0" speed="1.0" x="-30.0" y="4.0">
+		<waypoint x="-30.0" y="4.0"/>
+		<waypoint x="30.0" y="4.0"/>
+	    </event>
+	</events>
+	<visiongraph static="false">
+	    <graphnode name="Cam_01">
+		<neighbour name="Cam_02" />
+		<neighbour name="Cam_06" />
+		<neighbour name="Cam_07" />
+	    </graphnode>
+	    <graphnode name="Cam_02">
+		<neighbour name="Cam_03" />
+		<neighbour name="Cam_07" />
+		<neighbour name="Cam_06" />
+		<neighbour name="Cam_08" />
+	    </graphnode>
+	    <graphnode name="Cam_03">
+		<neighbour name="Cam_04" />
+		<neighbour name="Cam_08" />
+		<neighbour name="Cam_09" />
+		<neighbour name="Cam_07" />
+	    </graphnode>
+	    <graphnode name="Cam_04">
+		<neighbour name="Cam_05" />
+		<neighbour name="Cam_09" />
+		<neighbour name="Cam_08" />
+	    </graphnode>
+	    <graphnode name="Cam_05">
+		<neighbour name="Cam_09" />
+	    </graphnode>
+	    <graphnode name="Cam_06">
+		<neighbour name="Cam_07" />
+	    </graphnode>
+	    <graphnode name="Cam_07">
+		<neighbour name="Cam_08" />
+	    </graphnode>
+	    <graphnode name="Cam_08">
+		<neighbour name="Cam_09" />
+	    </graphnode>
+	</visiongraph>
+    </simulation>
+</root>
