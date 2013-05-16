@@ -42,11 +42,11 @@ public class SimSim {
 	
     public static boolean allStatistics = false;
     public static int runRandomConfigs = 0;
-	public static boolean runHomogeneous = true;
-	public static boolean runSequential = true;
+	public static boolean runHomogeneous = false;
+	public static boolean runSequential = false;
 	public static boolean runByParameter = false;
 	private static boolean runAllErrorVersions = false;
-	public static boolean runAllPossibleVersions = false;
+	public static boolean runAllPossibleVersions = true;
 	public static boolean runBandits = true;
 	private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
 	private static boolean diffSeed = true;
@@ -87,7 +87,7 @@ public class SimSim {
 			folder = new File(args[0]);
 		}
 		else{
-			folder = new File("..//..//..//..//scenarios//3Cams");
+			folder = new File("..//..//..//..//scenarios//2Cams");
 		}
 		
 		System.out.println("---> " + folder);

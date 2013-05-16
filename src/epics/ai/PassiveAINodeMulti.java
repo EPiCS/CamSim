@@ -14,72 +14,38 @@ import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 
-public class PassiveAINodeMulti extends ActiveAINodeMulti {
+public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 
 	private static final int DEFAULT_AUCTION_DURATION = 0;
 	
 	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
-    	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION, rg); // Goes through to instantiateAINode()    	
+    	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
+    	AUCTION_DURATION = DEFAULT_AUCTION_DURATION;
     }
 	
 	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
-    	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION, rg, bs); // Goes through to instantiateAINode()    	
+    	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
+    	AUCTION_DURATION = DEFAULT_AUCTION_DURATION;
     }
 
 	public PassiveAINodeMulti(AbstractAINode ai){
 		super(ai);
 	}
 	
-	/**
-    @Override
-    protected Object handle_startTracking(String from,
-            ITrObjectRepresentation content) {
-    	
-    	if(reg != null){
-    		reg.objectTrackedBy(content, this.camController);
-    	}
-    	
-    	if(!VISION_ON_BID){
-	    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
-	//    	if(!VISION_ON_FOUND) //strengthen link at handover
-	    		strengthenVisionEdge(from);
-	    	}
-    	}
-        this.startTracking(content);
-        this.stopSearch(content);
-        return null;
+	@Override
+    public void instantiateAINode(int comm, boolean staticVG,
+            Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+        reg = r;
+        if(vg != null){
+            visionGraph = vg;
+        }
+                
+        if(comm == 3){
+            USE_BROADCAST_AS_FAILSAVE = false;
+        }
+        randomGen = rg;
     }
-   
-
-    protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
-    	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
-    		strengthenVisionEdge(from);
-    	}
-    	
-    	if(trackingPossible()){
-	        Pair pair = findSimiliarObject(iTrObjectRepresentation);
-	
-	        if (pair == null) {
-	            return 0.0;
-	        }
-	
-	        ITrObjectRepresentation found = pair.itro;
-	        if (DEBUG_CAM) {
-	            CmdLogger.println(this.camController.getName() + "->" + from + ": My confidence for object " + found.getFeatures() + ": " + pair.confidence);
-	        }
-	        
-	        addedObjectsInThisStep ++;
-	        
-	        return this.calculateValue(iTrObjectRepresentation);
-	        
-//	        return pair.confidence;
-
-    	}
-    	else{
-    		return 0.0;
-    	}
-    }
- **/
+    
 	
     @Override
     public void update() {
@@ -90,43 +56,6 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
     	if(DECLINE_VISION_GRAPH)
     		this.updateVisionGraph();
     	
-//    	double resRes =0;
-//    	for(Double res : reservedResources.values()){
-//			resRes +=res;
-//		}
-//    	double totRes = resRes + this.camController.getResources();
-//    	System.out.println(this.camController.getName() + " resources reserved: " + resRes + " available: " + this.camController.getResources() + " total: " + totRes);
-
-    	
-//    	String output = this.camController.getName() + " traces objects [real name] (identified as): ";    	
-//    	
-////    	ITrObjectRepresentation realITO;
-//    	for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
-//    		String wrong = "NONE";
-//    		String real = "" + kvp.getValue().getFeatures();
-//    		if(wrongIdentified.containsValue(kvp.getValue())){
-//    			//kvp.getValue is not real... find real...
-//    			for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvpWrong : wrongIdentified.entrySet()){
-//    				if(kvpWrong.getValue().equals(kvp.getValue())){
-//    					wrong = "" + kvp.getValue().getFeatures();
-//    					real = "" + kvpWrong.getKey().getFeatures();
-//    					break;
-//    				}
-//    				else{
-//    					wrong = "ERROR";
-//    				}
-//    			}
-//    		}
-//			output = output + real + "(" + wrong + "); ";
-//		}
-//    	System.out.println(output);
-    	
-    	
-//    	String searched = this.camController.getName() + " searches for: ";
-//    	for(Map.Entry<ITrObjectRepresentation, ICameraController> entry : searchForTheseObjects.entrySet()){
-//    		searched += entry.getKey().getFeatures() + "; ";
-//    	}
-//    	System.out.println(searched);
     	
     	updateReceivedDelay();
     	updateAuctionDuration();
@@ -154,7 +83,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
         
         updateTotalUtilComm();
     }
-
+    
     protected void checkBidsForObjects() {
     	 if (this.searchForTheseObjects.containsValue(this.camController)) { 
              List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
@@ -278,13 +207,13 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
             	
             	if(this.camController.realObjectsUsed()){
 	            	if(this.camController.objectIsVisible(io) == 1){
-	            		callForHelp(io, 2);	
+	            		callForHelp(io);	
 	            	}
             	}
             	else{
             		if(this.camController.objectIsVisible(io) == -1){
 		                if (conf < 0.1 && conf < lastConf) {               	
-		                	callForHelp(io, 2);	
+		                	callForHelp(io);	
 		                }
             		}
             	}
@@ -293,49 +222,6 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
         }
 	}
 	
-	/**
-	@Override
-	public void printBiddings(){
-    	for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {
-    		ITrObjectRepresentation tor = entry.getKey();
-    		Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
-    		if(bids!= null){
-		    	String bidString = this.camController.getName() + " biddings for object " + tor.getFeatures() + ": ";
-		    	if(!bids.isEmpty()){
-			        for (Map.Entry<ICameraController, Double> e : bids.entrySet()) {
-			            bidString += e.getKey().getName() + ": " + e.getValue() + "; ";
-			        }
-		    	}
-		    	
-		    	if(runningAuction.get(tor) == null){
-		        	System.out.println("bid exists but no auction is running... how can that happen?? passive " + COMMUNICATION + " for object " + tor.getFeatures());
-		        }
-		    	
-		    	bidString += " - AUCTION DURATION LEFT: " + runningAuction.get(tor);
-		    	if(DEBUG_CAM)
-		    		System.out.println(bidString);
-    		}
-    	}
-    }
-    
-	@Override
-    public void callForHelp(ITrObjectRepresentation io, int index) {
-//    	if(wrongIdentified.containsKey(io)){
-//    		io = wrongIdentified.get(io);
-//    	}
-    	
-        if (DEBUG_CAM) {
-            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
-        }
-        this.addSearched(io, this.camController);
-        sendMessage(MessageType.StartSearch, io);
-        
-        if(reg != null){
-        	reg.objectIsAdvertised(io);
-        }
-	}
-    **/
-    
     private void printVisionGraph(){
     	String neighs = "";
     	for (String neighbour : visionGraph.keySet()) {
@@ -345,45 +231,6 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
     	System.out.println(this.camController.getName() + " has the following " + neighs);
     }
 
-    /**
-    @Override
-    public double getUtility() {
-        double utility = 0.0;
-        double classifier_confidence = 1;
-        double enabled = 1;  // 0/1 only
-        double visibility = 0.0;
-        double resources = MIN_RESOURCES_USED;
-        for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
-
-        	visibility = this.getConfidence(obj);
-//            utility += calculateValue(obj); 
-        	resources = reservedResources.get(obj);
-            utility += visibility * classifier_confidence * enabled;// * resources;
-        }
-
-        return utility;
-    }
     
-    @Override
-	public double calculateValue(ITrObjectRepresentation target){
-		double value = 0.0;
-		double conf = this.getConfidence(target);
-		double res = calcResources();
-		double enabled = 1;  // 0/1 only
-		
-		double reservedRes = 0.0;
-		for(Double res1 : reservedResources.values()){
-			reservedRes +=res1;
-		}
-		
-//		if(res != 0.0){
-////			System.err.println(this.camController.getName() + " has reserved " + reservedRes + " and would like to reserve now: " + res);
-//			this.reserveResources(target, res);
-//		}
-		
-		value = conf * res * enabled;
-		
-		return value;
-	}
-	**/
+
 }

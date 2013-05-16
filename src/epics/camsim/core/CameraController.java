@@ -382,7 +382,7 @@ public class CameraController implements ICameraController{
     public Map<List<Double>, TraceableObject> getTrackedObjects(){
     	Map<List<Double>, TraceableObject> retVal = new HashMap<List<Double>, TraceableObject>();
     	if(!isOffline()){//isOfflineFor <= 0){
-	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getTracedObjects().entrySet()){
+	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getTrackedObjects().entrySet()){
 	    		retVal.put(e.getKey(), ((TraceableObjectRepresentation)e.getValue()).getTraceableObject());
 	    	}	
     	}
@@ -666,7 +666,7 @@ public class CameraController implements ICameraController{
 
 	public Map<String, Double> getCamUtility() {
 		Map<String, Double> res = new HashMap<String, Double>();
-		for(ITrObjectRepresentation tor : this.camAINode.getTracedObjects().values()){
+		for(ITrObjectRepresentation tor : this.camAINode.getTrackedObjects().values()){
 			//res.put(tor.getFeatures().toString(), camAINode.getObjectUtility(tor));
 		}
 		return res;

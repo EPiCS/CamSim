@@ -1,19 +1,10 @@
 package epics.common;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import com.sun.corba.se.impl.orb.NormalDataCollector;
-
-import epics.bandits.EpsilonGreedy;
 import epics.common.RandomUse.USE;
 
 
@@ -64,16 +55,16 @@ public abstract class BanditSolver implements IBanditSolver {
 
     
 	
-	  /**
-	   *  Create a new instance of the BanditSolver. The BanditSolver is initialised with algo and communication so we don't have to select one in the first round.
-	   *  
-	   * @param numberOfOptions The number of alternatives (arms) available to the
-	   * bandit solver.
-	   * @param epsilon The value epsilon is initialised with
-	   * @param comm The initial communication
-	   * @param algo The initial algorithm
-	   * @param alpha The value alpha is initialised with
-	   */
+    /**
+     *  Create a new instance of the BanditSolver. The BanditSolver is initialised with algo and communication so we don't have to select one in the first round.
+     *  
+     * @param numberOfOptions The number of alternatives (arms) available to the
+     * bandit solver.
+     * @param epsilon The value epsilon is initialised with
+     * @param comm The initial communication
+     * @param algo The initial algorithm
+     * @param alpha The value alpha is initialised with
+     */
 	public BanditSolver(int numberOfOptions, double epsilon, double alpha, int interval, RandomNumberGenerator rg) {
 		  
 		this.alpha = alpha;
@@ -117,6 +108,11 @@ public abstract class BanditSolver implements IBanditSolver {
 	    this.epsilon = epsilon;
 	}
 	
+	/**
+	 * @param eg
+	 * @param comm
+	 * @param algo
+	 */
 	public BanditSolver(BanditSolver eg, int comm, String algo){
 		  this.armsCount = eg.armsCount;
 		  this.armsTotalReward = eg.armsTotalReward;
@@ -139,6 +135,11 @@ public abstract class BanditSolver implements IBanditSolver {
 			}
 	  }
 	
+	/**
+	 * @param cls
+	 * @param comm
+	 * @return
+	 */
 	private int DecideStrategy(int cls, int comm){
 		  if(cls == 0){
 			  switch (comm) {
@@ -166,6 +167,9 @@ public abstract class BanditSolver implements IBanditSolver {
 		  }
 	  }
 	
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#getBanditSolver()
+	 */
 	@Override
 	public BanditSolver getBanditSolver() {
 		return this;
@@ -174,16 +178,32 @@ public abstract class BanditSolver implements IBanditSolver {
 	/**
 	 * selects the best action based on the implemented method in the abstract class.
 	 */
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#selectAction()
+	 */
 	@Override	
 	public abstract int selectAction();
 	
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#bestAction()
+	 */
 	@Override
     public abstract String bestAction();
 	
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#setRewardForStrategy(int, double, double)
+	 */
 	public double setRewardForStrategy(int strategy, double performance, double communication){ //reward){
 	    return setRewardForStrategy(strategy, performance, communication, _nrObjects); 
 	}
 
+	/**
+	 * @param strategy
+	 * @param performance
+	 * @param communication
+	 * @param nrObjects
+	 * @return
+	 */
 	public double setRewardForStrategy(int strategy, double performance, double communication, double nrObjects){ //reward){
 	    double cHeadValue = 0.0;
         double cTotalValue = 0.0;
@@ -272,6 +292,9 @@ public abstract class BanditSolver implements IBanditSolver {
 	    return reward;
 	}
 	
+	/**
+	 * 
+	 */
 	private void reinitialise() {
 	    int numberOfOptions = armsCount.length;
 	    // Initialise arm counter
@@ -295,6 +318,9 @@ public abstract class BanditSolver implements IBanditSolver {
         
     }
 
+    /* (non-Javadoc)
+     * @see epics.common.IBanditSolver#setCurrentReward(double, double)
+     */
     public void setCurrentReward(double tracking_performance, double communication){
 	    
         totalPerformance += tracking_performance;
@@ -305,6 +331,9 @@ public abstract class BanditSolver implements IBanditSolver {
 //		return currentReward;
 	}
     
+    /* (non-Javadoc)
+     * @see epics.common.IBanditSolver#setCurrentReward(double, double, double)
+     */
     public void setCurrentReward(double tracking_performance, double communication, double nrObjects){
         totalPerformance += tracking_performance;
         totalCommunication += communication;
@@ -314,16 +343,25 @@ public abstract class BanditSolver implements IBanditSolver {
 //      return currentReward;
     }
 	
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#getTotalReward()
+	 */
 	@Override
 	public double[] getTotalReward() {
 		return armsTotalReward;
 	}
 
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#getTotalArms()
+	 */
 	@Override
 	public int[] getTotalArms() {
 		return usedArms;//armsCount;
 	}
 	
+	/* (non-Javadoc)
+	 * @see epics.common.IBanditSolver#getResults()
+	 */
 	@Override
 	public ArrayList<ArrayList<Double>> getResults(){
 		return allResults;

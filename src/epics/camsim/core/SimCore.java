@@ -814,7 +814,7 @@ public class SimCore {
 			if(bs != null){
 				double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
 				stats.setReward(utility, commOverhead, c.getName());
-				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTracedObjects().size())); 
+				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
 				//currentSelectInt = 0;
 				
 				//bs.setCurrentReward(utility, commOverhead);
@@ -990,7 +990,7 @@ public class SimCore {
 		Map<TraceableObject, List<CameraController>> traced = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
 		for(CameraController c : this.cameras){
-    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTracedObjects().values()){
+    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			if(traced.containsKey(tor.getTraceableObject())){
     				traced.get(tor.getTraceableObject()).add(c);
@@ -1047,7 +1047,7 @@ public class SimCore {
     	Map<TraceableObject, Boolean> searching = new HashMap<TraceableObject, Boolean>();
     	
     	for(CameraController c : this.cameras){
-    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTracedObjects().values()){
+    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			tracing.put(tor.getTraceableObject(), true);
     			if(c.getVisibleObjects().containsKey(tor)){
