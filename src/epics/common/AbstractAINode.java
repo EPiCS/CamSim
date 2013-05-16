@@ -99,7 +99,7 @@ public abstract class AbstractAINode {
 
     public abstract IMessage receiveMessage( IMessage message );
 
-    public abstract void addVisibleObject(ITrObjectRepresentation rto);
+//    public abstract void addVisibleObject(ITrObjectRepresentation rto);
 
     public abstract void removeVisibleObject(ITrObjectRepresentation rto);
 

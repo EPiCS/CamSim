@@ -331,8 +331,8 @@ public class CameraController implements ICameraController{
 	
 	            this.visible_objects.put( tc, confidence );
 	
-	            this.camAINode.addVisibleObject(
-	                    new TraceableObjectRepresentation(tc, tc.getFeatures()));
+//	            this.camAINode.addVisibleObject(
+//	                    new TraceableObjectRepresentation(tc, tc.getFeatures()));
 	            
 	        }else{
 	            this.visible_objects.put(tc, confidence);

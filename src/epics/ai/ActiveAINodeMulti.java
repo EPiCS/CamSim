@@ -19,39 +19,60 @@ import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 
+/**
+ * Implementation of AbstractAINode.
+ * defines the behaviour of the camera node regarding communication policies and the auction invitation schedules.
+ * this class uses the active auction invitation schedule to send invitations to other cameras in every timestep. 
+ * @author Marcin Bogdanski & Lukas Esterle, refactored by Horatio Cane 
+ */
 public class ActiveAINodeMulti extends AbstractAINode {
 	
+    protected class Pair {
+        ITrObjectRepresentation itro;
+        double confidence;
+
+        protected Pair(ITrObjectRepresentation itro, double confidence) {
+            this.itro = itro;
+            this.confidence = confidence;
+        }
+    }
+    
     public static final double USE_RESOURCES = 0.00005; //percentages of available resources used
     public static final double MIN_RESOURCES_USED = 0.000001; //how much resources have to be used at least
     public static final int DETECTIONRATE = 100;
     public static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
-    public static final int STEPS_TILL_RESOURCES_FREED = 5;
     
-    public static final double EVAPORATIONRATE = 0.995;
+    public static final int STEPS_TILL_RESOURCES_FREED = 5;
 	
+	public static final double EVAPORATIONRATE = 0.995;
 	public static final boolean DEBUG_CAM = false;
 	public static final boolean VISION_ON_BID = false;
 	public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
 	public static final boolean BIDIRECTIONAL_VISION = false;
-	public static final boolean DECLINE_VISION_GRAPH = true;
-    //protected static boolean USE_MULTICAST_STEP = false;
-    //protected static boolean MULTICAST_SMOOTH = true;
+    public static final boolean DECLINE_VISION_GRAPH = true;
 	private int communication;
     
+	boolean staticVG = false;
 	public static final int STEPS_TILL_BROADCAST = 5;
-	public static boolean USE_BROADCAST_AS_FAILSAVE = false;
     
+	public static boolean USE_BROADCAST_AS_FAILSAVE = false;
 	public static final int DELAY_COMMUNICATION = 0;
 	public static final int DELAY_FOUND = 0;
-	public final int AUCTION_DURATION;
+    
+    public final int AUCTION_DURATION;
     
     IRegistration reg;
     
-    public ActiveAINodeMulti(int comm, boolean staticVG, 
-    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
-    	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
-    	communication = comm;
+    public ActiveAINodeMulti(AbstractAINode ai){
+    	super(ai);
     	AUCTION_DURATION = 0;
+    }
+    
+    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+    	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
+    	communication = comm;
+    	AUCTION_DURATION = auctionDuration;
     }
     
     public ActiveAINodeMulti(int comm, boolean staticVG, 
@@ -69,497 +90,124 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
     
     public ActiveAINodeMulti(int comm, boolean staticVG, 
-    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
-    	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
+    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
+    	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
     	communication = comm;
-    	AUCTION_DURATION = auctionDuration;
-    }
-    
-    public ActiveAINodeMulti(AbstractAINode ai){
-    	super(ai);
     	AUCTION_DURATION = 0;
     }
     
-    @Override
-    public void instantiateAINode(int comm, boolean staticVG,
-    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
-
-    	reg = r;
-    	if(vg != null){
-    		visionGraph = vg;
-    	}
-    	
-    	this.staticVG = staticVG;
-    	
-//    	if(staticVG){
-//    		COMMUNICATION = 3;
-//    	}
-//    	else{
-    	if(comm == 3){
-    		USE_BROADCAST_AS_FAILSAVE = false;
-    	}
-//    	communication = comm;
-    	randomGen = rg;
-    	
-//	    	switch(comm){
-//	    	case 0: USE_MULTICAST_STEP = false; break;
-//	    	case 1: USE_MULTICAST_STEP = true; MULTICAST_SMOOTH = true; break;
-//	    	case 2: USE_MULTICAST_STEP = true; MULTICAST_SMOOTH = false; break;
-//	    	default: USE_MULTICAST_STEP = false; break;
-//	    	}
-//    	}
+	/**
+	 * sets the latest confidence for a certain object
+	 * @param io the object the confidence is set for
+	 * @param conf the confidence to be set
+	 */
+    protected void addLastConfidence(ITrObjectRepresentation io, double conf) {
+        this.lastConfidence.put(io, conf);
     }
     
-    boolean staticVG = false;
-	
-     
-    protected class Pair {
-        ITrObjectRepresentation itro;
-        double confidence;
-
-        protected Pair(ITrObjectRepresentation itro, double confidence) {
-            this.itro = itro;
-            this.confidence = confidence;
+    /**
+     * 
+     * @param target
+     * @param conf
+     */
+    protected void addOwnBidFor(ITrObjectRepresentation target, double conf) {
+        Map<ICameraController, Double> bids = this.biddings.get(target);
+        if (bids == null) {
+            bids = new HashMap<ICameraController, Double>();
         }
-    }
-
-    @Deprecated
-    @Override
-    public ITrObjectRepresentation getTrackedObject() {
-        return this.trObject;
-    }
-
-    @SuppressWarnings("unused")
-	@Override
-    public IMessage receiveMessage(IMessage message) {
-    	
-    	if(DELAY_COMMUNICATION > 0){
-    		switch(message.getType()){
-    		case AskConfidence: processMessage(message); break; //delayedCommunication.put(message, DELAY_COMMUNICATION); break;
-    		case StartSearch: delayedCommunication.put(message, DELAY_COMMUNICATION); break;
-    		case StopSearch: delayedCommunication.put(message,DELAY_COMMUNICATION); break;
-    		case Found: delayedCommunication.put(message, DELAY_COMMUNICATION+DELAY_FOUND); break;
-    		case StartTracking: delayedCommunication.put(message, DELAY_COMMUNICATION); break;
-    		default: return processMessage(message);
-    		}
-    	}
-    	else{
-    		return processMessage(message);
-    	}
-    	return null;
-    }
-    
-    public IMessage processMessage(IMessage message){
-    	Object result = null;
-
-        switch (message.getType()) {
-            case AskConfidence:
-                result = handle_askConfidence(message.getFrom(), (ITrObjectRepresentation) message.getContent());
-                break;
-            case StartSearch:
-                result = handle_startSearch(message.getFrom(), (ITrObjectRepresentation) message.getContent());
-                break;
-            case StopSearch:
-            	result = handle_stopSearch(message.getFrom(), (ITrObjectRepresentation) message.getContent());
-                break;
-            case Found:
-                result = handle_Found(message.getFrom(), (IBid) message.getContent());
-                break;
-            case StartTracking:
-                result = handle_startTracking(message.getFrom(), (ITrObjectRepresentation) message.getContent());
+        if(runningAuction.containsKey(target)) {
+        	double value = this.calculateValue(target);
+	        bids.put(this.camController, value);// conf);
+	        biddings.put(target, bids);
+    	} else {
+        	if(!tracedObjects.containsKey(target)){
+        		startTracking(target);
+        		stopSearch(target);
+        		sendMessage(MessageType.StopSearch, target);
+           	 	stepsTillBroadcast.remove(target);
+        	}
         }
-
-        if (result == null) {
-            return null;
-        } else {
-        	return this.camController.createMessage(message.getFrom(), MessageType.ResponseToAskIfCanTrace, result);
-        }
-    }
-
-    @SuppressWarnings("unused")
-	protected Object handle_startTracking(String from,
-            ITrObjectRepresentation content) {
-    	if(!VISION_ON_BID){
-	    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
-	//    	if(!VISION_ON_FOUND) //strengthen link at handover
-	    		strengthenVisionEdge(from);
-	    	}
-    	}
-    	if(DEBUG_CAM)
-    		CmdLogger.println(this.camController.getName() + " received Start Tracking msg from: " + from + " for object " + content.getFeatures());
-    	
-        this.startTracking(content);
-        this.stopSearch(content);
-        return null;
-    }
-
-    protected void startTracking(ITrObjectRepresentation target) {
-    	this.useResources(target);
-    	_paidUtility = target.getPrice();
-    	
-        tracedObjects.put(target.getFeatures(), target);
-    }
-
-    protected Object handle_Found(String from, IBid content) {
-//    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
-    	if(VISION_ON_BID) {
-    		strengthenVisionEdge(from);
-    	}
-        this.foundObject(content, from);
-        return null;
-    }
-
-    protected void foundObject(IBid bid, String from) {
-    	ITrObjectRepresentation target = bid.getTrObject();
-    	double conf = bid.getBid();
-//    	IMessage rst = this.camController.sendMessage(from, MessageType.AskConfidence, target);
-//    	if((rst != null)&& (rst.getContent() != null)){
-//    		double conf = (Double) rst.getContent(); //c.getVisibleObjects_bb().get(target);
-    	
-    		//if object is searched - if not searched, do not add to auctions
-    		for (ICameraController c : this.camController.getNeighbours()) {
-	            if (c.getName().equals(from)) {
-	            	if(this.advertised.containsKey(target)){
-	            		Map<ICameraController, Double> bids = biddings.get(target);
-	            		
-		                if (bids == null) {
-		                    bids = new HashMap<ICameraController, Double>();
-		                }
-		                if(!runningAuction.containsKey(target)){
-		                	runningAuction.put(target, AUCTION_DURATION);
-		                }
-		                if(!bids.containsKey(c)){
-			                bids.put(c, conf);
-			                biddings.put(target, bids);
-		                }
-		            }
-	            }
-	        }
-//    	}
-    }
-
-    protected Object handle_stopSearch(String from, ITrObjectRepresentation content) {
-    	this.stopSearch(content);
-        return null;
-    }
-
-    protected void stopSearch(ITrObjectRepresentation content) {
-    	this.searchForTheseObjects.remove(content);
-    }
-
-    protected Object handle_startSearch(String from, ITrObjectRepresentation content) {
-        this.searchFor(content, from);
-        return null;
-    }
-
-    protected void searchFor(ITrObjectRepresentation content, String from) {
-        if (from.equals("")) {
-            searchForTheseObjects.put(content, null);
-        } else {
-            for (ICameraController cc : this.camController.getNeighbours()) {
-                if (cc.getName().equals(from)) {
-                    //if (!searchForTheseObjects.containsKey(content)) {
-                        searchForTheseObjects.put(content, cc);
-                   //}
-                    break;
-                }
-            }
-        }
-    }
-
-    protected boolean checkEquality(ITrObjectRepresentation trA, ITrObjectRepresentation iTrObjectRepresentation) {
-
-        boolean result = true;
-        if (trA == null) {
-            result = false;
-        } else if (iTrObjectRepresentation == null) {
-            result = false;
-        } else {
-
-            List<Double> featuresSelf = trA.getFeatures();
-            List<Double> featuresOther = iTrObjectRepresentation.getFeatures();
-
-            assert (featuresSelf.size() == featuresOther.size());
-
-            /*
-             * Double comparison with ==. Will break as soon as we put
-             * real values inside. We need some acceptible epsilon error.
-             */
-            for (int i = 0; i < featuresSelf.size(); i++) {
-                if (featuresSelf.get(i) != featuresOther.get(i)) {
-                    result = false;
-                    break;
-                }
-            }
-
-        }
-
-        return result;
-    }
-
-    @SuppressWarnings("unused")
-	protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
-    	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
-    		strengthenVisionEdge(from);
-    	}
-    	
-    	if(trackingPossible()){
-	        Pair pair = findSimiliarObject(iTrObjectRepresentation);
-	
-	        if (pair == null) {
-	            return 0.0;
-	        }
-	        
-	        double conf = this.calculateValue(iTrObjectRepresentation);
-	
-	        ITrObjectRepresentation found = pair.itro;
-	        if (DEBUG_CAM) {
-	            CmdLogger.println(this.camController.getName() + "->" + from + ": My confidence for object " + found.getFeatures() + ": " + conf);//pair.confidence);
-	        }
-	        
-	        addedObjectsInThisStep ++;
-	        double test = pair.confidence;
-	        return conf; //pair.confidence;//this.calculateValue(iTrObjectRepresentation);
-    	}
-    	else{
-    		return 0.0;
-    	}
-    }
-
-    protected boolean trackingPossible() {
-    	if(this.camController.getLimit() == 0){
-    		//check if enough resources
-    		if(this.enoughResourcesForOneMore()){
-    			return true;
-    		}
-    		else{
-    			return false;
-    		}
-    	}
-		if(this.camController.getLimit() > this.addedObjectsInThisStep + this.tracedObjects.size()){
-			//check if enough resources
-			if(this.enoughResourcesForOneMore()){
-				return true;
-			}
-			else{
-				return false;
-			}
-		}
-		else{
-			return false;
-		}
-	}
-
-	protected Pair findSimiliarObject(ITrObjectRepresentation pattern) {
-        Map<ITrObjectRepresentation, Double> traced_list = this.camController.getVisibleObjects_bb();
-
-        for (Map.Entry<ITrObjectRepresentation, Double> e : traced_list.entrySet()) {
-	    ITrObjectRepresentation key = e.getKey();
-            boolean found = checkEquality(pattern, key);
-
-            if (found) {
-            	double confidence = e.getValue();
-                return new Pair(key, confidence);
-            }
-        }
-
-        return null;
-    }
-
-    @Override
-    public void addVisibleObject(ITrObjectRepresentation rto) {
-
-    }
-
-    @Override
-    public void removeVisibleObject(ITrObjectRepresentation rto) {
-    	if(wrongIdentified.containsKey(rto)){
-    		ITrObjectRepresentation original = rto;
-    		ITrObjectRepresentation wrong = wrongIdentified.get(rto);
-    		wrongIdentified.remove(original);
-    		rto = wrong;
-    	}
-    	
-    	if (this.isTraced(rto)) {
-            this.removeTracedObject(rto);
-            callForHelp(rto, 0);
-        }
-    }
-
-    protected boolean isTraced(ITrObjectRepresentation rto) {
-        if (this.tracedObjects.containsKey(rto.getFeatures())) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    protected void removeTracedObject(ITrObjectRepresentation rto) {
-        tracedObjects.remove(rto.getFeatures());
-        this.freeResources(rto);
     }
 
     protected void addSearched(ITrObjectRepresentation rto, ICameraController cam) {
     	this.searchForTheseObjects.put(rto, cam);
     }
 
-    @Override
-    public Map<String, Double> getVisionGraph() {
-        return this.visionGraph;
-    }
-
-    @Override
-    public void setController(ICameraController controller) {
-        this.camController = controller;
-    }
-
-    @Override
-    public void update() {
-    	sentMessages = 0;
-    	_nrBids = 0;
-    	_receivedUtility = 0.0;
-    	_paidUtility = 0.0;
-    	if(DECLINE_VISION_GRAPH)
-    		this.updateVisionGraph();
-    	
-//    	double resRes =0;
-//    	for(Double res : reservedResources.values()){
-//			resRes +=res;
-//		}
-//    	double totRes = resRes + this.camController.getResources();
-//    	System.out.println(this.camController.getName() + " resources reserved: " + resRes + " available: " + this.camController.getResources() + " total: " + totRes);
-
-    	if(DEBUG_CAM) {
-			String output = this.camController.getName();
-			if(this.camController.isOffline()){
-				output += " should be offline!! but";
-			}
-			output += " traces objects [real name] (identified as): ";    	
-    	
-			//    	ITrObjectRepresentation realITO;
-			for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
-				String wrong = "NONE";
-				String real = "" + kvp.getValue().getFeatures();
-				if(wrongIdentified.containsValue(kvp.getValue())){
-					//kvp.getValue is not real... find real...
-					for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvpWrong : wrongIdentified.entrySet()){
-						if(kvpWrong.getValue().equals(kvp.getValue())){
-							wrong = "" + kvp.getValue().getFeatures();
-							real = "" + kvpWrong.getKey().getFeatures();
-							break;
-						}
-						else{
-							wrong = "ERROR";
-						}
-					}
+//    @Override
+//    public void addVisibleObject(ITrObjectRepresentation rto) {
+//
+//    }
+    
+    protected void broadcast(MessageType mt, Object o){
+    	for (ICameraController icc : this.camController.getNeighbours()) {
+            this.camController.sendMessage(icc.getName(), mt, o);
+            if(mt == MessageType.StartSearch){
+            	List<String> cams = advertised.get((ITrObjectRepresentation) o);
+            	sentMessages++;
+	            if(cams != null){
+	            	if(!cams.contains(icc.getName()))
+	            		cams.add(icc.getName());
 				}
-				output = output + real + "(" + wrong + "); ";
-			}
-			System.out.println(output);
-		}
-    	
-    	updateReceivedDelay();
-    	updateAuctionDuration();
-    	
-    	addedObjectsInThisStep = 0;
-    	
-        checkIfSearchedIsVisible();
-        
-        checkIfTracedGotLost();
-
-        checkConfidences();
-        
-        printBiddings();
-        
-        for (Map.Entry<ITrObjectRepresentation, Map<ICameraController, Double>> bids : biddings.entrySet()) {
-			_nrBids += bids.getValue().size();
-		}
-        
-        checkBidsForObjects();       
-        
-        updateReservedResources();
-        
-        if(USE_BROADCAST_AS_FAILSAVE)
-        	updateBroadcastCountdown();	
-        
-        updateTotalUtilComm();
-    }
-    
-    protected void updateTotalUtilComm() {
-		this.tmpTotalComm += getComm();
-		this.tmpTotalUtil += getUtility();
-		this.tmpTotalRcvdPay += getReceivedUtility();
-		this.tmpTotalPaid += getPaidUtility();
-		this.tmpTotalBids += getNrOfBids();
-	}
-
-	protected void updateReceivedDelay(){
-    	List<IMessage> rem = new ArrayList<IMessage>();
-    	for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {
-    		int dur = entry.getValue();
-    		dur--;
-			entry.setValue(dur);
-			
-			if(dur<= 0){
-				rem.add(entry.getKey());
-				processMessage(entry.getKey());
-			}
-		}
-    	
-    	for (int i = 0; i < rem.size(); i++) {
-			delayedCommunication.remove(rem.get(i));
-		}
-    }
-    
-    protected void updateAuctionDuration(){
-    	if(AUCTION_DURATION > 0){
-    		for(Map.Entry<ITrObjectRepresentation, Integer> entry : runningAuction.entrySet()){
-    			int dur = entry.getValue();
-    			dur--;
-    			entry.setValue(dur);
-    			if(dur < 0){
-    				System.out.println("------------------------- negative duration!");
-    			}
-    		}
+				else{
+					cams = new ArrayList<String>();
+					cams.add(icc.getName());
+					advertised.put((ITrObjectRepresentation) o, cams);
+				}
+            }
+//            else{
+//            	if(mt == MessageType.StopSearch){
+//            		advertised.remove((ITrObjectRepresentation)o);
+////            		if(advertised.get((ITrObjectRepresentation) o) != null)
+////            			advertised.get((ITrObjectRepresentation) o).remove(icc.getName());
+//            	}
+//            }
+        }
+    	if(mt == MessageType.StopSearch){
+    		advertised.remove((ITrObjectRepresentation) o);
     	}
     }
-    
-    protected void updateBroadcastCountdown(){
-    	List<ITrObjectRepresentation> bc = new ArrayList<ITrObjectRepresentation>();
-    	for (Map.Entry<ITrObjectRepresentation, Integer> kvp : stepsTillBroadcast.entrySet()) {
-			int i = kvp.getValue();
-			i--;
-			if(i <= 0){
-				bc.add(kvp.getKey());
-			}
-			else{
-				stepsTillBroadcast.put(kvp.getKey(), i);
-			}
-		}
-    	
-    	for (ITrObjectRepresentation iTrObjectRepresentation : bc) {
-			broadcast(MessageType.StartSearch, iTrObjectRepresentation);
-		}
-    }
-    
-	protected void updateReservedResources() {
-    	List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
-		for(Map.Entry<ITrObjectRepresentation, Integer> entry : stepsTillFreeResources.entrySet()){
-			int steps = entry.getValue();
-			if(steps-1 == 0){
-				del.add(entry.getKey());
-			}
-			else{
-				stepsTillFreeResources.put(entry.getKey(), steps-1);
-			}
+
+    protected double calcResources() {
+		double allPossibleRes = this.camController.getAllResources();
+		double reservedRes = 0.0;
+		for(Double res : reservedResources.values()){
+			reservedRes +=res;
 		}
 		
-		for(ITrObjectRepresentation itr : del){
-			stepsTillFreeResources.remove(itr);
+		double useRes = (allPossibleRes-reservedRes) * USE_RESOURCES;
+		if(useRes < MIN_RESOURCES_USED){
+			useRes = 0.0;
+			if((allPossibleRes-reservedRes) >= MIN_RESOURCES_USED){
+				useRes = MIN_RESOURCES_USED;
+			}
 		}
+		return useRes;
 	}
 
-	/** Looks at objects owned by this camera that are desired by other cameras
+    @SuppressWarnings("unused")
+	public double calculateValue(ITrObjectRepresentation target){
+		double value = this.getConfidence(target); 
+		double res = calcResources(); // Probably not necessary
+		return value;
+	}
+
+    protected void callForHelp(ITrObjectRepresentation io, int index) {
+    	if(wrongIdentified.containsKey(io)){
+    		io = wrongIdentified.get(io);
+    	}
+    	
+        if (DEBUG_CAM) {
+            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
+        }
+        this.addSearched(io, this.camController);
+        sendMessage(MessageType.StartSearch, io);
+
+        if(reg != null){
+        	reg.objectIsAdvertised(io);
+        }
+	}
+
+    /** Looks at objects owned by this camera that are desired by other cameras
 	 * and evaluates bids from other cameras. Gives the object to the highest 
 	 * bidder (which can be itself). */
 	protected void checkBidsForObjects() {
@@ -674,15 +322,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
          }
 	}
 
-	protected void removeRunningAuction(ITrObjectRepresentation tor) {
-		//int before = runningAuction.size();
-		runningAuction.remove(tor);
-		//int after = runningAuction.size();
-		
-		biddings.remove(tor);
-	}
-
-	protected void checkConfidences() {
+    protected void checkConfidences() {
     	if (!this.getAllTracedObjects_bb().isEmpty()) {
             for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
             	double conf = 0.0;
@@ -708,47 +348,90 @@ public class ActiveAINodeMulti extends AbstractAINode {
         }
 	}
 
-	protected void printBiddings(){
-		
-    	for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {
-    		ITrObjectRepresentation tor = entry.getKey();
-    		Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
-    		if(bids != null){
-		    	@SuppressWarnings("unused")
-				String bidString = this.camController.getName() + " biddings for object " + tor.getFeatures() + ": ";
-		        for (Map.Entry<ICameraController, Double> e : bids.entrySet()) {
-		        	if(!e.getKey().getName().equals("Offline")){
-		        		bidString += e.getKey().getName() + ": " + e.getValue() + "; ";
-		        	}
-		        }
-		        if(runningAuction.get(tor) == null){
-		        	System.out.println("bid exists but no auction is running... how can that happen?? active " + communication + " element " + tor.getFeatures());
-		        }
-		        
-		        bidString += " -- AUCTION DURATION LEFT: " + runningAuction.get(tor);
-		        if(DEBUG_CAM)
-		        	System.out.println(bidString);
-    		}
-    	}
-    }
-    
-    protected void callForHelp(ITrObjectRepresentation io, int index) {
-    	if(wrongIdentified.containsKey(io)){
-    		io = wrongIdentified.get(io);
-    	}
-    	
-        if (DEBUG_CAM) {
-            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +") index " + index );
-        }
-        this.addSearched(io, this.camController);
-        sendMessage(MessageType.StartSearch, io);
+    protected boolean checkEquality(ITrObjectRepresentation trA, ITrObjectRepresentation iTrObjectRepresentation) {
 
-        if(reg != null){
-        	reg.objectIsAdvertised(io);
+        boolean result = true;
+        if (trA == null) {
+            result = false;
+        } else if (iTrObjectRepresentation == null) {
+            result = false;
+        } else {
+
+            List<Double> featuresSelf = trA.getFeatures();
+            List<Double> featuresOther = iTrObjectRepresentation.getFeatures();
+
+            assert (featuresSelf.size() == featuresOther.size());
+
+            /*
+             * Double comparison with ==. Will break as soon as we put
+             * real values inside. We need some acceptible epsilon error.
+             */
+            for (int i = 0; i < featuresSelf.size(); i++) {
+                if (featuresSelf.get(i) != featuresOther.get(i)) {
+                    result = false;
+                    break;
+                }
+            }
+
         }
-	}
-	
-	protected void checkIfTracedGotLost() {
+
+        return result;
+    }
+
+    protected void checkIfSearchedIsVisible() {
+    	ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
+
+    	for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
+    		
+    		if(wrongIdentified.containsKey(visible)){
+    			visible = wrongIdentified.get(visible);
+    		}
+    		
+    		if (!this.tracedObjects.containsKey(visible.getFeatures())) {
+    			if(!wrongIdentified.containsValue(visible)){
+		    		ITrObjectRepresentation wrong = visibleIsMissidentified(visible);
+		    		if(wrong != null){ //missidentified 
+		    			visible = wrong;
+		    		}
+	    		}
+    		
+    			if(this.searchForTheseObjects.containsKey(visible)){
+	            
+	            	ICameraController searcher = this.searchForTheseObjects.get(visible);
+	            	
+            		if (searcher != null) {
+            			double conf = this.calculateValue(visible); //this.getConfidence(visible);
+                        if (this.camController.getName().equals(searcher.getName())) {
+                            this.addOwnBidFor(visible, conf);
+                        } else {
+                        	this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, conf));
+                        }
+                    } else {
+                    	if(trackingPossible()){
+	                    	this.startTracking(visible);
+	                    	found.add(visible);
+	                    	broadcast(MessageType.StopSearch, visible);
+	                    	//sendMessage(MessageType.StopSearch, visible);
+	                    	
+//	                    	if(USE_MULTICAST_STEP){
+//	                        	multicast(MessageType.StopSearch, visible);
+//	                        }
+//	                        else{
+//	                        	broadcast(MessageType.StopSearch, visible);
+//	                        }
+	                    	addedObjectsInThisStep++;
+                    	}
+                    }
+                }
+    		}
+    		
+        }
+        for(ITrObjectRepresentation foundElement : found){
+        	this.stopSearch(foundElement);
+        }
+    }
+
+    protected void checkIfTracedGotLost() {
 		List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
 		for(ITrObjectRepresentation itor : this.tracedObjects.values()){
 			
@@ -772,16 +455,319 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			this.removeTracedObject(tor);
 		}
 	}
-	
-	protected void sendMessage(MessageType mt, Object o){
-		switch(this.communication){
-			case 0: broadcast(mt, o); break;
-			case 1: multicastSmooth(mt, o); break;
-			case 2: multicastStep(mt, o); break;
-			case 3: multicastFix(mt, o); break;
+
+    @Override
+	public int currentlyMissidentified() {
+		return this.wrongIdentified.size();
+	}
+
+    protected boolean enoughResourcesForOneMore(){
+		double res = calcResources();
+		if(res > 0){
+			return true;
+		}
+		else{
+			return false;
 		}
 	}
+
+    protected Pair findSimiliarObject(ITrObjectRepresentation pattern) {
+        Map<ITrObjectRepresentation, Double> traced_list = this.camController.getVisibleObjects_bb();
+
+        for (Map.Entry<ITrObjectRepresentation, Double> e : traced_list.entrySet()) {
+	    ITrObjectRepresentation key = e.getKey();
+            boolean found = checkEquality(pattern, key);
+
+            if (found) {
+            	double confidence = e.getValue();
+                return new Pair(key, confidence);
+            }
+        }
+
+        return null;
+    }
+
+	protected void foundObject(IBid bid, String from) {
+    	ITrObjectRepresentation target = bid.getTrObject();
+    	double conf = bid.getBid();
+//    	IMessage rst = this.camController.sendMessage(from, MessageType.AskConfidence, target);
+//    	if((rst != null)&& (rst.getContent() != null)){
+//    		double conf = (Double) rst.getContent(); //c.getVisibleObjects_bb().get(target);
+    	
+    		//if object is searched - if not searched, do not add to auctions
+    		for (ICameraController c : this.camController.getNeighbours()) {
+	            if (c.getName().equals(from)) {
+	            	if(this.advertised.containsKey(target)){
+	            		Map<ICameraController, Double> bids = biddings.get(target);
+	            		
+		                if (bids == null) {
+		                    bids = new HashMap<ICameraController, Double>();
+		                }
+		                if(!runningAuction.containsKey(target)){
+		                	runningAuction.put(target, AUCTION_DURATION);
+		                }
+		                if(!bids.containsKey(c)){
+			                bids.put(c, conf);
+			                biddings.put(target, bids);
+		                }
+		            }
+	            }
+	        }
+//    	}
+    }
+
+    protected void freeResources(ITrObjectRepresentation target){
+		if(this.reservedResources.containsKey(target)){
+			double resRes = reservedResources.remove(target);//reservedResources.get(target);
+			this.camController.addResources(resRes);
+		}	
+	}
+
+    protected Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
+        return this.tracedObjects;
+    }
+
+    protected Map<ICameraController, Double> getBiddingsFor(ITrObjectRepresentation tor) {
+        return this.biddings.get(tor);
+    }
+
+    public int getComm(){
+//		int retVal = 0;
+//		
+//		if(USE_MULTICAST_STEP){
+//			if(MULTICAST_SMOOTH){
+//				retVal = 1;
+//			}
+//			else{
+//				retVal = 2;
+//			}
+//		}
+//		else{
+//			retVal = 0;
+//		}
+		
+		return communication;
+	}
+
+    public double getConfidence(ITrObjectRepresentation target) {
+        Pair pair = findSimiliarObject(target);
+        if (pair == null) {
+            return 0;
+        } else {
+            return pair.confidence;
+        }
+    }
+
+    protected double getLastConfidenceFor(ITrObjectRepresentation io) {
+        if (lastConfidence.containsKey(io)) {
+            return lastConfidence.get(io);
+        } else {
+            return 0.0;
+        }
+    }
+
+    @Override
+	public int getNrOfBids() {
+		return _nrBids;
+	}
+
+    
+
+    @Override
+	public double getPaidUtility() {
+		return _paidUtility;
+	}
+    
+    @Override
+	public double getReceivedUtility() {
+		return _receivedUtility;
+	}
+
+	@Override
+	public Map<ITrObjectRepresentation, ICameraController> getSearchedObjects(){
+		return this.searchForTheseObjects;
+	}
+    
+    @Override
+	public int getTmpTotalBids(){
+		int tot = tmpTotalBids;
+		tmpTotalBids = 0;
+		return tot;
+	}
+    
+    @Override
+	public int getTmpTotalComm(){
+		int tot = tmpTotalComm;
+		tmpTotalComm = 0;
+		return tot;
+	}
+    
+	@Override
+	public double getTmpTotalPaid(){
+		double tot = tmpTotalPaid;
+		tmpTotalPaid = 0.0;
+		return tot;
+	}
+
+	@Override
+	public double getTmpTotalRcvPay(){
+		double tot = tmpTotalRcvdPay;
+		tmpTotalRcvdPay = 0.0;
+		return tot;
+	}
+
+	@Override
+	public double getTmpTotalUtility(){
+		double tot = tmpTotalUtil;
+		tmpTotalUtil = 0.0;
+		return tot;
+	}
+
+	@Override
+	public Map<List<Double>, ITrObjectRepresentation> getTracedObjects() {
+		
+		//make sure all traced objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
+		
+		Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
+		for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()){
+			if(wrongIdentified.containsValue(kvp.getValue())){
+				for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> wrongSet : wrongIdentified.entrySet()){
+					if(wrongSet.getValue().equals(kvp.getValue())){
+						retVal.put(wrongSet.getKey().getFeatures(), wrongSet.getKey());
+						break;
+					}
+				}
+			}
+			else{
+				retVal.put(kvp.getKey(), kvp.getValue());
+			}
+		}
+		
+		return retVal;
+	}
+
+	@Deprecated
+    @Override
+    public ITrObjectRepresentation getTrackedObject() {
+        return this.trObject;
+    }
+    
+    @SuppressWarnings("unused")
+	@Override
+    public double getUtility() {
+        double utility = 0.0;
+        double resources = MIN_RESOURCES_USED;
+        double enabled = 1;  // 0/1 only
+        if (enabled == 1) {
+            double visibility = 0.0;
+            double classifier_confidence = 1;
+	        for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
+	        	visibility = this.getConfidence(obj);
+	//            utility += calculateValue(obj); 
+	            utility += visibility * classifier_confidence * enabled;// * resources;
+	        }
+        }
+        return utility;
+    }
 	
+	@Override
+    public Map<String, Double> getVisionGraph() {
+        return this.visionGraph;
+    }
+	
+	@SuppressWarnings("unused")
+	protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
+    	if(VISION_ON_BID && BIDIRECTIONAL_VISION){
+    		strengthenVisionEdge(from);
+    	}
+    	
+    	if(trackingPossible()){
+	        Pair pair = findSimiliarObject(iTrObjectRepresentation);
+	
+	        if (pair == null) {
+	            return 0.0;
+	        }
+	        
+	        double conf = this.calculateValue(iTrObjectRepresentation);
+	
+	        ITrObjectRepresentation found = pair.itro;
+	        if (DEBUG_CAM) {
+	            CmdLogger.println(this.camController.getName() + "->" + from + ": My confidence for object " + found.getFeatures() + ": " + conf);//pair.confidence);
+	        }
+	        
+	        addedObjectsInThisStep ++;
+	        double test = pair.confidence;
+	        return conf; //pair.confidence;//this.calculateValue(iTrObjectRepresentation);
+    	}
+    	else{
+    		return 0.0;
+    	}
+    }
+	
+	protected Object handle_Found(String from, IBid content) {
+//    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
+    	if(VISION_ON_BID) {
+    		strengthenVisionEdge(from);
+    	}
+        this.foundObject(content, from);
+        return null;
+    }
+	
+	protected Object handle_startSearch(String from, ITrObjectRepresentation content) {
+        this.searchFor(content, from);
+        return null;
+    }
+
+	
+	@SuppressWarnings("unused")
+	protected Object handle_startTracking(String from,
+            ITrObjectRepresentation content) {
+    	if(!VISION_ON_BID){
+	    	if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
+	//    	if(!VISION_ON_FOUND) //strengthen link at handover
+	    		strengthenVisionEdge(from);
+	    	}
+    	}
+    	if(DEBUG_CAM)
+    		CmdLogger.println(this.camController.getName() + " received Start Tracking msg from: " + from + " for object " + content.getFeatures());
+    	
+        this.startTracking(content);
+        this.stopSearch(content);
+        return null;
+    }
+	
+	
+	protected Object handle_stopSearch(String from, ITrObjectRepresentation content) {
+    	this.stopSearch(content);
+        return null;
+    }
+   
+	@Override
+    public void instantiateAINode(int comm, boolean staticVG,
+    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+
+    	reg = r;
+    	if(vg != null){
+    		visionGraph = vg;
+    	}
+    	
+    	this.staticVG = staticVG;
+    	
+    	if(comm == 3){
+    		USE_BROADCAST_AS_FAILSAVE = false;
+    	}
+    	randomGen = rg;
+
+    }
+
+	protected boolean isTraced(ITrObjectRepresentation rto) {
+        if (this.tracedObjects.containsKey(rto.getFeatures())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 	protected void multicastFix(MessageType mt, Object o){
 		
 		List<String> cams = new ArrayList<String>();
@@ -805,7 +791,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //			}
 //		}
 	}
-	
+
 	protected void multicastSmooth(MessageType mt, Object o){
 		if(mt == MessageType.StartSearch){
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
@@ -879,7 +865,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 
-	
 	protected void multicastStep(MessageType mt, Object o){
 		if(mt == MessageType.StartSearch){
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
@@ -936,113 +921,29 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 		}
 	}
-	
-	
-	protected void broadcast(MessageType mt, Object o){
-    	for (ICameraController icc : this.camController.getNeighbours()) {
-            this.camController.sendMessage(icc.getName(), mt, o);
-            if(mt == MessageType.StartSearch){
-            	List<String> cams = advertised.get((ITrObjectRepresentation) o);
-            	sentMessages++;
-	            if(cams != null){
-	            	if(!cams.contains(icc.getName()))
-	            		cams.add(icc.getName());
-				}
-				else{
-					cams = new ArrayList<String>();
-					cams.add(icc.getName());
-					advertised.put((ITrObjectRepresentation) o, cams);
-				}
-            }
-//            else{
-//            	if(mt == MessageType.StopSearch){
-//            		advertised.remove((ITrObjectRepresentation)o);
-////            		if(advertised.get((ITrObjectRepresentation) o) != null)
-////            			advertised.get((ITrObjectRepresentation) o).remove(icc.getName());
-//            	}
-//            }
-        }
-    	if(mt == MessageType.StopSearch){
-    		advertised.remove((ITrObjectRepresentation) o);
-    	}
-    }
-   
-	protected void removeFromBiddings(ITrObjectRepresentation o) {
-        this.biddings.remove(o);
-    }
-
-	protected Map<ICameraController, Double> getBiddingsFor(ITrObjectRepresentation tor) {
-        return this.biddings.get(tor);
-    }
-
-	protected void addLastConfidence(ITrObjectRepresentation io, double conf) {
-        this.lastConfidence.put(io, conf);
-
-    }
-
-	protected double getLastConfidenceFor(ITrObjectRepresentation io) {
-        if (lastConfidence.containsKey(io)) {
-            return lastConfidence.get(io);
-        } else {
-            return 0.0;
-        }
-    }
-
-	protected Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
-        return this.tracedObjects;
-    }
     
-    protected void checkIfSearchedIsVisible() {
-    	ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
-
-    	for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
-    		
-    		if(wrongIdentified.containsKey(visible)){
-    			visible = wrongIdentified.get(visible);
+    protected void printBiddings(){
+		
+    	for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {
+    		ITrObjectRepresentation tor = entry.getKey();
+    		Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
+    		if(bids != null){
+		    	@SuppressWarnings("unused")
+				String bidString = this.camController.getName() + " biddings for object " + tor.getFeatures() + ": ";
+		        for (Map.Entry<ICameraController, Double> e : bids.entrySet()) {
+		        	if(!e.getKey().getName().equals("Offline")){
+		        		bidString += e.getKey().getName() + ": " + e.getValue() + "; ";
+		        	}
+		        }
+		        if(runningAuction.get(tor) == null){
+		        	System.out.println("bid exists but no auction is running... how can that happen?? active " + communication + " element " + tor.getFeatures());
+		        }
+		        
+		        bidString += " -- AUCTION DURATION LEFT: " + runningAuction.get(tor);
+		        if(DEBUG_CAM)
+		        	System.out.println(bidString);
     		}
-    		
-    		if (!this.tracedObjects.containsKey(visible.getFeatures())) {
-    			if(!wrongIdentified.containsValue(visible)){
-		    		ITrObjectRepresentation wrong = visibleIsMissidentified(visible);
-		    		if(wrong != null){ //missidentified 
-		    			visible = wrong;
-		    		}
-	    		}
-    		
-    			if(this.searchForTheseObjects.containsKey(visible)){
-	            
-	            	ICameraController searcher = this.searchForTheseObjects.get(visible);
-	            	
-            		if (searcher != null) {
-            			double conf = this.calculateValue(visible); //this.getConfidence(visible);
-                        if (this.camController.getName().equals(searcher.getName())) {
-                            this.addOwnBidFor(visible, conf);
-                        } else {
-                        	this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, conf));
-                        }
-                    } else {
-                    	if(trackingPossible()){
-	                    	this.startTracking(visible);
-	                    	found.add(visible);
-	                    	broadcast(MessageType.StopSearch, visible);
-	                    	//sendMessage(MessageType.StopSearch, visible);
-	                    	
-//	                    	if(USE_MULTICAST_STEP){
-//	                        	multicast(MessageType.StopSearch, visible);
-//	                        }
-//	                        else{
-//	                        	broadcast(MessageType.StopSearch, visible);
-//	                        }
-	                    	addedObjectsInThisStep++;
-                    	}
-                    }
-                }
-    		}
-    		
-        }
-        for(ITrObjectRepresentation foundElement : found){
-        	this.stopSearch(foundElement);
-        }
+    	}
     }
     
 //    private boolean visibleIsSearched(ITrObjectRepresentation visible) {
@@ -1060,6 +961,359 @@ public class ActiveAINodeMulti extends AbstractAINode {
 //		}
 //    }
 		
+	private void printStatus() {
+        String output = this.camController.getName();
+        if(this.camController.isOffline()){
+        	output += " should be offline!! but";
+        }
+        output += " traces objects [real name] (identified as): ";    	
+  	
+        //    	ITrObjectRepresentation realITO;
+        for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
+        	String wrong = "NONE";
+        	String real = "" + kvp.getValue().getFeatures();
+        	if(wrongIdentified.containsValue(kvp.getValue())){
+        		//kvp.getValue is not real... find real...
+        		for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvpWrong : wrongIdentified.entrySet()){
+        			if(kvpWrong.getValue().equals(kvp.getValue())){
+        				wrong = "" + kvp.getValue().getFeatures();
+        				real = "" + kvpWrong.getKey().getFeatures();
+        				break;
+        			}
+        			else{
+        				wrong = "ERROR";
+        			}
+        		}
+        	}
+        	output = output + real + "(" + wrong + "); ";
+        }
+        System.out.println(output);
+    }
+
+//	private void printSearched(){
+//    	String searchedString = this.camController.getName() + " has in its search-list: ";
+//    	for(Map.Entry<ITrObjectRepresentation, ICameraController> searched : this.searchForTheseObjects.entrySet()){
+//    		if(searched.getValue() != null){
+//    			searchedString += searched.getKey().getFeatures() + " by " + searched.getValue().getName() + " ; ";
+//    		}
+//    		else{
+//    			searchedString += searched.getKey().getFeatures() + " by GLOBAL; ";
+//    		}
+//    	}
+//    	System.out.println(searchedString);
+//    }
+	
+    public IMessage processMessage(IMessage message){
+    	Object result = null;
+
+        switch (message.getType()) {
+            case AskConfidence:
+                result = handle_askConfidence(message.getFrom(), (ITrObjectRepresentation) message.getContent());
+                break;
+            case StartSearch:
+                result = handle_startSearch(message.getFrom(), (ITrObjectRepresentation) message.getContent());
+                break;
+            case StopSearch:
+            	result = handle_stopSearch(message.getFrom(), (ITrObjectRepresentation) message.getContent());
+                break;
+            case Found:
+                result = handle_Found(message.getFrom(), (IBid) message.getContent());
+                break;
+            case StartTracking:
+                result = handle_startTracking(message.getFrom(), (ITrObjectRepresentation) message.getContent());
+        }
+
+        if (result == null) {
+            return null;
+        } else {
+        	return this.camController.createMessage(message.getFrom(), MessageType.ResponseToAskIfCanTrace, result);
+        }
+    }
+    
+
+    @SuppressWarnings("unused")
+	@Override
+    public IMessage receiveMessage(IMessage message) {
+    	
+    	if(DELAY_COMMUNICATION > 0){
+    		switch(message.getType()){
+    		case AskConfidence: processMessage(message); break; //delayedCommunication.put(message, DELAY_COMMUNICATION); break;
+    		case StartSearch: delayedCommunication.put(message, DELAY_COMMUNICATION); break;
+    		case StopSearch: delayedCommunication.put(message,DELAY_COMMUNICATION); break;
+    		case Found: delayedCommunication.put(message, DELAY_COMMUNICATION+DELAY_FOUND); break;
+    		case StartTracking: delayedCommunication.put(message, DELAY_COMMUNICATION); break;
+    		default: return processMessage(message);
+    		}
+    	}
+    	else{
+    		return processMessage(message);
+    	}
+    	return null;
+    }
+
+    protected void removeFromBiddings(ITrObjectRepresentation o) {
+        this.biddings.remove(o);
+    }
+
+    protected void removeRunningAuction(ITrObjectRepresentation tor) {
+		//int before = runningAuction.size();
+		runningAuction.remove(tor);
+		//int after = runningAuction.size();
+		
+		biddings.remove(tor);
+	}
+
+    protected void removeTracedObject(ITrObjectRepresentation rto) {
+        tracedObjects.remove(rto.getFeatures());
+        this.freeResources(rto);
+    }
+
+	@Override
+    public void removeVisibleObject(ITrObjectRepresentation rto) {
+    	if(wrongIdentified.containsKey(rto)){
+    		ITrObjectRepresentation original = rto;
+    		ITrObjectRepresentation wrong = wrongIdentified.get(rto);
+    		wrongIdentified.remove(original);
+    		rto = wrong;
+    	}
+    	
+    	if (this.isTraced(rto)) {
+            this.removeTracedObject(rto);
+            callForHelp(rto, 0);
+        }
+    }
+	
+	protected void reserveResources(ITrObjectRepresentation target, double resources) {
+//		double res = calcResources();
+		
+		this.reservedResources.put(target, resources);
+		this.stepsTillFreeResources.put(target, STEPS_TILL_RESOURCES_FREED);
+	}
+	
+	protected void searchFor(ITrObjectRepresentation content, String from) {
+        if (from.equals("")) {
+            searchForTheseObjects.put(content, null);
+        } else {
+            for (ICameraController cc : this.camController.getNeighbours()) {
+                if (cc.getName().equals(from)) {
+                    //if (!searchForTheseObjects.containsKey(content)) {
+                        searchForTheseObjects.put(content, cc);
+                   //}
+                    break;
+                }
+            }
+        }
+    }
+	
+	protected void sendMessage(MessageType mt, Object o){
+		switch(this.communication){
+			case 0: broadcast(mt, o); break;
+			case 1: multicastSmooth(mt, o); break;
+			case 2: multicastStep(mt, o); break;
+			case 3: multicastFix(mt, o); break;
+		}
+	}
+
+	@Override
+	public void setComm(int com) {
+		communication = com;		
+	}
+	
+	@Override
+    public void setController(ICameraController controller) {
+        this.camController = controller;
+    }
+
+	protected void startTracking(ITrObjectRepresentation target) {
+    	this.useResources(target);
+    	_paidUtility = target.getPrice();
+    	
+        tracedObjects.put(target.getFeatures(), target);
+    }
+	
+	protected void stopSearch(ITrObjectRepresentation content) {
+    	this.searchForTheseObjects.remove(content);
+    }
+	
+	@Override
+    public void strengthenVisionEdge(String destinationName) {
+    	if(!staticVG){
+	        if (this.visionGraph.containsKey(destinationName)) {
+	            double val = this.visionGraph.get(destinationName);
+	            this.visionGraph.put(destinationName, val + 1);
+	        } else {
+	            this.visionGraph.put(destinationName, 1.0);
+	        }
+    	}
+    }
+	
+	protected boolean trackingPossible() {
+    	if(this.camController.getLimit() == 0){
+    		//check if enough resources
+    		if(this.enoughResourcesForOneMore()){
+    			return true;
+    		}
+    		else{
+    			return false;
+    		}
+    	}
+		if(this.camController.getLimit() > this.addedObjectsInThisStep + this.tracedObjects.size()){
+			//check if enough resources
+			if(this.enoughResourcesForOneMore()){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else{
+			return false;
+		}
+	}
+
+	@Override
+    public void update() {
+        sentMessages = 0;
+        _nrBids = 0;
+        _receivedUtility = 0.0;
+        _paidUtility = 0.0;
+        if(DECLINE_VISION_GRAPH)
+            this.updateVisionGraph();
+
+        if(DEBUG_CAM) {
+            printStatus();
+        }
+        
+        updateReceivedDelay();
+        updateAuctionDuration();
+        
+        addedObjectsInThisStep = 0;
+        
+        checkIfSearchedIsVisible();
+        
+        checkIfTracedGotLost();
+
+        checkConfidences();
+        
+        printBiddings();
+        
+        for (Map.Entry<ITrObjectRepresentation, Map<ICameraController, Double>> bids : biddings.entrySet()) {
+            _nrBids += bids.getValue().size();
+        }
+        
+        checkBidsForObjects();       
+        
+        updateReservedResources();
+        
+        if(USE_BROADCAST_AS_FAILSAVE)
+            updateBroadcastCountdown(); 
+        
+        updateTotalUtilComm();
+    }
+
+	protected void updateAuctionDuration(){
+    	if(AUCTION_DURATION > 0){
+    		for(Map.Entry<ITrObjectRepresentation, Integer> entry : runningAuction.entrySet()){
+    			int dur = entry.getValue();
+    			dur--;
+    			entry.setValue(dur);
+    			if(dur < 0){
+    				System.out.println("------------------------- negative duration!");
+    			}
+    		}
+    	}
+    }
+	
+	protected void updateBroadcastCountdown(){
+    	List<ITrObjectRepresentation> bc = new ArrayList<ITrObjectRepresentation>();
+    	for (Map.Entry<ITrObjectRepresentation, Integer> kvp : stepsTillBroadcast.entrySet()) {
+			int i = kvp.getValue();
+			i--;
+			if(i <= 0){
+				bc.add(kvp.getKey());
+			}
+			else{
+				stepsTillBroadcast.put(kvp.getKey(), i);
+			}
+		}
+    	
+    	for (ITrObjectRepresentation iTrObjectRepresentation : bc) {
+			broadcast(MessageType.StartSearch, iTrObjectRepresentation);
+		}
+    }
+
+	protected void updateReceivedDelay(){
+    	List<IMessage> rem = new ArrayList<IMessage>();
+    	for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {
+    		int dur = entry.getValue();
+    		dur--;
+			entry.setValue(dur);
+			
+			if(dur<= 0){
+				rem.add(entry.getKey());
+				processMessage(entry.getKey());
+			}
+		}
+    	
+    	for (int i = 0; i < rem.size(); i++) {
+			delayedCommunication.remove(rem.get(i));
+		}
+    }
+	
+	protected void updateReservedResources() {
+    	List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
+		for(Map.Entry<ITrObjectRepresentation, Integer> entry : stepsTillFreeResources.entrySet()){
+			int steps = entry.getValue();
+			if(steps-1 == 0){
+				del.add(entry.getKey());
+			}
+			else{
+				stepsTillFreeResources.put(entry.getKey(), steps-1);
+			}
+		}
+		
+		for(ITrObjectRepresentation itr : del){
+			stepsTillFreeResources.remove(itr);
+		}
+	}
+	
+	protected void updateTotalUtilComm() {
+		this.tmpTotalComm += getComm();
+		this.tmpTotalUtil += getUtility();
+		this.tmpTotalRcvdPay += getReceivedUtility();
+		this.tmpTotalPaid += getPaidUtility();
+		this.tmpTotalBids += getNrOfBids();
+	}
+	
+	protected void updateVisionGraph() {
+    	if(!staticVG){
+	    	ArrayList<String> toRemove = new ArrayList<String>();
+	        for (Map.Entry<String, Double> e : visionGraph.entrySet()) {
+	            double val = e.getValue();
+	            e.setValue( e.getValue() * EVAPORATIONRATE); //0.995);
+	            if (val < 0) {
+	                toRemove.add(e.getKey());
+	            }
+	        }
+	        for (int i = 0; i < toRemove.size(); i++) {
+	            visionGraph.remove(toRemove.get(i));
+	        }
+    	}
+    }
+	
+	protected void useResources(ITrObjectRepresentation target){
+		double resRes = MIN_RESOURCES_USED; //0.0;
+		if(reservedResources.containsKey(target)){
+			resRes = reservedResources.get(target);
+		}
+		else{
+			resRes = this.calcResources();
+			this.reserveResources(target, resRes);
+		}
+		this.camController.reduceResources(resRes);
+		stepsTillFreeResources.remove(target);
+	}
+	
 	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
 		//object is not visible --> would send wrong bid!
 		
@@ -1089,263 +1343,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		else{
 			return null;
 		}
-	}
-
-//	private void printSearched(){
-//    	String searchedString = this.camController.getName() + " has in its search-list: ";
-//    	for(Map.Entry<ITrObjectRepresentation, ICameraController> searched : this.searchForTheseObjects.entrySet()){
-//    		if(searched.getValue() != null){
-//    			searchedString += searched.getKey().getFeatures() + " by " + searched.getValue().getName() + " ; ";
-//    		}
-//    		else{
-//    			searchedString += searched.getKey().getFeatures() + " by GLOBAL; ";
-//    		}
-//    	}
-//    	System.out.println(searchedString);
-//    }
-	
-    protected void addOwnBidFor(ITrObjectRepresentation target, double conf) {
-        Map<ICameraController, Double> bids = this.biddings.get(target);
-        if (bids == null) {
-            bids = new HashMap<ICameraController, Double>();
-        }
-        //modified (removed ! befor runningAuction.containsKey) and added ELSE ! 23/05/2012 - takes over object, if noone took it
-        if(runningAuction.containsKey(target)) {
-        	double value = this.calculateValue(target);
-        	//runningAuction.put(target, 0);
-	        bids.put(this.camController, value);// conf);
-	        biddings.put(target, bids);
-    	} else {
-        	if(!tracedObjects.containsKey(target)){
-        		startTracking(target);
-        		stopSearch(target);
-        		sendMessage(MessageType.StopSearch, target);
-           	 	stepsTillBroadcast.remove(target);
-        	}
-        }
-    }
-    
-
-    protected void updateVisionGraph() {
-    	if(!staticVG){
-	    	ArrayList<String> toRemove = new ArrayList<String>();
-	        for (Map.Entry<String, Double> e : visionGraph.entrySet()) {
-	            double val = e.getValue();
-	            e.setValue( e.getValue() * EVAPORATIONRATE); //0.995);
-	            if (val < 0) {
-	                toRemove.add(e.getKey());
-	            }
-	        }
-	        for (int i = 0; i < toRemove.size(); i++) {
-	            visionGraph.remove(toRemove.get(i));
-	        }
-    	}
-    }
-
-    @Override
-    public void strengthenVisionEdge(String destinationName) {
-    	if(!staticVG){
-	        if (this.visionGraph.containsKey(destinationName)) {
-	            double val = this.visionGraph.get(destinationName);
-	            this.visionGraph.put(destinationName, val + 1);
-	        } else {
-	            this.visionGraph.put(destinationName, 1.0);
-	        }
-    	}
-    }
-
-    public double getConfidence(ITrObjectRepresentation target) {
-        Pair pair = findSimiliarObject(target);
-        if (pair == null) {
-            return 0;
-        } else {
-            return pair.confidence;
-        }
-    }
-
-    @SuppressWarnings("unused")
-	@Override
-    public double getUtility() {
-        double utility = 0.0;
-        double resources = MIN_RESOURCES_USED;
-        double enabled = 1;  // 0/1 only
-        if (enabled == 1) {
-            double visibility = 0.0;
-            double classifier_confidence = 1;
-	        for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
-	        	visibility = this.getConfidence(obj);
-	//            utility += calculateValue(obj); 
-	            utility += visibility * classifier_confidence * enabled;// * resources;
-	        }
-        }
-        return utility;
-    }
-
-	@Override
-	public Map<List<Double>, ITrObjectRepresentation> getTracedObjects() {
-		
-		//make sure all traced objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
-		
-		Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
-		for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()){
-			if(wrongIdentified.containsValue(kvp.getValue())){
-				for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> wrongSet : wrongIdentified.entrySet()){
-					if(wrongSet.getValue().equals(kvp.getValue())){
-						retVal.put(wrongSet.getKey().getFeatures(), wrongSet.getKey());
-						break;
-					}
-				}
-			}
-			else{
-				retVal.put(kvp.getKey(), kvp.getValue());
-			}
-		}
-		
-		return retVal;
-	}
-	
-	@Override
-	public Map<ITrObjectRepresentation, ICameraController> getSearchedObjects(){
-		return this.searchForTheseObjects;
-	}
-	
-	public int getComm(){
-//		int retVal = 0;
-//		
-//		if(USE_MULTICAST_STEP){
-//			if(MULTICAST_SMOOTH){
-//				retVal = 1;
-//			}
-//			else{
-//				retVal = 2;
-//			}
-//		}
-//		else{
-//			retVal = 0;
-//		}
-		
-		return communication;
-	}
-	
-	@SuppressWarnings("unused")
-	public double calculateValue(ITrObjectRepresentation target){
-		double value = this.getConfidence(target); 
-		double res = calcResources(); // Probably not necessary
-		return value;
-	}
-
-	protected void reserveResources(ITrObjectRepresentation target, double resources) {
-//		double res = calcResources();
-		
-		this.reservedResources.put(target, resources);
-		this.stepsTillFreeResources.put(target, STEPS_TILL_RESOURCES_FREED);
-	}
-	
-	protected boolean enoughResourcesForOneMore(){
-		double res = calcResources();
-		if(res > 0){
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
-
-	protected double calcResources() {
-		double allPossibleRes = this.camController.getAllResources();
-		double reservedRes = 0.0;
-		for(Double res : reservedResources.values()){
-			reservedRes +=res;
-		}
-		
-		double useRes = (allPossibleRes-reservedRes) * USE_RESOURCES;
-		if(useRes < MIN_RESOURCES_USED){
-			useRes = 0.0;
-			if((allPossibleRes-reservedRes) >= MIN_RESOURCES_USED){
-				useRes = MIN_RESOURCES_USED;
-			}
-		}
-		return useRes;
-	}
-	
-	protected void useResources(ITrObjectRepresentation target){
-		double resRes = MIN_RESOURCES_USED; //0.0;
-		if(reservedResources.containsKey(target)){
-			resRes = reservedResources.get(target);
-		}
-		else{
-			resRes = this.calcResources();
-			this.reserveResources(target, resRes);
-		}
-		this.camController.reduceResources(resRes);
-		stepsTillFreeResources.remove(target);
-	}
-	
-	protected void freeResources(ITrObjectRepresentation target){
-		if(this.reservedResources.containsKey(target)){
-			double resRes = reservedResources.remove(target);//reservedResources.get(target);
-			this.camController.addResources(resRes);
-		}	
-	}
-	
-	@Override
-	public int currentlyMissidentified() {
-		return this.wrongIdentified.size();
-	}
-
-	@Override
-	public void setComm(int com) {
-		communication = com;		
-	}
-
-	@Override
-	public double getReceivedUtility() {
-		return _receivedUtility;
-	}
-	
-	@Override
-	public double getPaidUtility() {
-		return _paidUtility;
-	}
-
-	@Override
-	public int getNrOfBids() {
-		return _nrBids;
-	}
-	
-	@Override
-	public double getTmpTotalUtility(){
-		double tot = tmpTotalUtil;
-		tmpTotalUtil = 0.0;
-		return tot;
-	}
-	
-	@Override
-	public double getTmpTotalPaid(){
-		double tot = tmpTotalPaid;
-		tmpTotalPaid = 0.0;
-		return tot;
-	}
-	
-	@Override
-	public double getTmpTotalRcvPay(){
-		double tot = tmpTotalRcvdPay;
-		tmpTotalRcvdPay = 0.0;
-		return tot;
-	}
-	
-	@Override
-	public int getTmpTotalComm(){
-		int tot = tmpTotalComm;
-		tmpTotalComm = 0;
-		return tot;
-	}
-	
-	@Override
-	public int getTmpTotalBids(){
-		int tot = tmpTotalBids;
-		tmpTotalBids = 0;
-		return tot;
 	}
 	
 }
