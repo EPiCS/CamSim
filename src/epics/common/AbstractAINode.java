@@ -55,7 +55,7 @@ public abstract class AbstractAINode {
     private int communication;
 	protected Map<String, Double> visionGraph = new HashMap<String, Double>();
     protected Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
-    protected Map<List<Double>, ITrObjectRepresentation> tracedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
+    protected Map<List<Double>, ITrObjectRepresentation> trackedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
     protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
     protected Map<ITrObjectRepresentation, Map<ICameraController, Double>> biddings = new HashMap<ITrObjectRepresentation, Map<ICameraController, Double>>();
     protected Map<ITrObjectRepresentation, List<String>> advertised = new HashMap<ITrObjectRepresentation, List<String>>();
@@ -148,7 +148,7 @@ public abstract class AbstractAINode {
             bids.put(this.camController, value);// conf);
             biddings.put(target, bids);
         } else {
-            if(!tracedObjects.containsKey(target)){
+            if(!trackedObjects.containsKey(target)){
                 startTracking(target);
                 stopSearch(target);
                 sendMessage(MessageType.StopSearch, target);
@@ -333,9 +333,9 @@ public abstract class AbstractAINode {
                 visible = wrongIdentified.get(visible);
             }
             
-            if (!this.tracedObjects.containsKey(visible.getFeatures())) {
+            if (!this.trackedObjects.containsKey(visible.getFeatures())) {
                 if(!wrongIdentified.containsValue(visible)){
-                    ITrObjectRepresentation wrong = visibleIsMissidentified(visible);
+                    ITrObjectRepresentation wrong = visibleIsMisidentified(visible);
                     if(wrong != null){ //missidentified 
                         visible = wrong;
                     }
@@ -383,7 +383,7 @@ public abstract class AbstractAINode {
      */
     protected void checkIfTracedGotLost() {
         List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
-        for(ITrObjectRepresentation itor : this.tracedObjects.values()){
+        for(ITrObjectRepresentation itor : this.trackedObjects.values()){
             
             ITrObjectRepresentation mapped = itor;
             if(wrongIdentified.containsValue(itor)){
@@ -402,7 +402,7 @@ public abstract class AbstractAINode {
         }
         
         for(ITrObjectRepresentation tor : del){
-            this.removeTracedObject(tor);
+            this.removeTrackedObject(tor);
         }
     }
 
@@ -496,7 +496,7 @@ public abstract class AbstractAINode {
      * @return all traced objects
      */
     protected Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
-        return this.tracedObjects;
+        return this.trackedObjects;
     }
 
     /**
@@ -654,7 +654,7 @@ public abstract class AbstractAINode {
         //make sure all traced objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
         
         Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
-        for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()){
+        for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()){
             if(wrongIdentified.containsValue(kvp.getValue())){
                 for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> wrongSet : wrongIdentified.entrySet()){
                     if(wrongSet.getValue().equals(kvp.getValue())){
@@ -813,7 +813,7 @@ public abstract class AbstractAINode {
      */
     public void instantiateAINode(AbstractAINode ai){
     	this.lastConfidence = ai.lastConfidence;
-		this.tracedObjects = ai.tracedObjects;
+		this.trackedObjects = ai.trackedObjects;
 		this.searchForTheseObjects = ai.searchForTheseObjects;
 		this.biddings = ai.biddings;
 		this.advertised = ai.advertised;
@@ -858,7 +858,7 @@ public abstract class AbstractAINode {
      * @return true if tracked, false otherwise
      */
     protected boolean isTracked(ITrObjectRepresentation rto) {
-        if (this.tracedObjects.containsKey(rto.getFeatures())) {
+        if (this.trackedObjects.containsKey(rto.getFeatures())) {
             return true;
         } else {
             return false;
@@ -1076,7 +1076,7 @@ public abstract class AbstractAINode {
         output += " traces objects [real name] (identified as): ";      
     
         //      ITrObjectRepresentation realITO;
-        for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
+        for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()) {
             String wrong = "NONE";
             String real = "" + kvp.getValue().getFeatures();
             if(wrongIdentified.containsValue(kvp.getValue())){
@@ -1155,14 +1155,16 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * @param o
+	 * removes all bids for a given object 
+	 * @param o the object to remove the bids for
 	 */
 	protected void removeFromBiddings(ITrObjectRepresentation o) {
         this.biddings.remove(o);
     }
 	
 	/**
-	 * @param tor
+	 * removes an entire auction for a given object. 
+	 * @param tor the object the auction has to be removed for
 	 */
 	protected void removeRunningAuction(ITrObjectRepresentation tor) {
         //int before = runningAuction.size();
@@ -1173,16 +1175,19 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * @param rto
+	 * removes a currently tracked object and frees all reserved resources 
+	 * @param rto the object to be removed from the tracked ones
 	 */
-	protected void removeTracedObject(ITrObjectRepresentation rto) {
-        tracedObjects.remove(rto.getFeatures());
+	protected void removeTrackedObject(ITrObjectRepresentation rto) {
+        trackedObjects.remove(rto.getFeatures());
         this.freeResources(rto);
     }
 
 	
 	/**
-	 * @param rto
+	 * removes a given object from the list of currently visible objects.
+	 * in case the object is currently tracked, it is removed from tracked objects as well
+	 * @param rto the object not visible anymore
 	 */
 	public void removeVisibleObject(ITrObjectRepresentation rto) {
         if(wrongIdentified.containsKey(rto)){
@@ -1193,15 +1198,16 @@ public abstract class AbstractAINode {
         }
         
         if (this.isTracked(rto)) {
-            this.removeTracedObject(rto);
+            this.removeTrackedObject(rto);
             callForHelp(rto);
         }
     }
 	
 	
 	/**
-	 * @param target
-	 * @param resources
+	 * reserves a certain amount of resources for a given object
+	 * @param target the obeject to reserve resources for
+	 * @param resources the amount of resources to reserve 
 	 */
 	protected void reserveResources(ITrObjectRepresentation target, double resources) {
 //      double res = calcResources();
@@ -1211,8 +1217,12 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * @param content
-	 * @param from
+	 * starts to search for a certain object. keeps track which camera initiated the search.
+	 * 
+	 * this method is invoked when the camera receives the request to search for a specific object from another camera. 
+	 * 
+	 * @param content object to search for 
+	 * @param from the camera which initiated the search
 	 */
 	protected void searchFor(ITrObjectRepresentation content, String from) {
         if (from.equals("")) {
@@ -1230,8 +1240,11 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * @param mt
-	 * @param o
+	 * sends a message to other cameras. the messagetype and the object the message is related to is needed.
+	 * based on the selected communication, the message is either broadcasted, multicasted using smooth, step or fixed recipients. 
+	 * the type of communciation can be set using {@link AbstractAINode#setComm(int) setComm}
+	 * @param mt the type of message being sent
+	 * @param o the object this message is related to
 	 */
 	protected void sendMessage(MessageType mt, Object o){
         switch(this.communication){
@@ -1243,31 +1256,39 @@ public abstract class AbstractAINode {
     }
 		
 	/**
-	 * @param com
+	 * sets the communication policy:
+	 * 0 = broadcast
+	 * 1 = multicast smooth
+	 * 2 = multicast step
+	 * 3 = multicast fix 
+	 * @param com the communication policy
 	 */
 	public void setComm(int com) {
         communication = com;        
     }
 	
 	/**
-	 * @param controller
+	 * sets the actual camera for this AI for calling controller functions
+	 * @param controller to be set
 	 */
 	public void setController(ICameraController controller) {
         this.camController = controller;
     }
     
     /**
-     * @param target
+     * start tracking reserves resources for the given target, pays the utility price and starts to track the object
+     * @param target the object to start tracking
      */
     protected void startTracking(ITrObjectRepresentation target) {
         this.useResources(target);
         _paidUtility = target.getPrice();
         
-        tracedObjects.put(target.getFeatures(), target);
+        trackedObjects.put(target.getFeatures(), target);
     }
 
     /**
-     * @param content
+     * stops to search the given object. this should happen when the object has been found in another camera
+     * @param content the object to NOT search anymore
      */
     protected void stopSearch(ITrObjectRepresentation content) {
         this.searchForTheseObjects.remove(content);
@@ -1275,7 +1296,8 @@ public abstract class AbstractAINode {
 
 
 	/**
-	 * @param destinationName
+	 * strengthens the link to another camera in the vision graph 
+	 * @param destinationName the name of the remote camera and link to be strengthened
 	 */
 	public void strengthenVisionEdge(String destinationName) {
         if(!staticVG){
@@ -1289,7 +1311,8 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * @return
+	 * decides if another object can be tracked
+	 * @return true if another object can be tracked
 	 */
 	protected boolean trackingPossible() {
         if(this.camController.getLimit() == 0){
@@ -1301,7 +1324,7 @@ public abstract class AbstractAINode {
                 return false;
             }
         }
-        if(this.camController.getLimit() > this.addedObjectsInThisStep + this.tracedObjects.size()){
+        if(this.camController.getLimit() > this.addedObjectsInThisStep + this.trackedObjects.size()){
             //check if enough resources
             if(this.enoughResourcesForOneMore()){
                 return true;
@@ -1316,12 +1339,25 @@ public abstract class AbstractAINode {
     }
 
 	/**
+	 * abstract method. is implemented in subclasses.
+	 * is called in every timestep
 	 * 
+	 * the following is handled:
+	 *     the delay for receiving messages is updated
+	 *     the left duration of auctions is updated
+	 *     checks if a searched object is now visible
+	 *     checks if a tracked object got lost
+	 *     updates all confidences
+	 *     checks if any new biddings have arrived for any objects, or if an auction has ended
+	 *     updates the reserved resources
+	 * 
+	 * also, all temporary variables (received payments, paid payments and so on) are reset.
 	 */
 	public abstract void update();
 
 	/**
-	 * 
+	 * reduces the duration of all auctions
+	 * needed to identify when auctions have ended.
 	 */
 	protected void updateAuctionDuration(){
         if(AUCTION_DURATION > 0){
@@ -1337,7 +1373,9 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * 
+	 * reduces the broadcast countdown for all objects
+	 * if the coundown reaches 0, the start search message is broadcasted. this is only important if multicast smooth or step are being used
+	 * and should not be used at all when fixd communication is used.
 	 */
 	protected void updateBroadcastCountdown(){
         List<ITrObjectRepresentation> bc = new ArrayList<ITrObjectRepresentation>();
@@ -1359,7 +1397,9 @@ public abstract class AbstractAINode {
 	
 		
     /**
-     * 
+     * reduces the delay counter for receiving messages.
+     * if the counter for a messages arrives at 0, the message is received
+     * by the receiver
      */
     protected void updateReceivedDelay(){
         List<IMessage> rem = new ArrayList<IMessage>();
@@ -1380,7 +1420,9 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * 
+	 * updates the reserved resources. when a camera searches for an object, it reserves
+	 * resources for this object to be tracked. resources are only reserved for a certain time, afterwards they will be freed again.
+	 * if an object is being found after the resources have been freed, the resources will be allocated again, if there are enough of them.
 	 */
 	protected void updateReservedResources() {
         List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
@@ -1400,7 +1442,7 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * 
+	 * updates the all payments made and received, the number of overall messages sent and the number of bids made
 	 */
 	protected void updateTotalUtilComm() {
         this.tmpTotalComm += getComm();
@@ -1411,7 +1453,7 @@ public abstract class AbstractAINode {
     }
 
     /**
-     * 
+     * updates the vision graph. reduces every link by the evaporationrate
      */
     protected void updateVisionGraph() {
         if(!staticVG){
@@ -1430,7 +1472,8 @@ public abstract class AbstractAINode {
     }
     
     /**
-     * @param target
+     * allocates and uses resources. removes the counter for reserved resources
+     * @param target the object the resources are reserved for
      */
     protected void useResources(ITrObjectRepresentation target){
         double resRes = MIN_RESOURCES_USED; //0.0;
@@ -1446,10 +1489,12 @@ public abstract class AbstractAINode {
     }
 	
 	/**
-	 * @param visible
-	 * @return
+	 * decides if a visible object has been misidentified as a different object.
+	 * 
+	 * @param visible the object which might have been misidentified
+	 * @return the object as which given object has been identified.
 	 */
-	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
+	protected ITrObjectRepresentation visibleIsMisidentified(ITrObjectRepresentation visible){
         //object is not visible --> would send wrong bid!
         
         int random = randomGen.nextInt(100, RandomUse.USE.FALSEOBJ);

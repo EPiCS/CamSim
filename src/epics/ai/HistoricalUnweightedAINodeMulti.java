@@ -59,7 +59,7 @@ public class HistoricalUnweightedAINodeMulti extends ActiveAINodeMulti {
 			output += " traces objects [real name] (identified as): ";    	
     	
 			//    	ITrObjectRepresentation realITO;
-			for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
+			for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()) {
 				String wrong = "NONE";
 				String real = "" + kvp.getValue().getFeatures();
 				if(wrongIdentified.containsValue(kvp.getValue())){

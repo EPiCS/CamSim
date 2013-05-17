@@ -2,22 +2,18 @@ package epics.ai;
 
 import java.awt.font.NumericShaper.Range;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import epics.camsim.core.Bid;
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
 import epics.common.IBanditSolver;
-import epics.common.IBid;
 import epics.common.ICameraController;
 import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
-import epics.common.RandomUse;
 
 /**
  * Implementation of AbstractAINode.
@@ -145,7 +141,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		                                	 if(BIDIRECTIONAL_VISION || (!VISION_RCVER_BOUND))
 		                                		 strengthenVisionEdge(giveTo.getName());
 	                                	 }
-	                                	 this.removeTracedObject(tor);
+	                                	 this.removeTrackedObject(tor);
 	                                	 
 	                                	 List<String> cams = advertised.get(tor);
 	                                	 if(cams != null){

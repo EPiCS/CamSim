@@ -18,20 +18,44 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 
 	private static final int DEFAULT_AUCTION_DURATION = 0;
 	
+	/**
+	 * constructor for this node. calls its super constructor and sets the DEFAULT_AUCTION_DURATION
+	 * @param comm the communication policy
+	 * @param staticVG if static or dynamic vision graph
+	 * @param vg the initial vision graph
+	 * @param r the global registration component - can be null
+	 * @param rg the random number generator for this instance
+	 */
 	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
     	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
     	AUCTION_DURATION = DEFAULT_AUCTION_DURATION;
     }
 	
+	/**
+	 * constructor for this node. calls its super constructor and sets the DEFAULT_AUCTION_DURATION
+	 * @param comm the communication policy
+     * @param staticVG if static or dynamic vision graph
+     * @param vg the initial vision graph
+     * @param r the global registration component - can be null
+     * @param rg the random number generator for this instance
+	 * @param bs the bandit solver to decide the best communication policy and auctioning schedule
+	 */
 	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
     	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
     	AUCTION_DURATION = DEFAULT_AUCTION_DURATION;
     }
 
+	/**
+	 * creates a passive ai instance from another existing instance
+	 * @param ai the given existing AI instance
+	 */
 	public PassiveAINodeMulti(AbstractAINode ai){
 		super(ai);
 	}
 	
+	/* (non-Javadoc)
+	 * @see epics.common.AbstractAINode#instantiateAINode(int, boolean, java.util.Map, epics.common.IRegistration, epics.common.RandomNumberGenerator)
+	 */
 	@Override
     public void instantiateAINode(int comm, boolean staticVG,
             Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
@@ -47,6 +71,9 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
     }
     
 	
+    /* (non-Javadoc)
+     * @see epics.common.AbstractAINode#update()
+     */
     @Override
     public void update() {
     	sentMessages = 0;
@@ -84,6 +111,11 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
         updateTotalUtilComm();
     }
     
+    /**
+     * the method checks if there are bids for any objects and if these corresponding auctions have already ended or if they are still running.
+     * if the auction has ended, the winner is selected, the needed payments have to be announced. the winner is notified, this camera stops tracking.
+     * all non-winning cameras are notified to stop searching for the given object.
+     */
     protected void checkBidsForObjects() {
     	 if (this.searchForTheseObjects.containsValue(this.camController)) { 
              List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
@@ -151,7 +183,7 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 		                                	 if(BIDIRECTIONAL_VISION || (!VISION_RCVER_BOUND))
 		                                		 strengthenVisionEdge(giveTo.getName());
 	                                	 }
-	                                	 this.removeTracedObject(tor);
+	                                	 this.removeTrackedObject(tor);
 	                                	 
 	                                	 List<String> cams = advertised.get(tor);
 	                                	 if(cams != null){
@@ -186,6 +218,9 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
          }
 	}
     
+	/* (non-Javadoc)
+	 * @see epics.common.AbstractAINode#checkConfidences()
+	 */
 	@Override
 	public void checkConfidences() {
     	if (!this.getAllTracedObjects_bb().isEmpty()) {
@@ -222,6 +257,9 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
         }
 	}
 	
+    /**
+     * helper class to print a human readable version of the vision graph.
+     */
     private void printVisionGraph(){
     	String neighs = "";
     	for (String neighbour : visionGraph.keySet()) {
