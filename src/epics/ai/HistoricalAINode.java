@@ -294,6 +294,8 @@ public class HistoricalAINode {
 	 * (avg = totalTSVisible/tsVisibleCounter) */
 	private HashMap<Integer, Integer> tsVisibleCounterForCat = new HashMap<Integer, Integer>();
 	
+	/** The vision graph. Maps the camera name to the map of pheromones. The inner map 
+	 * contains each category mapped to values of the pheromones */
 	private Map<String, Map<Integer, Double>> visionGraph = new HashMap<String, Map<Integer, Double>>();
 	
 	public HistoricalAINode() { /* Nothing here */ }
@@ -520,8 +522,8 @@ public class HistoricalAINode {
 	}
 	
 	/** Given two points representing the positions of the object over the 
-	 * last two time steps, get the heading of the object's trajectory (in degrees).
-	 * This is relative to the camera with the given angle (in degrees) */
+	 * last two time steps, get the heading of the object's 
+	 * trajectory (in degrees) */
 	public static double getObjectHeading(Point2D.Double p1, Point2D.Double p2) {
 		double heading = getAngleFromOtherPoint(p1.x, p1.y, p2.x, p2.y);
 		//heading += cameraHeading; // Make angle relative to camera

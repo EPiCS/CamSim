@@ -822,7 +822,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			}
 			//get max strength
 			double highest = 0;
-			for(Double d : vgGetValues(io)){
+			Collection<Double> vgValues = vgGetValues(io); 
+			for(Double d : vgValues){
 				if(d > highest){
 					highest = d;
 				}
