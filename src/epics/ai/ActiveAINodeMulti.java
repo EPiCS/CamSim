@@ -27,11 +27,24 @@ public class ActiveAINodeMulti extends AbstractAINode {
     
     public static final int DETECTIONRATE = 100;
     
+    /**
+     * Creates an AI Node with active auction schedule from another, existing ai node
+     * @param ai the existing ai node
+     */
     public ActiveAINodeMulti(AbstractAINode ai){
     	super(ai);
     	AUCTION_DURATION = 0;
     }
     
+    /**
+     * Creates an AI Node with active auction schedule WITHOUT bandit solver for switching to another node automatically
+     * @param comm the used communication policy
+     * @param staticVG if static vision graph or not
+     * @param vg the initial vision graph
+     * @param r the global registration component - can be null
+     * @param auctionDuration the duration of auctions
+     * @param rg the random number generator for this instance
+     */
     public ActiveAINodeMulti(int comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
     	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
@@ -39,6 +52,16 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	AUCTION_DURATION = auctionDuration;
     }
     
+    /**
+     * Creates an AI Node with active auction schedule WITH a bandit solver for switching to another node automatically
+     * @param comm the used communication policy
+     * @param staticVG if static vision graph or not
+     * @param vg the initial vision graph
+     * @param r the global registration component - can be null
+     * @param auctionDuration the duration of auctions
+     * @param rg the random number generator for this instance
+     * @param bs the bandit solver 
+     */
     public ActiveAINodeMulti(int comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
@@ -46,6 +69,14 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	AUCTION_DURATION = auctionDuration;
     }
     
+    /**
+     * Creates an AI Node with active auction schedule WITHOUT bandit solver for switching to another node automatically
+     * @param comm the used communication policy
+     * @param staticVG if static vision graph or not
+     * @param vg the initial vision graph
+     * @param r the global registration component - can be null
+     * @param rg the random number generator for this instance
+     */
     public ActiveAINodeMulti(int comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
     	super(comm, staticVG, vg, r, rg); // Goes through to instantiateAINode()
@@ -53,6 +84,15 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	AUCTION_DURATION = 0;
     }
     
+    /**
+     * Creates an AI Node with active auction schedule WITH a bandit solver for switching to another node automatically
+     * @param comm the used communication policy
+     * @param staticVG if static vision graph or not
+     * @param vg the initial vision graph
+     * @param r the global registration component - can be null
+     * @param rg the random number generator for this instance
+     * @param bs the bandit solver 
+     */
     public ActiveAINodeMulti(int comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(comm, staticVG, vg, r, rg, bs); // Goes through to instantiateAINode()
@@ -177,6 +217,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
          }
 	}
 
+	/* (non-Javadoc)
+	 * @see epics.common.AbstractAINode#instantiateAINode(int, boolean, java.util.Map, epics.common.IRegistration, epics.common.RandomNumberGenerator)
+	 */
 	@Override
 	public void instantiateAINode(int comm, boolean staticVG,
             Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
@@ -191,6 +234,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
         randomGen = rg;
     }
 	
+	/* (non-Javadoc)
+	 * @see epics.common.AbstractAINode#update()
+	 */
 	@Override
     public void update() {
         sentMessages = 0;
