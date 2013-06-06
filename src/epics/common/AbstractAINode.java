@@ -35,6 +35,11 @@ public abstract class AbstractAINode {
     public abstract double getUtility();
     
     public abstract Map<ITrObjectRepresentation, ICameraController> getSearchedObjects();
+
+    /* Organise auctions and bid values */
+    public abstract void updateAuctionDuration();
+    public abstract void updateReceivedDelay();
+    public abstract void checkIfSearchedIsVisible(); // Place bids
     
     public abstract int getComm();
 
@@ -67,4 +72,7 @@ public abstract class AbstractAINode {
 	 * strings for keys and convert the value string to the appropriate type.
 	 * This method should return whether the param was successfully applied. */
 	public abstract boolean setParam(String key, String value);
+	
+	/** Get the name of this node */
+	public abstract String getName();
 }

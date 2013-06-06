@@ -429,41 +429,6 @@ public class SimCore {
 
     }
 
-    public void update_original() throws Exception{
-    	
-        /*
-         * Print messages on the screen, one per step
-         */
-        if( CmdLogger.hasSomething() ){
-            CmdLogger.update();
-            System.out.println("shouldn't be possible...  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            return;
-        }
-
-        /*
-         * Update all traceable objects (move them around)
-         */
-        for ( TraceableObject o : this.objects ){
-            o.update();
-        }
-
-        for( CameraController c : this.cameras ){
-            for ( TraceableObject o : this.objects ){
-            	c.update_confidence( o );
-            }
-        }
-
-        for( CameraController c : this.cameras ){
-            c.updateAI();
-        }
-        
-//        checkConsistency();
-//        printObjects();
-        
-        Statistics.addUtility( this.computeUtility() );
-        Statistics.nextTimeStep();
-    }
-
     public void update() throws Exception{
     	    	
         // Print messages on the screen, one per step
@@ -517,18 +482,18 @@ public class SimCore {
 //            }
         }
 
-        for( CameraController c : this.cameras ){
-        	//if(!c.isOffline()){
-	            c.updateAI();
-	            Statistics.addMissidentified(c.currentlyMissidentified());
-	            //Statistics.addCamUtility(c.getName(), c.getCamUtility());
-        	//}
+        // Place all bids before updateAI() is called in the next loop
+        for(CameraController c : this.cameras){
+        	c.getAINode().updateReceivedDelay();
+        	c.getAINode().updateAuctionDuration();
+        	c.getAINode().checkIfSearchedIsVisible();
+        	c.forwardMessages(); // Push messages to relevant nodes
         }
         
-//        checkConsistency();
-//        printObjects();
-        
-        
+        for(CameraController c : this.cameras){
+        	c.updateAI();
+        	Statistics.addMissidentified(c.currentlyMissidentified());
+        }
         
         Statistics.addUtility( this.computeUtility() );
         Statistics.nextTimeStep();

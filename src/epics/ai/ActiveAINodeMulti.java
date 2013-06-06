@@ -487,13 +487,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			System.out.println(output);
 		}
     	
-    	updateReceivedDelay();
-    	updateAuctionDuration();
-    	
     	addedObjectsInThisStep = 0;
     	
-        checkIfSearchedIsVisible();
-        
         checkIfTracedGotLost();
 
         checkConfidences();
@@ -508,7 +503,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
         	updateBroadcastCountdown();	
     }
     
-    protected void updateReceivedDelay(){
+    @Override
+    public void updateReceivedDelay(){
     	List<IMessage> rem = new ArrayList<IMessage>();
     	for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {
     		int dur = entry.getValue();
@@ -526,7 +522,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
     }
     
-    protected void updateAuctionDuration(){
+    @Override
+    public void updateAuctionDuration(){
     	if(AUCTION_DURATION > 0){
     		for(Map.Entry<ITrObjectRepresentation, Integer> entry : runningAuction.entrySet()){
     			int dur = entry.getValue();
@@ -577,7 +574,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	/** Looks at objects owned by this camera that are desired by other cameras
 	 * and evaluates bids from other cameras. Gives the object to the highest 
 	 * bidder (which can be itself). */
-	protected void checkBidsForObjects() {
+	public void checkBidsForObjects() {
     	 if (this.searchForTheseObjects.containsValue(this.camController)) { //this camera is looking for an object --> is owner of at least one object that is searched for by the network
              List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
              for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) { 
@@ -996,7 +993,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
         return this.tracedObjects;
     }
     
-    protected void checkIfSearchedIsVisible() {
+	@Override
+	public void checkIfSearchedIsVisible() {
     	ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
 
     	for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
@@ -1297,5 +1295,11 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	@Override
 	public boolean setParam(String key, String value) {
 		return false; // No params settable for this class yet
+	}
+	
+	@Override
+	/** Returns the name of the underlying CameraController object */
+	public String getName() {
+		return this.camController.getName();
 	}
 }

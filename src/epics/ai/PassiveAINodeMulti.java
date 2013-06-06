@@ -18,7 +18,8 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
     	super(comm, staticVG, vg, r, DEFAULT_AUCTION_DURATION); // Goes through to instantiateAINode()
     }
 
-    protected void checkBidsForObjects() {
+	@Override
+    public void checkBidsForObjects() {
     	 if (this.searchForTheseObjects.containsValue(this.camController)) { 
              List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
              for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {

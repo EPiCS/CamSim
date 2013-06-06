@@ -406,7 +406,7 @@ public class CameraController implements ICameraController{
     }
     
 
-    private IMessage forwardMessages() {
+    protected IMessage forwardMessages() {
     	IMessage retVal = null;
     	List<IMessage> delete = new ArrayList<IMessage>();
 		for (Map.Entry<IMessage, Integer> entry : sendOut.entrySet()) {
