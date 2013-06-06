@@ -766,7 +766,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 				}
 			}
 			
-			if(!this.camController.getVisibleObjects_bb().containsKey(mapped)){ //wrongIdentified.get(mapped))){
+			// If an object we are tracking is not in the visible objects list
+			if(!this.camController.getVisibleObjects_bb().containsKey(mapped)){
 				callForHelp(mapped, 4);
 				del.add(mapped);
 			}
@@ -1003,6 +1004,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     			visible = wrongIdentified.get(visible);
     		}
     		
+    		// If we can see an object but aren't tracking it
     		if (!this.tracedObjects.containsKey(visible.getFeatures())) {
     			if(!wrongIdentified.containsValue(visible)){
 		    		ITrObjectRepresentation wrong = visibleIsMissidentified(visible);
@@ -1046,21 +1048,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
         	this.stopSearch(foundElement);
         }
     }
-    
-//    private boolean visibleIsSearched(ITrObjectRepresentation visible) {
-//		if(this.searchForTheseObjects.containsKey(visible)){
-//			//visible is searched --> decide if identified correctly
-//			if(this.foundObjectIsCorrect()){
-//				return true;
-//			}
-//			else{
-//				return false;
-//			}
-//		}
-//		else{
-//			return false;
-//		}
-//    }
 		
 	protected ITrObjectRepresentation visibleIsMissidentified(ITrObjectRepresentation visible){
 		//object is not visible --> would send wrong bid!

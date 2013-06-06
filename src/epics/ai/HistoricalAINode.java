@@ -329,7 +329,9 @@ public class HistoricalAINode {
 				}
 				//System.out.println("\tQOM for object "+tor.getFeatures()+" is: "+getQuantityOfMovement(itro));
 				
-				getCategoryForObject(itro);
+				if (classificationEnabled()) {
+					getCategoryForObject(itro);
+				}
 			}
 		}
 		

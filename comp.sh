@@ -9,20 +9,22 @@ INCLUDECLASSES="$BUILDMAIN ./src/epics/ai/*.java"
 MANIFESTNAME=MANIFEST.MF
 DASH="--------------------------------------"
 
-NEWER=`find ./src -newer ./build.jar -name "*.java"`
-if [ -z "$NEWER" ]; then 
-    while true; do 
-	read -p "There are no new source files since last compilation. Continue compilation? [y/n] " yn
-	case $yn in 
-	    [Yy] ) echo "Compiling..."; break;; 
-	    [Nn] ) echo "Exiting..."; exit;; 
-	    * ) echo "Please answer y or n";; 
-	esac
-    done
-else 
-    echo "New source files since last compilation: $NEWER"
+# If build exists, check for new source files
+if [ -f "$JARNAME" ]; then
+    NEWER=`find ./src -newer ./build.jar -name "*.java"`
+    if [ -z "$NEWER" ]; then
+        while true; do
+	        read -p "There are no new source files since last compilation. Continue compilation? [y/n] " yn
+	        case $yn in
+	            [Yy] ) echo "Compiling..."; break;;
+	            [Nn] ) echo "Exiting..."; exit;;
+	            * ) echo "Please answer y or n";;
+	        esac
+        done
+    else 
+        echo "New source files since last compilation: $NEWER"
+    fi
 fi
-
 
 function createmanifest {
     if [ -f $MANIFESTNAME ]; then
