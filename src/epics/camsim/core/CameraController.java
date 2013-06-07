@@ -370,7 +370,9 @@ public class CameraController implements ICameraController{
     public IMessage sendMessage( String to, MessageType msgType, Object content){
     	if(DELAY_COMM > 0){
     		IMessage msg = this.createMessage(to, msgType, content);
-    		Statistics.addCommunication(1.0);
+    		if (msgType == MessageType.StartSearch) {
+    			Statistics.addCommunication(1.0);
+    		}
     		sendOut.put(msg, DELAY_COMM);
     		return null;
     	}
@@ -388,8 +390,9 @@ public class CameraController implements ICameraController{
 		            return this.createMessage(this.name, MessageType.ErrorBadDestinationAddress, null);
 		        }
 			    if(!cc.isOffline()){
-			        Statistics.addCommunication(1.0);
-			        
+			    	if (msgType == MessageType.StartSearch) {
+			    		Statistics.addCommunication(1.0);
+			    	}
 			        //System.out.println(this.getName() + " in sendMessage() to " + to + " for object " + c);
 			        
 			        IMessage msg = this.createMessage(to, msgType, content);
