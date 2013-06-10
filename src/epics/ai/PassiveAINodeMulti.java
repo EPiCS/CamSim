@@ -22,7 +22,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
     }
 
 	@Override
-	public void checkConfidences() {
+	public void advertiseTrackedObjects() {
 		for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
 			double conf = 0.0;
 			double lastConf = 0.0;

@@ -445,10 +445,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			System.out.println(output);
 		}
     	
-    	addedObjectsInThisStep = 0;
-    	
-        checkConfidences();
-        
         printBiddings();
         
         checkBidsForObjects();       
@@ -625,7 +621,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		biddings.remove(tor);
 	}
 
-	protected void checkConfidences() {
+	@Override
+	public void advertiseTrackedObjects() {
 		for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
 			callForHelp(io, 2);	
 		}
@@ -874,6 +871,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     
 	@Override
 	public void checkIfSearchedIsVisible() {
+		addedObjectsInThisStep = 0;
     	ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
 
     	for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {

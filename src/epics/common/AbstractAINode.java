@@ -37,6 +37,7 @@ public abstract class AbstractAINode {
     public abstract Map<ITrObjectRepresentation, ICameraController> getSearchedObjects();
 
     /* Organise auctions and bid values */
+    public abstract void advertiseTrackedObjects();
     public abstract void updateAuctionDuration();
     public abstract void updateReceivedDelay();
     public abstract void checkIfSearchedIsVisible(); // Place bids

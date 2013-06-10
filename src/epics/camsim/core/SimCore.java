@@ -469,6 +469,11 @@ public class SimCore {
         	}
         }
 
+        // Advertise each camera's owned objects
+        for(CameraController c : this.cameras){
+        	c.getAINode().advertiseTrackedObjects();
+        }
+        
         // Place all bids before updateAI() is called in the next loop
         for(CameraController c : this.cameras){
         	c.getAINode().updateReceivedDelay();
