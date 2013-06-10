@@ -369,11 +369,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     		wrongIdentified.remove(original);
     		rto = wrong;
     	}
-    	
-    	if (this.isTraced(rto)) {
-            this.removeTracedObject(rto);
-            callForHelp(rto, 0);
-        }
     }
 
     protected boolean isTraced(ITrObjectRepresentation rto) {
@@ -489,8 +484,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	
     	addedObjectsInThisStep = 0;
     	
-        checkIfTracedGotLost();
-
         checkConfidences();
         
         printBiddings();
@@ -750,32 +743,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
         if(reg != null){
         	reg.objectIsAdvertised(io);
         }
-	}
-	
-	protected void checkIfTracedGotLost() {
-		List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
-		for(ITrObjectRepresentation itor : this.tracedObjects.values()){
-			
-			ITrObjectRepresentation mapped = itor;
-			if(wrongIdentified.containsValue(itor)){
-				for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvp : wrongIdentified.entrySet()){
-					if(kvp.getValue().equals(itor)){
-						mapped = kvp.getKey();
-						break;
-					}
-				}
-			}
-			
-			// If an object we are tracking is not in the visible objects list
-			if(!this.camController.getVisibleObjects_bb().containsKey(mapped)){
-				callForHelp(mapped, 4);
-				del.add(mapped);
-			}
-		}
-		
-		for(ITrObjectRepresentation tor : del){
-			this.removeTracedObject(tor);
-		}
 	}
 	
 	protected void sendMessage(MessageType mt, Object o){
