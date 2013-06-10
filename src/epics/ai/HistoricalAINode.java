@@ -89,18 +89,18 @@ public class HistoricalAINode {
 	    	histNode = new HistoricalAINode();
 	    }
 
-	    @Override
-	    public void update() {
-	    	// Store current point and get rid of an old one if necessary
-	    	histNode.updateHistoricalPoints(this.camController);
-	    	super.update();
-	    }
-		
 		@Override
 		/** The bid for an object. Not the same as 'confidence' */
 		public double calculateValue(ITrObjectRepresentation itro) {
 			double superValue = super.calculateValue(itro);
 			return histNode.calculateValue(itro, superValue);
+		}
+		
+		@Override
+		public void advertiseTrackedObjects() {
+	    	// Store current point and get rid of an old one if necessary
+	    	histNode.updateHistoricalPoints(this.camController);
+			super.advertiseTrackedObjects();
 		}
 		
 		@Override
@@ -184,20 +184,20 @@ public class HistoricalAINode {
 	    	histNode = new HistoricalAINode();
 	    }
 	    
-	    @Override
-	    public void update() {
-	    	// Store current point and get rid of an old one if necessary
-	    	histNode.updateHistoricalPoints(this.camController);
-	    	super.update();
-	    }
-		
 		@Override
 		/** The bid for an object. Not the same as 'confidence' */
 		public double calculateValue(ITrObjectRepresentation itro) {
 			double superValue = super.calculateValue(itro);
 			return histNode.calculateValue(itro, superValue);
 		}
-		
+
+		@Override
+		public void advertiseTrackedObjects() {
+	    	// Store current point and get rid of an old one if necessary
+	    	histNode.updateHistoricalPoints(this.camController);
+			super.advertiseTrackedObjects();
+		}
+
 		@Override
 		/** See {@link AbstractAINode#setParam(String, String)} */
 		public boolean setParam(String key, String value) {
