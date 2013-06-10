@@ -203,30 +203,26 @@ public class ActiveAINodeMulti extends AbstractAINode {
     protected void foundObject(IBid bid, String from) {
     	ITrObjectRepresentation target = bid.getTrObject();
     	double conf = bid.getBid();
-//    	IMessage rst = this.camController.sendMessage(from, MessageType.AskConfidence, target);
-//    	if((rst != null)&& (rst.getContent() != null)){
-//    		double conf = (Double) rst.getContent(); //c.getVisibleObjects_bb().get(target);
-    	
-    		//if object is searched - if not searched, do not add to auctions
-    		for (ICameraController c : this.camController.getNeighbours()) {
-	            if (c.getName().equals(from)) {
-	            	if(this.advertised.containsKey(target)){
-	            		Map<ICameraController, Double> bids = biddings.get(target);
-	            		
-		                if (bids == null) {
-		                    bids = new HashMap<ICameraController, Double>();
-		                }
-		                if(!runningAuction.containsKey(target)){
-		                	runningAuction.put(target, AUCTION_DURATION);
-		                }
-		                if(!bids.containsKey(c)){
-			                bids.put(c, conf);
-			                biddings.put(target, bids);
-		                }
-		            }
-	            }
-	        }
-//    	}
+
+    	//if object is searched - if not searched, do not add to auctions
+    	for (ICameraController c : this.camController.getNeighbours()) {
+    		if (c.getName().equals(from)) {
+    			if(this.advertised.containsKey(target)){
+    				Map<ICameraController, Double> bids = biddings.get(target);
+    				
+    				if (bids == null) {
+    					bids = new HashMap<ICameraController, Double>();
+    				}
+    				if(!runningAuction.containsKey(target)){
+    					runningAuction.put(target, AUCTION_DURATION);
+    				}
+    				if(!bids.containsKey(c)){
+    					bids.put(c, conf);
+    					biddings.put(target, bids);
+    				}
+    			}
+    		}
+    	}
     }
 
     protected Object handle_stopSearch(String from, ITrObjectRepresentation content) {
@@ -249,9 +245,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
         } else {
             for (ICameraController cc : this.camController.getNeighbours()) {
                 if (cc.getName().equals(from)) {
-                    //if (!searchForTheseObjects.containsKey(content)) {
-                        searchForTheseObjects.put(content, cc);
-                   //}
+                	searchForTheseObjects.put(content, cc);
                     break;
                 }
             }
@@ -272,19 +266,15 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
             assert (featuresSelf.size() == featuresOther.size());
 
-            /*
-             * TODO: Double comparison with ==. Will break as soon as we put
-             * real values inside. We need some acceptible epsilon error.
-             */
+            /* TODO: Double comparison with ==. Will break as soon as we put
+             * real values inside. We need some acceptible epsilon error. */
             for (int i = 0; i < featuresSelf.size(); i++) {
                 if (featuresSelf.get(i) != featuresOther.get(i)) {
                     result = false;
                     break;
                 }
             }
-
         }
-
         return result;
     }
 
@@ -308,10 +298,8 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	        }
 	        
 	        addedObjectsInThisStep ++;
-	        double test = pair.confidence;
-	        return conf; //pair.confidence;//this.calculateValue(iTrObjectRepresentation);
-    	}
-    	else{
+	        return conf;
+    	} else {
     		return 0.0;
     	}
     }
@@ -447,13 +435,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	if(DECLINE_VISION_GRAPH)
     		this.updateVisionGraph();
     	
-//    	double resRes =0;
-//    	for(Double res : reservedResources.values()){
-//			resRes +=res;
-//		}
-//    	double totRes = resRes + this.camController.getResources();
-//    	System.out.println(this.camController.getName() + " resources reserved: " + resRes + " available: " + this.camController.getResources() + " total: " + totRes);
-
     	if(DEBUG_CAM && ! tracedObjects.entrySet().isEmpty()) {
 			String output = this.camController.getName();
 			if(this.camController.isOffline()){
@@ -611,13 +592,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                                 this.startTracking(tor);
 	                                 sendMessage(MessageType.StopSearch, tor);
 	                                 stepsTillBroadcast.remove(tor);
-	                                 //runningAuction.remove(tor);
-	//                                 if(USE_MULTICAST_STEP){
-	//                                	 multicast(MessageType.StopSearch, tor);
-	//                                 }
-	//                                 else{
-	//                                	 broadcast(MessageType.StopSearch, tor);
-	//                                 }
 	                             } else {
 	                                 IMessage reply = this.camController.sendMessage(giveTo.getName(), MessageType.StartTracking, tor);
 	                                 
@@ -648,18 +622,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                                	 
 	                                	 sendMessage(MessageType.StopSearch, tor);
 	                                	 stepsTillBroadcast.remove(tor);
-	                                	 //runningAuction.remove(tor);
-	                                	 
-	//                                	 if(USE_MULTICAST_STEP){
-	//                                    	 multicast(MessageType.StopSearch, tor);
-	//                                     }
-	//                                     else{
-	//                                    	 broadcast(MessageType.StopSearch, tor);
-	//                                     }
 	                                 }
 	                             }
 	                         }
-	                         //int map = runningAuction.remove(tor);
 	                         removeRunningAuction(tor); 
                     	 }
                      }
@@ -674,10 +639,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 
 	protected void removeRunningAuction(ITrObjectRepresentation tor) {
-		//int before = runningAuction.size();
 		runningAuction.remove(tor);
-		//int after = runningAuction.size();
-		
 		biddings.remove(tor);
 	}
 
@@ -693,15 +655,13 @@ public class ActiveAINodeMulti extends AbstractAINode {
             				lastConf = this.getLastConfidenceFor(kvp.getKey());
             			}
             		}	
-            	}
-            	else{
+            	} else {
 	                conf = this.calculateValue(io); //this.getConfidence(io);
 	                lastConf = this.getLastConfidenceFor(io);
             	}
             	
-            	
-               	callForHelp(io, 2);	
-                this.addLastConfidence(io, conf);
+            	callForHelp(io, 2);	
+            	this.addLastConfidence(io, conf);
             }
         }
 	}
@@ -996,20 +956,12 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	                    	this.startTracking(visible);
 	                    	found.add(visible);
 	                    	broadcast(MessageType.StopSearch, visible);
-	                    	//sendMessage(MessageType.StopSearch, visible);
-	                    	
-//	                    	if(USE_MULTICAST_STEP){
-//	                        	multicast(MessageType.StopSearch, visible);
-//	                        }
-//	                        else{
-//	                        	broadcast(MessageType.StopSearch, visible);
-//	                        }
+
 	                    	addedObjectsInThisStep++;
                     	}
                     }
                 }
     		}
-    		
         }
         for(ITrObjectRepresentation foundElement : found){
         	this.stopSearch(foundElement);
@@ -1047,19 +999,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		}
 	}
 
-//	private void printSearched(){
-//    	String searchedString = this.camController.getName() + " has in its search-list: ";
-//    	for(Map.Entry<ITrObjectRepresentation, ICameraController> searched : this.searchForTheseObjects.entrySet()){
-//    		if(searched.getValue() != null){
-//    			searchedString += searched.getKey().getFeatures() + " by " + searched.getValue().getName() + " ; ";
-//    		}
-//    		else{
-//    			searchedString += searched.getKey().getFeatures() + " by GLOBAL; ";
-//    		}
-//    	}
-//    	System.out.println(searchedString);
-//    }
-	
     protected void addOwnBidFor(ITrObjectRepresentation target, double bidValue) {
         Map<ICameraController, Double> bids = this.biddings.get(target);
         if (bids == null) {
@@ -1188,8 +1127,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 
 	protected void reserveResources(ITrObjectRepresentation target, double resources) {
-//		double res = calcResources();
-		
 		this.reservedResources.put(target, resources);
 		this.stepsTillFreeResources.put(target, STEPS_TILL_RESOURCES_FREED);
 	}
@@ -1198,8 +1135,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 		double res = calcResources();
 		if(res > 0){
 			return true;
-		}
-		else{
+		} else {
 			return false;
 		}
 	}
