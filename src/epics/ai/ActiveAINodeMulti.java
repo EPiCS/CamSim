@@ -67,25 +67,12 @@ public class ActiveAINodeMulti extends AbstractAINode {
     	if(vg != null){
     		visionGraph = vg;
     	}
-    	
     	this.staticVG = staticVG;
     	
-//    	if(staticVG){
-//    		COMMUNICATION = 3;
-//    	}
-//    	else{
     	if(comm == 3){
     		USE_BROADCAST_AS_FAILSAVE = false;
     	}
     	COMMUNICATION = comm;
-    	
-//	    	switch(comm){
-//	    	case 0: USE_MULTICAST_STEP = false; break;
-//	    	case 1: USE_MULTICAST_STEP = true; MULTICAST_SMOOTH = true; break;
-//	    	case 2: USE_MULTICAST_STEP = true; MULTICAST_SMOOTH = false; break;
-//	    	default: USE_MULTICAST_STEP = false; break;
-//	    	}
-//    	}
     }
     
     boolean staticVG = false;
@@ -124,7 +111,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
     @Override
     public IMessage receiveMessage(IMessage message) {
-    	
     	if(DELAY_COMMUNICATION > 0){
     		switch(message.getType()){
     		case AskConfidence: processMessage(message); break; //delayedCommunication.put(message, DELAY_COMMUNICATION); break;
@@ -134,8 +120,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     		case StartTracking: delayedCommunication.put(message, DELAY_COMMUNICATION); break;
     		default: return processMessage(message);
     		}
-    	}
-    	else{
+    	} else {
     		return processMessage(message);
     	}
     	return null;
@@ -438,7 +423,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 			if(this.camController.isOffline()){
 				output += " should be offline!! but";
 			}
-			output += " traces objects [real name] (identified as): ";    	
+			output += " traces objects [real name](identified as): ";    	
     	
 			for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : tracedObjects.entrySet()) {
 				String wrong = "NONE";
@@ -450,8 +435,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 							wrong = "" + kvp.getValue().getFeatures();
 							real = "" + kvpWrong.getKey().getFeatures();
 							break;
-						}
-						else{
+						} else {
 							wrong = "ERROR";
 						}
 					}
@@ -648,7 +632,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 
 	protected void printBiddings(){
-		
     	for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) {
     		ITrObjectRepresentation tor = entry.getKey();
     		Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
@@ -1029,14 +1012,13 @@ public class ActiveAINodeMulti extends AbstractAINode {
     @Override
     public double getUtility() {
         double utility = 0.0;
-        double resources = MIN_RESOURCES_USED;
+        // double resources = MIN_RESOURCES_USED;
         double enabled = 1;  // 0/1 only
         if (enabled == 1) {
             double visibility = 0.0;
             double classifier_confidence = 1;
 	        for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
 	        	visibility = this.getConfidence(obj);
-	//            utility += calculateValue(obj); 
 	            utility += visibility * classifier_confidence * enabled;// * resources;
 	        }
         }
