@@ -91,7 +91,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     boolean staticVG = false;
     
     private Map<String, Double> visionGraph = new HashMap<String, Double>(); // Use getVisionGraph() to access
-    protected Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
     protected Map<List<Double>, ITrObjectRepresentation> tracedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
     protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
     Map<ITrObjectRepresentation, Map<ICameraController, Double>> biddings = new HashMap<ITrObjectRepresentation, Map<ICameraController, Double>>();
@@ -116,7 +115,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
     ICameraController camController;
     ITrObjectRepresentation trObject;
-    double last_confidence = 0;
 
     @Deprecated
     @Override
@@ -644,26 +642,9 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	}
 
 	protected void checkConfidences() {
-    	if (!this.getAllTracedObjects_bb().isEmpty()) {
-            for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
-            	double conf = 0.0;
-            	double lastConf = 0.0;
-            	if(wrongIdentified.containsValue(io)){
-            		for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvp : wrongIdentified.entrySet()){
-            			if (kvp.getValue().equals(io)){
-            				conf = this.calculateValue(kvp.getKey()); //this.getConfidence(kvp.getKey());
-            				lastConf = this.getLastConfidenceFor(kvp.getKey());
-            			}
-            		}	
-            	} else {
-	                conf = this.calculateValue(io); //this.getConfidence(io);
-	                lastConf = this.getLastConfidenceFor(io);
-            	}
-            	
-            	callForHelp(io, 2);	
-            	this.addLastConfidence(io, conf);
-            }
-        }
+		for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
+			callForHelp(io, 2);	
+		}
 	}
 
 	protected void printBiddings(){
@@ -902,19 +883,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 
 	protected Map<ICameraController, Double> getBiddingsFor(ITrObjectRepresentation tor) {
         return this.biddings.get(tor);
-    }
-
-	protected void addLastConfidence(ITrObjectRepresentation io, double conf) {
-        this.lastConfidence.put(io, conf);
-
-    }
-
-	protected double getLastConfidenceFor(ITrObjectRepresentation io) {
-        if (lastConfidence.containsKey(io)) {
-            return lastConfidence.get(io);
-        } else {
-            return 0.0;
-        }
     }
 
 	protected Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
