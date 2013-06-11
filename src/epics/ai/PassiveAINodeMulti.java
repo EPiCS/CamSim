@@ -38,7 +38,7 @@ public class PassiveAINodeMulti extends ActiveAINodeMulti {
 				lastConf = this.getLastConfidenceFor(io);
 			}
 			
-			if (conf < CONF_THRESHOLD && conf < lastConf) {               	
+			if (conf < CONF_THRESHOLD && (conf == 0 || conf < lastConf)) {               	
 				callForHelp(io, 2);	
 			}
 			this.addLastConfidence(io, conf);
