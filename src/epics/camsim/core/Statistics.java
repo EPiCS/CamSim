@@ -138,8 +138,8 @@ public class Statistics {
     	String summary = time_step + comma 
     			+ util_tmp + comma 
     			+ util_cumulative + comma 
-    			+ comm_tmp + comma 
-    			+ comm_cumulative + comma 
+//    			+ comm_tmp + comma 
+//    			+ comm_cumulative + comma 
     			+ handover_tmp + comma 
     			+ handover_cumulative + comma
     			+ ident_tmp + comma 
