@@ -516,7 +516,7 @@ public class HistoricalAINode {
 					" was computed as: "+category);
 		}
 		
-		if (DEBUG_HIST) {
+		if (DEBUG_HIST && classificationEnabled()) {
 			System.out.printf("Heading for object %s: %.2f, category: %d\n",
 					itro.getFeatures(),heading,category);
 		}
