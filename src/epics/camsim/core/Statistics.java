@@ -23,14 +23,17 @@ public class Statistics {
     }
     private static double util_tmp = 0;
     private static double comm_tmp = 0;
+    private static double handover_tmp = 0;
     private static int ident_tmp = 0;
     private static int visible_tmp = 0;
     private static double util_cumulative = 0;
     private static double comm_cumulative = 0;
+    private static double handover_cumulative = 0;
     private static Map<String, Map<String,Double>> tmp_camUtil = new HashMap<String, Map<String,Double>>();
     private static ArrayList<Integer> time = new ArrayList<Integer>();
     private static ArrayList<Double> utility = new ArrayList<Double>();
     private static ArrayList<Double> communication = new ArrayList<Double>();
+    private static ArrayList<Double> handover = new ArrayList<Double>();
     private static ArrayList<Integer> identification = new ArrayList<Integer>();
     private static ArrayList<Integer> visible = new ArrayList<Integer>();
     		
@@ -45,12 +48,15 @@ public class Statistics {
         time_step = 0;
         util_tmp = 0;
         comm_tmp = 0;
+        handover_tmp = 0;
         ident_tmp = 0;
         util_cumulative = 0;
         comm_cumulative = 0;
+        handover_cumulative = 0;
         time.clear();
         utility.clear();
         communication.clear();
+        handover.clear();
         identification.clear();
         visible.clear();
     }
@@ -105,10 +111,12 @@ public class Statistics {
         time.add(time_step);
         utility.add(util_tmp);
         communication.add(comm_tmp);
+        handover.add(handover_tmp);
         identification.add(ident_tmp);
         visible.add(visible_tmp);
         util_cumulative += util_tmp;
         comm_cumulative += comm_tmp;
+        handover_cumulative += handover_tmp;
 
         System.out.println(getSummaryDesc(true));
         System.out.println(getSummary(true));
@@ -117,6 +125,7 @@ public class Statistics {
         time_step++;
         util_tmp = 0;
         comm_tmp = 0;
+        handover_tmp = 0;
         ident_tmp = 0;
         visible_tmp = 0;
         tmp_camUtil = new HashMap<String, Map<String,Double>>();
@@ -130,6 +139,8 @@ public class Statistics {
     			+ util_cumulative + comma 
     			+ comm_tmp + comma 
     			+ comm_cumulative + comma 
+    			+ handover_tmp + comma 
+    			+ handover_cumulative + comma
     			+ ident_tmp + comma 
     			+ visible_tmp;
     	return summary;
@@ -141,8 +152,10 @@ public class Statistics {
     	String desc = "TIME" + comma 
     			+ "GLOBAL_UTILITY" + comma 
     			+ "CUMULATIVE_UTILITY" + comma
-    			+ "COMMUNICATION" + comma 
-    			+ "CUMULATIVE_COMM" + comma 
+//    			+ "COMMUNICATION" + comma 
+//    			+ "CUMULATIVE_COMM" + comma 
+    			+ "HANDOVER" + comma
+    			+ "CUMULATIVE_HANDOVER" + comma
     			+ "MISIDENTIFICATION" + comma 
     			+ "VISIBLE";
     	return desc;
@@ -158,6 +171,10 @@ public class Statistics {
 
     public static void addCommunication(double communication) {
         comm_tmp += communication;
+    }
+
+    public static void addHandover(double handover) {
+        handover_tmp += handover;
     }
 
 	public static void addMissidentified(int currentlyMissidentified) {

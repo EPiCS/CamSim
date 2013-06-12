@@ -372,6 +372,8 @@ public class CameraController implements ICameraController{
     		IMessage msg = this.createMessage(to, msgType, content);
     		if (msgType == MessageType.StartSearch) {
     			Statistics.addCommunication(1.0);
+    		} else if (msgType == MessageType.StartTracking) {
+    			Statistics.addHandover(1.0);
     		}
     		sendOut.put(msg, DELAY_COMM);
     		return null;
@@ -392,8 +394,9 @@ public class CameraController implements ICameraController{
 			    if(!cc.isOffline()){
 			    	if (msgType == MessageType.StartSearch) {
 			    		Statistics.addCommunication(1.0);
-			    	}
-			        //System.out.println(this.getName() + " in sendMessage() to " + to + " for object " + c);
+			    	} else if (msgType == MessageType.StartTracking) {
+		    			Statistics.addHandover(1.0);
+		    		}
 			        
 			        IMessage msg = this.createMessage(to, msgType, content);
 			        return cc.getAINode().receiveMessage(msg);
