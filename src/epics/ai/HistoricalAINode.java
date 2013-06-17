@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -98,11 +99,15 @@ public class HistoricalAINode {
 		
 		@Override
 		public void advertiseTrackedObjects() {
-	    	// Store current point and get rid of an old one if necessary
-	    	histNode.updateHistoricalPoints(this.camController);
 			super.advertiseTrackedObjects();
 		}
 		
+		@Override
+		public void update() {
+			super.update();
+			histNode.update();
+		}
+
 		@Override
 		/** See {@link AbstractAINode#setParam(String, String)} */
 		public boolean setParam(String key, String value) {
@@ -193,9 +198,13 @@ public class HistoricalAINode {
 
 		@Override
 		public void advertiseTrackedObjects() {
-	    	// Store current point and get rid of an old one if necessary
-	    	histNode.updateHistoricalPoints(this.camController);
 			super.advertiseTrackedObjects();
+		}
+		
+		@Override
+		public void update() {
+			super.update();
+			histNode.update();
 		}
 
 		@Override
@@ -281,6 +290,8 @@ public class HistoricalAINode {
     private Map<ITrObjectRepresentation, Integer> lastSeenCategoryForObj = 
     		new HashMap<ITrObjectRepresentation, Integer>();
     
+    private HashSet<ITrObjectRepresentation> searchedThisTimestep = 
+		new HashSet<ITrObjectRepresentation>();
     
 	/** How many timesteps in total objects are visible for (divide by counter for avg) */
 	private double totalTSVisible = 0;
@@ -300,12 +311,15 @@ public class HistoricalAINode {
 	
 	public HistoricalAINode() { /* Nothing here */ }
 	
-	/** Store the current point for each visible object. This allows
-	 *  bids to be made later based on where the point has been. 
-	 *  Also updates how many timesteps this object has been visible for. */
-	protected void updateHistoricalPoints(ICameraController camController) {
-		// For every object, check for points. If nothing there, create a list first.
-		for(ITrObjectRepresentation itro : camController.getVisibleObjects_bb().keySet()) {
+	public void update() {
+		updateHistoricalPoints();
+	}
+
+	/** Store the current point for each searched object. This allows
+	 *  bids to be made later based on where the point has been. */
+	protected void updateHistoricalPoints() {
+		for (ITrObjectRepresentation itro : searchedThisTimestep) {
+			// For every object, check for points. If nothing there, create a list first.
 			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) itro;
 			TraceableObject object = tor.getTraceableObject();
 			LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
@@ -339,7 +353,7 @@ public class HistoricalAINode {
 		Iterator<ITrObjectRepresentation> iter = historicalLocations.keySet().iterator();
 		while (iter.hasNext()) {
 			ITrObjectRepresentation itro = iter.next();
-			if (! camController.getVisibleObjects_bb().containsKey(itro)) {
+			if (! searchedThisTimestep.contains(itro)) {
 				// Object disappeared. Grab visible timesteps
 				int visibleTS = historicalLocations.get(itro).size();
 				
@@ -375,11 +389,8 @@ public class HistoricalAINode {
 								+" ("+tsVisibleCounter+" objects seen so far)");
 					}					
 				}
-				if (DEBUG_HIST) {
-					System.out.println("\tObject "+itro.getFeatures()+" lost by "+camController.getName()+". ");
-				}
-				
-				iter.remove(); // Object is accounted for and not in view any more
+
+				iter.remove(); // Object is accounted for and not searched any more
 				if (category != 0) {
 					// We remove the object's points but remember its category so that
 					// when we hand over we know which category to strengthen the 
@@ -388,6 +399,7 @@ public class HistoricalAINode {
 				}
 			}
 		}
+		searchedThisTimestep.clear();
 	}
 
 	/** The average number of timesteps objects remain 
@@ -420,7 +432,16 @@ public class HistoricalAINode {
 	 * which retrieves the category from the ITRO. */
 	private Double getAvgVisibleTSForObject(ITrObjectRepresentation itro) {
 		int cat = this.getCategoryForObject(itro);
-		return getAvgVisibleTSForCat(cat);
+		Double result;
+		if (cat == 0) {
+			// Couldn't categorise, so we shouldn't place a bid.
+			// However, use this tiny amount so that we win the auction if
+			// nobody else is interested (so as not to lose the object)
+			result = 0.000001;
+		} else {
+			result = getAvgVisibleTSForCat(cat); 
+		}
+		return result;
 	}
 	
 	@SuppressWarnings("unused")
@@ -468,6 +489,12 @@ public class HistoricalAINode {
 				// Default value in case avgTS-tsSoFar is negative. See FYP(Overstay Problem)
 				bidCoefficient = this.overstayBidCoefficient;
 			}
+		}
+		
+		// If object is visible and we've searched for it, add to this list
+		// for later reference. 
+		if (superValue > 0.0) {
+			searchedThisTimestep.add(itro);
 		}
 		
 		if (histEnabled) {
