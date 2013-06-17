@@ -1,6 +1,6 @@
 #!/bin/sh
 STARTTIME=$SECONDS
-TIMESTEPS="1000"
+TIMESTEPS="10000"
 SEEDS=30
 
 # Only set if not already set
