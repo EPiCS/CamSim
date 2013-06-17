@@ -29,7 +29,7 @@ do
 
     SUMMARY_FILE="$PREFIX-$SEED-summary.txt"
     STDOUT_FILE="/dev/null" #"$PREFIX-$SEED-stdout.txt"
-    ARGS="--no-gui -t $TIMESTEPS -o $OUTPUT_FILE --summaryfile $SUMMARY_FILE --seed $SEED"
+    ARGS="--no-gui -t $TIMESTEPS --summaryfile $SUMMARY_FILE --seed $SEED"
     echo "Running with args: $ARGS $EXTRA_ARGS"
 
     ./run.sh $ARGS" "$EXTRA_ARGS > $STDOUT_FILE

@@ -45,6 +45,10 @@ function checkFileExists {
     fi
 }
 
+if [ ! -d $BASELOGDIR ]; then
+    mkdir $BASELOGDIR
+fi
+
 # To make the format of the files clear
 touch $BASELOGDIR"/PreInst-OverStay"
 
