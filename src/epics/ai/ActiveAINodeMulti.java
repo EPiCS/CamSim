@@ -840,13 +840,6 @@ public class ActiveAINodeMulti extends AbstractAINode {
 					advertised.put((ITrObjectRepresentation) o, cams);
 				}
             }
-//            else{
-//            	if(mt == MessageType.StopSearch){
-//            		advertised.remove((ITrObjectRepresentation)o);
-////            		if(advertised.get((ITrObjectRepresentation) o) != null)
-////            			advertised.get((ITrObjectRepresentation) o).remove(icc.getName());
-//            	}
-//            }
         }
     	if(mt == MessageType.StopSearch){
     		advertised.remove((ITrObjectRepresentation) o);
