@@ -138,10 +138,10 @@ public class Statistics {
     	String summary = time_step + comma 
     			+ util_tmp + comma 
     			+ util_cumulative + comma 
-//    			+ comm_tmp + comma 
-//    			+ comm_cumulative + comma 
-    			+ handover_tmp + comma 
-    			+ handover_cumulative + comma
+    			+ comm_tmp + comma 
+    			+ comm_cumulative + comma 
+//    			+ handover_tmp + comma 
+//    			+ handover_cumulative + comma
     			+ ident_tmp + comma 
     			+ visible_tmp;
     	return summary;
@@ -153,10 +153,10 @@ public class Statistics {
     	String desc = "TIME" + comma 
     			+ "GLOBAL_UTILITY" + comma 
     			+ "CUMULATIVE_UTILITY" + comma
-//    			+ "COMMUNICATION" + comma 
-//    			+ "CUMULATIVE_COMM" + comma 
-    			+ "HANDOVER" + comma
-    			+ "CUMULATIVE_HANDOVER" + comma
+    			+ "COMMUNICATION" + comma
+    			+ "CUMULATIVE_COMM" + comma 
+//    			+ "HANDOVER" + comma
+//    			+ "CUMULATIVE_HANDOVER" + comma
     			+ "MISIDENTIFICATION" + comma 
     			+ "VISIBLE";
     	return desc;
