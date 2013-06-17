@@ -20,6 +20,11 @@ function writeParamFile {
     echo >> $PARAM_FILE
     echo "PreInstantiationBidCoefficient=$1" >> $PARAM_FILE
     echo "OverstayBidCoefficient=$2" >> $PARAM_FILE
+    echo >> $PARAM_FILE
+    echo "HistEnabled=true" >> $PARAM_FILE
+    echo "DebugHist=false" >> $PARAM_FILE
+    echo "ClassificationEnabled=false" >> $PARAM_FILE
+
 }
 
 function getCommTypeName {
@@ -65,6 +70,8 @@ do
 		        if [[ "$ScenarioName" == *hist* ]]
 		        then
 		            PARAM_FILE_ARG="--paramfile $PARAM_FILE"
+		        else
+		            PARAM_FILE_ARG=""
 		        fi
 
 		        ./exp.sh $PARAM_FILE_ARG --comm $CommType $ScenarioFile 
