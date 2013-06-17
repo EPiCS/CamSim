@@ -16,11 +16,11 @@ ObjCategories=2
 
 date
 
-echo "Looping through ScenarioFiles: $ScenarioFiles"
-echo "Looping through PreInst: $PreInstantiationBidCoefficient"
-echo "Looping through OverStay: $OverstayBidCoefficient"
-echo "Looping through Hists: $Hists"
-echo "Looping through Classes: $Classes"
+echo -e "Looping through ScenarioFiles: \n$ScenarioFiles"
+echo -e "Looping through PreInst: \n$PreInstantiationBidCoefficient"
+echo -e "Looping through OverStay: \n$OverstayBidCoefficient"
+echo -e "Looping through Hists: \n$Hists"
+echo -e "Looping through Classes: \n$Classes"
 
 # Args:
 # PreInst, Overstay, Hist, Class

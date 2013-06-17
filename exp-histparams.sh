@@ -11,9 +11,9 @@ CommTypes=`seq 0 1 2` # Broadcast, smooth, step
 
 date
 
-echo "Looping through ScenarioFiles: $ScenarioFiles"
-echo "Looping through PreInst: $PreInstantiationBidCoefficient"
-echo "Looping through OverStay: $OverstayBidCoefficient"
+echo -e "Looping through ScenarioFiles:\n$ScenarioFiles"
+echo -e "Looping through PreInst:\n$PreInstantiationBidCoefficient"
+echo -e "Looping through OverStay:\n$OverstayBidCoefficient"
 
 function writeParamFile {
     echo "# Comments look like this" > $PARAM_FILE
