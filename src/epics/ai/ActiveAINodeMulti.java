@@ -343,11 +343,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
     }
 
     protected boolean isTraced(ITrObjectRepresentation rto) {
-        if (this.tracedObjects.containsKey(rto.getFeatures())) {
-            return true;
-        } else {
-            return false;
-        }
+        return this.tracedObjects.containsKey(rto.getFeatures());
     }
 
     protected void removeTracedObject(ITrObjectRepresentation rto) {
