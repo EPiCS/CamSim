@@ -25,6 +25,7 @@ public class Main {
     static boolean useGlobal = false;
     
     static String summaryFile = null;
+    static String paramFile = null;
     static String algo = "";
     static String comm = "";
     static int predefVG = -1;
@@ -58,7 +59,7 @@ public class Main {
     public static void usage() {
         System.out.println("USAGE: ");
         System.out.println("  program [OPTIONS] input_file");
-        System.out.println("\nuse -h vor help");
+        System.out.println("\nuse -h for help");
     }
 
     public static void help() {
@@ -67,17 +68,23 @@ public class Main {
         System.out.println(
         		
                 "OPTIONS:\n" +
-                " -h --help              	Print this help message\n" +
-                " -o --output [STRING]   	Change output file name (default: output.csv)\n" +
-                " -f --summaryfile [STRING]	Set a summary file to append the summary to\n" +
-                " -s --seed [INTEGER]    	Used this seed (default: 0)\n" +
-                " -t --time [INTEGER]    	Simulation time, in time steps (default: 100)\n" +
-                " -g --global            	Uses Global Registration Component\n" +
-                " -v --vg [INTEGER]		 	Defines the visiongraph ((default) -1 = defined in scenario file, 0 = static as defined in scenario, 1 = dynamic - ignore scenario file, 2 = dynamic - start with scenario file \n" +
-                " -c --comm [INTEGER] 	 	Defines Communication ((default) 0 = Broadcast, 1 = SMOOTH, 2 = STEP, 3 = Static) \n" +
-                " -a --algo [STRING]	 	Defines the used algorithm ((default) \"active\", \"passive\") \n" +
+                " -h, --help                 Print this help message\n" +
+                " -o, --output [STRING]      Change output file name (default: output.csv)\n" +
+                " -f, --summaryfile [STRING] Set a summary file to append the summary to\n" +
+                " -p, --paramfile [STRING]   Set a parameters file for this run\n" +                
+                " -s, --seed [INTEGER]       Used this seed (default: 0)\n" +
+                " -t, --time [INTEGER]       Simulation time, in time steps (default: 100)\n" +
+                " -g, --global               Uses Global Registration Component\n" +
+                " -v, --vg [INTEGER]         Defines the visiongraph\n" +
+                "                              -1 = defined in scenario file (default), \n" +
+                "                              0 = static as defined in scenario, \n" +
+                "                              1 = dynamic - ignore scenario file, \n" +
+                "                              2 = dynamic - start with scenario file \n" +
+                " -c, --comm [INTEGER]       Defines Communication ((default) 0 = Broadcast, \n" +
+                "                              1 = SMOOTH, 2 = STEP, 3 = Static) \n" +
+                " -a, --algo [STRING]        Defines the used algorithm ((default) \"active\", \"passive\") \n" +
                 "\n" +
-                "    --no-gui            	Will launch simulator in command line mode\n"
+                "     --no-gui               Will launch simulator in command line mode\n"
 
                 );
     }
@@ -91,7 +98,7 @@ public class Main {
 
         int c;
         String arg;
-        LongOpt[] longopts = new LongOpt[13];
+        LongOpt[] longopts = new LongOpt[14];
 
         StringBuffer sb = new StringBuffer();
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
@@ -107,9 +114,10 @@ public class Main {
         longopts[10] = new LongOpt("deterr", LongOpt.REQUIRED_ARGUMENT, null, 'd');
         longopts[11] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
         longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
+        longopts[13] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
         
         
-        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:d:e:r:s:t:", longopts);
+        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:d:e:r:s:t:f:p:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -156,6 +164,12 @@ public class Main {
                     }
                     break;
 
+                case 'p':
+                    arg = g.getOptarg();
+                    System.out.println("Setting param file: " + arg);
+                    paramFile = arg;
+                    break;
+                    
                 case 't':
                     arg = g.getOptarg();
                     try {
@@ -252,7 +266,8 @@ public class Main {
 	        }
         }
         
-        SimCore sim = new SimCore(seed, output_file, summaryFile, ss, useGlobal, camErr, camReset, trackErr, false, true);
+        SimCore sim = new SimCore(seed, output_file, summaryFile, paramFile, ss, 
+        		useGlobal, camErr, camReset, trackErr, false, true);
         if (showgui == false) {
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();

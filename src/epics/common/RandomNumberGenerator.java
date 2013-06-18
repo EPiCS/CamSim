@@ -55,10 +55,7 @@ public class RandomNumberGenerator {
 		}
     }
     
-//    public static double nextDouble(){
-//    	return RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV);
-//    }
-//    
+
     public int nextInt(RandomUse.USE u){
 //    	if(threadId != Thread.currentThread().getId()){
 //    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");

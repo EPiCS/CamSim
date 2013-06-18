@@ -21,11 +21,10 @@ import epics.camsim.core.CameraController;
 import epics.camsim.core.TraceableObject;
 
 /**
-Draws a spatial network on a panel
-*/
-public class WorldView extends JPanel implements Observer
-{
-    private static final boolean SHOW_LABELS = false;
+ * Draws a spatial network on a panel
+ */
+public class WorldView extends JPanel implements Observer {
+    private static final boolean SHOW_LABELS = true;
     private static final boolean SHOW_RES_LABELS = false;
 	private SimCoreModel sim_model;
     private CoordinateSystemTransformer cst;
@@ -35,21 +34,16 @@ public class WorldView extends JPanel implements Observer
         this.cst = this.sim_model.createCoordinateSystemTransformer(100, 100);
     }
 	
-    public WorldView(SimCoreModel model)
-    {
-	super();
-
-	setBackground(Color.white);
-
+    public WorldView(SimCoreModel model) {
+		super();
+	
+		setBackground(Color.white);
         this.setModel(model);
-
         setToolTipText("test");
-        
     }
     
     @Override
-    public void processMouseMotionEvent(MouseEvent e)
-    {
+    public void processMouseMotionEvent(MouseEvent e) {
     	double dx = cst.winToSimX(e.getLocationOnScreen().x);
     	double dy = cst.winToSimY(e.getLocationOnScreen().y);
     	setToolTipText(e.getLocationOnScreen().x + "," + e.getLocationOnScreen().y);
@@ -58,62 +52,50 @@ public class WorldView extends JPanel implements Observer
     }
     
     @Override
-    public void paintComponent(Graphics g)
-    {
-	Graphics2D g2 = (Graphics2D)g;
-	int height = getHeight();
-	int width = getWidth();
-
+    public void paintComponent(Graphics g) {
+		Graphics2D g2 = (Graphics2D)g;
+		int height = getHeight();
+		int width = getWidth();
+	
         int MIN_THICKNESS = 3;
 
         this.cst.setWindowHeight(height);
         this.cst.setWindowWidth(width);
-
-	g2.setColor(Color.white);
-	g2.fill( new Rectangle( 0, 0, width, height ) );
-
-	g2.setColor(Color.green);
 	
-	double diameter = 5;//Math.min(height, width);
-
-	//System.out.println("PAINTING");
-
+		g2.setColor(Color.white);
+		g2.fill(new Rectangle(0, 0, width, height));
+		
         g2.setColor(Color.GREEN);
-
         ArrayList<CameraController> cameras = sim_model.getCameras();
-        for( CameraController c : cameras ){
+        for(CameraController c : cameras) {
 
             /*
              * Camera dot
              */
 
-        	if(c.isOffline()){
+        	if(c.isOffline()) {
         		g2.setColor(Color.GRAY);
-        	}
-        	else{
+        	} else {
         		g2.setColor(Color.GREEN);
         	}
 
-            Point p = new Point( this.cst.simToWindowX(c.getX()), this.cst.simToWindowY(c.getY()), 8);		//draw spots
+            Point p = new Point(this.cst.simToWindowX(c.getX()), this.cst.simToWindowY(c.getY()), 8); //draw spots
             g2.fill(p);
             
            // g.drawOval((int) this.cst.simToWindowX(0), (int)this.cst.simToWindowY(0), 2, 2);
             
-            if(SHOW_LABELS){
+            if(SHOW_LABELS) {
 	            g2.setColor(Color.BLACK);
 	            Font f = new Font("Arial", Font.PLAIN, 10);
 	            g2.setFont(f);
-	            String algo;
-	            if(c.getAINode().getClass().getName().contains("Passive")){
+	            String algo = c.getAINode().getClass().getSimpleName();
+	            if(algo.contains("Passive")) {
 	            	algo = "P";
-	            }
-	            else if(c.getAINode().getClass().getName().contains("Active")){
+	            } else if(algo.contains("Active")) {
 	            	algo = "A";
-	            }
-	            else{
-	            	algo = "Unknown";
-	            }
-	            if(SHOW_RES_LABELS){
+	            } // Else actual name
+	            
+	            if(SHOW_RES_LABELS) {
 	            	if(c.isOffline()){
 	            		g2.setColor(Color.ORANGE);
 	            		g2.drawString("OFFLINE: " + c.getName() + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
@@ -121,18 +103,15 @@ public class WorldView extends JPanel implements Observer
 	            	else{
 	            		g2.drawString(c.getName() + " \n Algo: " + algo + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	}
-	            }
-	            else{
-	            	if(c.isOffline()){
+	            } else{
+	            	if(c.isOffline()) {
 	            		g2.setColor(Color.ORANGE);
 	            		g2.drawString("OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-	            	}
-	            	else{
+	            	} else {
 	            		g2.drawString(c.getName() + " \n Algo: " + algo, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
 	            	}
 	            }
-            }
-            else{
+            } else {
             	if(c.isOffline()){
             		g2.setColor(Color.ORANGE);
     	            Font f = new Font("Arial", Font.PLAIN, 10);
@@ -143,16 +122,14 @@ public class WorldView extends JPanel implements Observer
             
 
             /*
-             * vision graph here
+             * Vision graph here
              */
 
-            
-
-            Map<String,Double> vg = c.getVisionGraph();
-            for ( Map.Entry<String,Double> e : vg.entrySet() ){
+            Map<String,Double> vg = c.getDrawableVisionGraph();
+            for (Map.Entry<String,Double> e : vg.entrySet()){
 
                 CameraController cc = sim_model.getCameraByName(e.getKey());
-                if ( cc == null ){
+                if (cc == null){
                     continue;
                 }
                 double ccX = this.cst.simToWindowX(cc.getX());
@@ -160,22 +137,22 @@ public class WorldView extends JPanel implements Observer
 
                 double val = e.getValue();
                 int col = (int)(val * 255);
-                if ( col > 255 ){ col = 255; }
+                if (col > 255) { col = 255; }
 
                 int thickness = 0;
-                if ( val > 0 ){
+                if(val > 0) {
                     thickness = MIN_THICKNESS;
                 }
-                if ( val > 1 ){
+                if(val > 1) {
                     thickness = MIN_THICKNESS + 2;
                 }
-                if ( thickness > 6 ){ thickness = 6; }
-                if ( thickness < MIN_THICKNESS ){  thickness = MIN_THICKNESS;}
+                if(thickness > 6 ) { thickness = 6; }
+                if( thickness < MIN_THICKNESS) {  thickness = MIN_THICKNESS;}
 
-                g2.setStroke( new BasicStroke(thickness));
+                g2.setStroke(new BasicStroke(thickness));
 
                 // Fading red
-                g2.setColor( new Color(255, 255-col, 255-col )  );
+                g2.setColor(new Color(255, 255-col, 255-col ));
                 
                 Line2D.Double edge = new Line2D.Double(
                     this.cst.simToWindowX(c.getX()), this.cst.simToWindowY(c.getY()),
@@ -183,7 +160,7 @@ public class WorldView extends JPanel implements Observer
                 g2.draw(edge);
             }
 
-            g2.setStroke( new BasicStroke(MIN_THICKNESS));
+            g2.setStroke(new BasicStroke(MIN_THICKNESS));
 
 
             /*
@@ -230,7 +207,7 @@ public class WorldView extends JPanel implements Observer
             
             boolean polygon = false;
 
-            if ( polygon ){
+            if(polygon) {
 
 	            //g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
 	            Polygon poly = new Polygon();
@@ -240,8 +217,7 @@ public class WorldView extends JPanel implements Observer
 	            g2.fillPolygon(poly);
 	            //g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
-            }
-            else  {
+            } else {
                 
 	            Line2D.Double q = new Line2D.Double(
 	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
@@ -275,7 +251,7 @@ public class WorldView extends JPanel implements Observer
 	
             Map<TraceableObject, Double> objs = c.getVisibleObjects();
            
-            for ( Map.Entry<TraceableObject, Double> e : objs.entrySet() ){
+            for (Map.Entry<TraceableObject, Double> e : objs.entrySet()){
                 TraceableObject key = e.getKey();
                 double confidence = e.getValue();
 
@@ -331,7 +307,7 @@ public class WorldView extends JPanel implements Observer
             }
         
 
-            if ( false ){
+            if (false){
             	TraceableObject traced = c.getTraced();
                 g2.setColor( Color.green );
 
@@ -344,14 +320,12 @@ public class WorldView extends JPanel implements Observer
                     this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
                     this.cst.simToWindowX(traced.getX()), this.cst.simToWindowY(traced.getY()) );
                 g2.draw(q);
-
             }
         }
 
         
-
+        // Draw objects which move through the scene
         g2.setColor(Color.BLACK);
-
         ArrayList<TraceableObject> objects = sim_model.getObjects();
         for( TraceableObject tc : objects ){
             Point p = new Point( this.cst.simToWindowX(tc.getX()), this.cst.simToWindowY(tc.getY()), 5);		//draw spots
@@ -363,8 +337,7 @@ public class WorldView extends JPanel implements Observer
          
     }
     
-    public void update(Observable obs, Object obj)
-    {
-	repaint();
+    public void update(Observable obs, Object obj) {
+    	repaint();
     }
 }

@@ -1,6 +1,5 @@
 package epics.camsim.core;
 
-import java.awt.font.NumericShaper.Range;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,21 +11,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
 import epics.common.AbstractAINode;
 import epics.common.CmdLogger;
 import epics.common.IBanditSolver;
 import epics.common.IMessage;
-import epics.common.RandomUse;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
+import epics.common.RunParams;
 
 /**
  *
  * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
  */
-
 public class SimCore {
 
 	int TRACKERERROR = -1; //percent of missdetected objects
@@ -65,6 +67,7 @@ public class SimCore {
     
     private IRegistration reg = null;
     private SimSettings settings;
+    private String paramFile;
 
     private void checkCoordInRange( double x, double y ){
         if ( x < min_x || x > max_x || y < min_y || y > max_y ){
@@ -78,17 +81,17 @@ public class SimCore {
 	private String outputFile;
     
 	public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "");
+		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
 		this.interpretFile(ss);
 	}
 	
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "");
+		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
 		this.epsilon = epsilon;
 		this.interpretFile(ss);
 	}
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, boolean realData, boolean allStatistics){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, realData, allStatistics, "");
+		initSimCore(seed, output, global, -1, 50, -1, alpha, realData, allStatistics, "", null);
 		this.epsilon = epsilon;
 		this.interpretFile(ss);
 	}
@@ -96,20 +99,20 @@ public class SimCore {
 	public SimCore( long seed, String output, SimSettings ss, 
 			boolean global, int camError, int camReset, int trackError, double alpha, boolean realData, boolean allStatistics) {
 	    initSimCore(seed, output, global, camError, camReset, trackError,
-				alpha, realData, allStatistics, "");
+				alpha, realData, allStatistics, "", null);
 		this.interpretFile(ss);
 	}
 	
-	public SimCore(long seed, String output, String summaryFile, SimSettings ss, 
+	public SimCore(long seed, String output, String summaryFile, String paramFile, SimSettings ss, 
     		boolean global, int camError, int camReset, int trackError, boolean realData, boolean allStatistics) {
     	initSimCore(seed, output, global, camError, camReset, trackError,
-				alpha, realData, allStatistics, summaryFile);
+				alpha, realData, allStatistics, summaryFile, paramFile);
     	this.interpretFile(ss);
     }
 
 	private void initSimCore(long seed, String output, boolean global,
 			int camError, int camReset, int trackError, double alpha,
-			boolean realData, boolean allStatistics, String summary) {
+			boolean realData, boolean allStatistics, String summary, String paramFile) {
 		this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
 	    this.TRACKERERROR = trackError;
@@ -135,7 +138,7 @@ public class SimCore {
 		}
 	    
 	}
-	    
+	
     public void interpretFile(SimSettings ss){
     	settings = ss;
     	
@@ -169,7 +172,7 @@ public class SimCore {
     	}
     	
     		
-    	for ( SimSettings.CameraSettings cs : ss.cameras ){
+    	for (SimSettings.CameraSettings cs : ss.cameras){
     		Map<String, Double> vg = null;
     		
     		if(ss.visionGraph != null){
@@ -197,8 +200,12 @@ public class SimCore {
         }
     	
 
-        for ( SimSettings.TrObjectSettings tro : ss.objects ){
+        for (SimSettings.TrObjectSettings tro : ss.objects){
             this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features);
+        }
+        
+        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {
+        	this.add_object(objWithWP.speed, objWithWP.waypoints, objWithWP.features);
         }
         
         events = ss.events;
@@ -306,12 +313,12 @@ public class SimCore {
     	try {
     		aiNode = newAINodeFromName(ai_alg, comm, staticVG, vg, reg, bandit);
     	} catch (Exception e) {
-    		System.out.println("Invalid ai_algorithm parameter in scenario file: "+ai_alg);
-    		System.out.println("Must be a fully qualified class name e.g. 'epics.ai.ActiveAINodeMulti'");
+    		System.out.println("Couldn't initialise AI Node from name given in scenario file: "+ai_alg);
+    		System.out.println("Is it a fully qualified class name? e.g. 'epics.ai.ActiveAINodeMulti'");
     		e.printStackTrace();
     		System.exit(1);
     	}
-        
+    	
         CameraController cc = new CameraController(
         		name,
                 x_pos, y_pos,
@@ -319,13 +326,23 @@ public class SimCore {
                 Math.toRadians(angle_degrees),
                 range, aiNode, limit, 100 - TRACKERERROR, stats, randomGen, predefConfidences, predefVisibility);
 
+    	try {
+    		if (paramFile != null) {
+    			this.applyParamsToAINode(aiNode, paramFile);
+    		}
+    	} catch (IOException e) {
+    		System.out.println("Couldn't read ParamFile: " + paramFile);
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
+        
         if(USEGLOBAL){
         	reg.addCamera(cc);
     	}
         
-        this.getCameras().add( cc );
-        for ( CameraController c1 : this.cameras ){
-            c1.addCamera( cc );
+        this.getCameras().add(cc);
+        for (CameraController c1 : this.cameras){
+            c1.addCamera(cc);
             cc.addCamera(c1);
         }
 	}
@@ -373,6 +390,24 @@ public class SimCore {
     	node.setComm(comm);
     	return node;
     }
+
+    /** Given a file which contains parameters for our run, we run through 
+     * the params and apply each one to the AI node. This is mainly to aid
+     * running of experiments, where the necessary parameters can be applied
+     * to the node for a particular run, then the params file is changed for 
+     * the next run */
+    public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
+    	RunParams.loadIfNotLoaded(paramsFilepath);
+    	System.out.println("Setting params for " + node.getName() + "...");
+    	Set<Entry<Object,Object>> props = RunParams.getAllProperties();
+    	for (Entry<Object, Object> prop : props) {
+    		String key = (String) prop.getKey();
+    		String value = (String) prop.getValue();
+    		if (! node.setParam(key, value)) {
+    			throw new IllegalStateException("Param "+key+" could not be applied");
+    		}
+    	}
+    }
     
   	public void add_random_camera(){
         this.add_camera(
@@ -391,7 +426,6 @@ public class SimCore {
         if ( remove_index < this.cameras.size() ){
             cc = this.cameras.remove(remove_index);
         }
-        
         
         if(USEGLOBAL){
         	if(cc != null)
@@ -442,14 +476,6 @@ public class SimCore {
         	if(USEGLOBAL){
         		reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         	}
-//        	else{
-//		        for(CameraController cc : this.getCameras()){
-//		    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
-//		    			if(!cc.isOffline())
-//		    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-//			    	}
-//		    	}
-//        	}
         }
     }
 
@@ -464,11 +490,9 @@ public class SimCore {
         }
         else{
 	        for(CameraController cc : this.getCameras()){
-//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
-	    			if(!cc.isOffline())
-	    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-//		    	}
-	    	}
+	        	if(!cc.isOffline())
+	        		cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+	        }
         }
         
     }
@@ -482,11 +506,9 @@ public class SimCore {
         }
         else{
 	        for(CameraController cc : this.getCameras()){
-//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //(cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
-	    			if(!cc.isOffline())
-	    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-//		    	}
-	    	}  
+	        	if(!cc.isOffline())
+	        		cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+	        }  
         }
     }
 
@@ -498,12 +520,10 @@ public class SimCore {
         	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         }
         else{
-	        for(CameraController cc : this.getCameras()){
-//	    		if(!(cc.getAINode() instanceof ActiveAINodeMultiAsker)){ //((cc.getAINode() instanceof PassiveAINodeMulti)||(cc.getAINode() instanceof PassiveAINodeSingle)){
-	    			if(!cc.isOffline())
-	    				cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-//		    	}
-	    	}
+        	for(CameraController cc : this.getCameras()){
+        		if(!cc.isOffline())
+        			cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+        	}
         }
     }
 
@@ -519,13 +539,13 @@ public class SimCore {
     	if(this.objects.isEmpty()){
     		return;
     	}
-    	
+
         int rnd = randomGen.nextInt( objects.size() , RandomUse.USE.UNIV);
         
         TraceableObject obj_to_remove = this.objects.get(rnd);
 
        
-        for ( CameraController c : this.cameras ){
+        for (CameraController c : this.cameras){
             c.removeObject(obj_to_remove.getFeatures());
         }
         this.objects.remove(rnd);
@@ -718,7 +738,7 @@ public class SimCore {
         }
         
         // Update all traceable objects (move them around)
-        for ( TraceableObject o : this.objects ){
+        for (TraceableObject o : this.objects){
             o.update();
         }
 
@@ -740,10 +760,10 @@ public class SimCore {
         
 		//update all objects position in the world view
 		//select a new ai if bandit solvers are used
-        for( CameraController c : this.cameras ){
+        for(CameraController c : this.cameras){
         	if(!c.isOffline()){
-	            for ( TraceableObject o : this.objects ){
-	            	c.update_confidence( o );
+	            for (TraceableObject o : this.objects){
+	            	c.update_confidence(o);
 	            }
 	            if(!c.getVisibleObjects_bb().isEmpty()){
 	            	stats.addVisible();
@@ -795,6 +815,19 @@ public class SimCore {
 			}
         }
 
+        // Advertise each camera's owned objects
+        for(CameraController c : this.cameras){
+        	c.getAINode().advertiseTrackedObjects();
+        }
+        
+        // Place all bids before updateAI() is called in the next loop
+        for(CameraController c : this.cameras){
+        	c.getAINode().updateReceivedDelay();
+        	c.getAINode().updateAuctionDuration();
+        	c.getAINode().checkIfSearchedIsVisible();
+        	c.forwardMessages(); // Push messages to relevant nodes
+        }
+        
         //do trading for all cameras
         for( CameraController c : this.cameras ){
 		    c.updateAI();
@@ -836,7 +869,6 @@ public class SimCore {
         double ut = this.computeUtility();
         //System.out.println(stats.getSummary(false));
         stats.nextTimeStep();
-        
     }
 
 	private int getStratForAI(AbstractAINode ai) {
@@ -956,7 +988,6 @@ public class SimCore {
 	private void addFalseObject(CameraController c) {
     	double id = 0.111 * getNextID();
 
-    	
     	double tmp_x = 0;
         double tmp_y = -1;
         double tmp_heading = c.getHeading();
@@ -974,17 +1005,7 @@ public class SimCore {
     	double heading_degrees = randomGen.nextDouble(RandomUse.USE.UNIV) * 360;
     	double speed = randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4;
     	TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
-    	
 	}
-
-//	private boolean detectedFalseObejct() {
-//		int res = RandomNumberGenerator.nextInt(100);
-//		if(res < TRACKERERROR){
-//			return true;
-//		}
-//		return false;
-//	}
-
 
 	private void printObjects() throws Exception {
 		Map<TraceableObject, List<CameraController>> traced = new HashMap<TraceableObject, List<CameraController>>();
@@ -1070,21 +1091,12 @@ public class SimCore {
     				throw new Exception("INCONSISTENCY!!");
     			}
     		}
-//    		else{
-//    			if(searching.containsKey(to)){
-//    				throw new Exception("INCONSISTENCY!!!");
-//    			}
-//    		}
     	}
-    	
-    	
-    	
     }
 
     public double computeUtility(){
-
         double utility_sum = 0;
-        for ( CameraController c : this.cameras){
+        for (CameraController c : this.cameras){
         	if(!c.isOffline()){
         		utility_sum += c.getAINode().getUtility();
         		try {
@@ -1094,18 +1106,9 @@ public class SimCore {
 				}
         	}
         }
-
         return utility_sum;
-
     }
 
-    /*
-     * After this point, default and GETTERS - SETTERS only
-     */
-
-    /**
-     * @return the cameras
-     */
     public ArrayList<CameraController> getCameras() {
         return cameras;
     }
@@ -1119,31 +1122,31 @@ public class SimCore {
         return null;
     }
 
-    /**
-     * @return the objects
-     */
     public ArrayList<TraceableObject> getObjects() {
         return objects;
     }
 
+    /** Save the scenario currently active in the simulation to an XML file.
+     * Note that this does not fully support scenario XML features such as 
+     * objects with waypoints. It also does not represent angles 100% correctly. */
 	public void save_to_xml(String absolutePath) {
 		File f = new File(absolutePath + ".xml");
 		
 		FileWriter fw;
 		try {
 			fw = new FileWriter(f);
-			String s = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"+System.getProperty( "line.separator" )+"		<root>"+System.getProperty( "line.separator" )+"	    " +
+			String s = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"+System.getProperty( "line.separator" )+"<root>"+System.getProperty( "line.separator" )+"	    " +
 				"<simulation max_x=\"" + max_x + "\" max_y=\"" + max_y + "\" min_x=\"" + min_x + "\" min_y=\"" + min_y + "\">"+ System.getProperty( "line.separator" )+ "	        <cameras>"+ System.getProperty( "line.separator" );
 			fw.write(s);
 			
 			for (CameraController cam : cameras) {
-				fw.write("	        	     "+ cam.toString() + System.getProperty( "line.separator" ));
+				fw.write("	        	     "+ cam.toString() + System.getProperty("line.separator"));
 			}
 			fw.write("	        </cameras>"+System.getProperty( "line.separator" )+"        <objects>"+System.getProperty( "line.separator" ));
 			for(TraceableObject to : objects){
-				fw.write("	        	     "+ to.toXMLString() + System.getProperty( "line.separator" ));
+				fw.write("	        	     "+ to.toXMLString("	        	     ") + System.getProperty("line.separator"));
 			}
-			fw.write("        </objects>"+System.getProperty( "line.separator" )+"    </simulation>"+System.getProperty( "line.separator" )+"</root>");
+			fw.write("        </objects>"+System.getProperty("line.separator")+"    </simulation>"+System.getProperty("line.separator")+"</root>");
 			fw.close();
 		} catch (IOException e) {
 			e.printStackTrace();

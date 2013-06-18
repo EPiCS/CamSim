@@ -69,7 +69,7 @@ public class CameraController implements ICameraController{
         this.name = name;
         this.camAINode = ai;
         this.resources = new Resources();
-        ai.setController( this );
+        ai.setController(this);
         this.stats = stats;
         this.randomGen = rg;
         this.predefConf = predefConfidences;
@@ -78,7 +78,7 @@ public class CameraController implements ICameraController{
     }
     
     public double getAvailableResources(){
-    	if(isOffline()){//isOfflineFor > 0){
+    	if(isOffline()){
     		return 0;
     	}
     	else{
@@ -87,19 +87,19 @@ public class CameraController implements ICameraController{
     }
     
     public void reduceResources(double amount){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		resources.reduceResources(amount);
     	}
     }
     
     public void addResources(double amount){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		resources.addResources(amount);
     	}
     }
 
     void updateAI() {
-    	if(isOffline()){//isOfflineFor > 0){
+    	if(isOffline()){
     		isOfflineFor--;
     	}
     	else{
@@ -110,7 +110,7 @@ public class CameraController implements ICameraController{
     
 
 	public String getName() {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		return this.name;
     	}
     	else{
@@ -119,7 +119,7 @@ public class CameraController implements ICameraController{
     }
 
     public void addCamera(CameraController cam) {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	        if (cam != this) {
 	            if ( !this.neighbours.contains( cam )){
 	                this.neighbours.add(cam);
@@ -129,7 +129,7 @@ public class CameraController implements ICameraController{
     }
 
     public void removeCamera( CameraController cam ){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	        while( this.neighbours.contains(cam)){
 	            this.neighbours.remove( cam );
 	        }
@@ -140,91 +140,9 @@ public class CameraController implements ICameraController{
      * The main purpose of this method is to check if TraceableObject o is
      * visible to camera, if yes, then calculate confidence and further call
      * addVisibleObject or removeVisibleObject.
-     * @param o
-     * @return
      */
-    public double update_confidence_original( TraceableObject o ) {
-    	
-        double result_confidence;
-
-        double cx = this.getX();
-        double cy = this.getY();
-        double ox = o.getX();
-        double oy = o.getY();
-
-        double dist = Math.sqrt((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy));
-
-        if (dist > this.getRange()) {
-            // Object out of range
-            result_confidence = 0;
-        } else {
-
-            double tmp_x = 0;
-            double tmp_y = -1;
-
-            double tmp_heading = this.getHeading();
-
-            double vcx = tmp_x * Math.cos(tmp_heading) - tmp_y * Math.sin(tmp_heading);
-            double vcy = tmp_x * Math.sin(tmp_heading) - tmp_y * Math.cos(tmp_heading);
-
-            double vox = ox - cx;
-            double voy = oy - cy;
-
-            double vo_len = Math.sqrt(vox * vox + voy * voy);
-
-            vox = vox / vo_len;
-            voy = voy / vo_len;
-
-            double dot = vcx * vox + vcy * voy;
-
-            double angle = Math.acos(dot);
-
-            if (angle < this.getAngle() / 2) {
-
-
-                // ------------
-
-                /*
-                 * !!! SWITCH HERE !!!
-                 */
-
-                double dist_conf = (this.getRange() - dist) / this.getRange();
-
-                //dist_conf = dist_conf * 5; // so we use more of atan
-                //dist_conf = Math.atan( 1 / dist_conf );
-
-                // -------------
-
-                double ang_conf = (this.getAngle() / 2 - angle) / (this.getAngle() / 2);
-
-                double total_conf = dist_conf * ang_conf;
-
-
-                //System.out.println( "result " + total_conf + " = " + dist_conf + " * " + ang_conf + " // total = dist * ang");
-
-                // Object in range and in front of camera
-                
-                result_confidence = total_conf;
-
-            } else {
-                // Object in range, but not in front of camera
-                result_confidence = 0;
-            }
-
-
-        }
-
-        if (result_confidence > 0 ){
-            this.addVisibleObject(o, result_confidence);
-        }else{
-            this.removeVisibleObject(o);
-        }
-
-        return result_confidence;
-    }
-
-    public double update_confidence( TraceableObject o ) {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    public double update_confidence(TraceableObject o) {
+    	if (!isOffline()) {
 	        double result_confidence = 0;
 	
 	        double cx = this.getX();
@@ -234,7 +152,7 @@ public class CameraController implements ICameraController{
 	
 	        double dist = Math.sqrt((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy));
 	
-	        if(gotDetection()){
+	        if (gotDetection()) {
 		        if (dist > this.getRange()) {
 		            // Object out of range
 		            result_confidence = 0;
@@ -261,59 +179,43 @@ public class CameraController implements ICameraController{
 		            double angle = Math.acos(dot);
 		
 		            if (angle < this.getAngle() / 2) {
-		
-		
-		                // ------------
-		
-		                /*
-		                 * !!! SWITCH HERE !!!
-		                 */
-		
 		                double dist_conf = (this.getRange() - dist) / this.getRange();
 		
 		                //dist_conf = dist_conf * 5; // so we use more of atan
 		                //dist_conf = Math.atan( 1 / dist_conf );
 		
-		                // -------------
-		
 		                double ang_conf = (this.getAngle() / 2 - angle) / (this.getAngle() / 2);
 		
 		                double total_conf = dist_conf * ang_conf;
-		
-		
+
 		                //System.out.println( "result " + total_conf + " = " + dist_conf + " * " + ang_conf + " // total = dist * ang");
 		
 		                // Object in range and in front of camera
-		                
 		                result_confidence = total_conf;
 		
 		            } else {
 		                // Object in range, but not in front of camera
 		                result_confidence = 0;
 		            }
-		
-		
 		        }
-	        }
-	        else{
+	        } else {
 	        	result_confidence = 0;
 	        }
 	
-	        if (result_confidence > 0 ){
+	        if (result_confidence > 0 ) {
 	            this.addVisibleObject(o, result_confidence);
-	        }else{
+	        } else {
 	            this.removeVisibleObject(o);
 	        }
 	        
 	        return result_confidence;
-    	}
-    	else{
+    	} else {
     		return 0;
     	}
     }
 
     private boolean gotDetection() {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 			int res = randomGen.nextInt(100, RandomUse.USE.UNIV);
 			if(res > DETECTIONRATE){
 				return false;
@@ -326,7 +228,7 @@ public class CameraController implements ICameraController{
 	}
     
     private void addVisibleObject( TraceableObject tc, double confidence ){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	        if ( ! this.visible_objects.containsKey(tc)){
 	
 	            this.visible_objects.put( tc, confidence );
@@ -341,7 +243,7 @@ public class CameraController implements ICameraController{
     }
     
     private void removeVisibleObject( TraceableObject tc ){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	        if (this.visible_objects.containsKey(tc)){
 	
 	            this.camAINode.removeVisibleObject( new TraceableObjectRepresentation(tc, tc.getFeatures()));
@@ -366,7 +268,7 @@ public class CameraController implements ICameraController{
     }
 
     public TraceableObject getTraced(){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	        ITrObjectRepresentation itro = this.camAINode.getTrackedObject();
 	        if ( itro == null ){
 	            return null;
@@ -381,7 +283,7 @@ public class CameraController implements ICameraController{
     
     public Map<List<Double>, TraceableObject> getTrackedObjects(){
     	Map<List<Double>, TraceableObject> retVal = new HashMap<List<Double>, TraceableObject>();
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getTrackedObjects().entrySet()){
 	    		retVal.put(e.getKey(), ((TraceableObjectRepresentation)e.getValue()).getTraceableObject());
 	    	}	
@@ -390,7 +292,7 @@ public class CameraController implements ICameraController{
     }
 
     public Map<TraceableObject, Double> getVisibleObjects(){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		return this.visible_objects;
     	}
     	else{
@@ -399,7 +301,7 @@ public class CameraController implements ICameraController{
     }
 
     public int getNumVisibleObjects(){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		return this.visible_objects.size();
     	}
     	else{
@@ -433,7 +335,7 @@ public class CameraController implements ICameraController{
     public Map<ITrObjectRepresentation,Double> getVisibleObjects_bb() {
     	
         Map<ITrObjectRepresentation,Double> result_list = new HashMap<ITrObjectRepresentation,Double>();
-        if(!isOffline()){//isOfflineFor <= 0){
+        if(!isOffline()){
 	        for ( Map.Entry<TraceableObject, Double> e : this.visible_objects.entrySet()) {
 	            TraceableObject key = e.getKey();
 	            double confidence = e.getValue();
@@ -449,7 +351,7 @@ public class CameraController implements ICameraController{
 
     @Override
     public IMessage createMessage(String to, MessageType msgType, Object content) {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		return new Message( this.name, to, msgType, content);
     	}
     	else{ 
@@ -465,7 +367,7 @@ public class CameraController implements ICameraController{
     public List<ICameraController> getNeighbours() {
     	
         List<ICameraController> lst = new LinkedList<ICameraController>();
-        if(!isOffline()){//isOfflineFor <= 0){
+        if(!isOffline()){
 	        for ( int i = 0; i < this.neighbours.size(); i++ ){
 	            lst.add( this.neighbours.get(i));
 	        }
@@ -474,7 +376,7 @@ public class CameraController implements ICameraController{
     }
 
     private CameraController getNeighbourByName( String name ){
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
 	        for ( int i = 0; i < this.neighbours.size(); i++ ){
 	            if ( this.neighbours.get(i).getName().compareTo(name) == 0 ){
 	                return this.neighbours.get(i);
@@ -487,13 +389,17 @@ public class CameraController implements ICameraController{
     public IMessage sendMessage( String to, MessageType msgType, Object content){
     	if(DELAY_COMM > 0){
     		IMessage msg = this.createMessage(to, msgType, content);
+
     		try {
     			if(msgType == MessageType.StartSearch){
     				stats.addCommunication(1.0, this.getName());
-    			}
+    			} else if (msgType == MessageType.StartTracking) {
+        			stats.addHandover(1.0);
+        		}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+
     		sendOut.put(msg, DELAY_COMM);
     		return null;
     	}
@@ -504,8 +410,8 @@ public class CameraController implements ICameraController{
 	    		c = tor.getFeatures().toString();
 	    	}
 	    	catch(Exception ex){}
-	    	//System.out.println("--> message from: " + this.name + " to: " + to + " msgtype " + msgType + " content " + c);
-	    	if(!isOffline()){//isOfflineFor <= 0){
+	    	
+	    	if(!isOffline()){
 		        CameraController cc = this.getNeighbourByName(to);
 		        if ( cc == null ){
 		            return this.createMessage(this.name, MessageType.ErrorBadDestinationAddress, null);
@@ -514,12 +420,12 @@ public class CameraController implements ICameraController{
 			    	try {
 			    	    if(msgType == MessageType.StartSearch){
 			    	        stats.addCommunication(1.0, this.getName());
-			    	    }
+			    	    } else if (msgType == MessageType.StartTracking) {
+			    			stats.addHandover(1.0);
+			    		}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-			        
-			        //System.out.println(this.getName() + " in sendMessage() to " + to + " for object " + c);
 			        
 			        IMessage msg = this.createMessage(to, msgType, content);
 			        return cc.getAINode().receiveMessage(msg);
@@ -535,7 +441,7 @@ public class CameraController implements ICameraController{
     }
     
 
-    private IMessage forwardMessages() {
+    protected IMessage forwardMessages() {
     	IMessage retVal = null;
     	List<IMessage> delete = new ArrayList<IMessage>();
 		for (Map.Entry<IMessage, Integer> entry : sendOut.entrySet()) {
@@ -559,7 +465,7 @@ public class CameraController implements ICameraController{
 
 
     public AbstractAINode getAINode() {
-    	if(!isOffline()){//isOfflineFor <= 0){
+    	if(!isOffline()){
     		return this.camAINode;
     	}
     	else{
@@ -567,11 +473,10 @@ public class CameraController implements ICameraController{
     	}
     }
 
-    public Map<String,Double> getVisionGraph(){
-    	if(!isOffline()){//isOfflineFor <= 0){
-    		return this.camAINode.getVisionGraph();
-    	}
-    	else{
+    public Map<String,Double> getDrawableVisionGraph(){
+    	if(!isOffline()){
+    		return this.camAINode.getDrawableVisionGraph();
+    	} else {
     		return new HashMap<String, Double>();
     	}
     }
@@ -581,22 +486,14 @@ public class CameraController implements ICameraController{
     @Override
     public String toString(){
     	String retVal = "<camera ai_algorithm=\"";
-    	if(getAINode() instanceof epics.ai.PassiveAINodeMulti){
-    		retVal += "passive\" ";
-    	}
-    	else{
-    		retVal += "active\" ";
-    	}
-    	
-    	retVal += "heading=\"" + this.heading * Math.toRadians(3600) + "\" name=\"" + this.name + "\" range=\""+ this.range + "\" viewing_angle=\"" + this.viewing_angle * Math.toRadians(3000) + "\" x=\"" + this.x +"\" y=\"" + this.y + "\" comm=\"0\"/>"; 
+    	retVal += getAINode().getClass().getCanonicalName() + "\" ";
+    	retVal += "heading=\"" + Math.toDegrees(this.heading) + "\" name=\"" + this.name + "\" range=\""+ this.range + "\" viewing_angle=\"" + Math.toDegrees(this.viewing_angle) + "\" x=\"" + this.x +"\" y=\"" + this.y + "\" comm=\"0\"/>"; 
     	return retVal;
     }
 
-
-
 	@Override
 	public int getLimit() {
-		if(!isOffline()){//isOfflineFor <= 0){
+		if(!isOffline()){
 			return LIMIT;
 		}
 		else{
@@ -606,7 +503,7 @@ public class CameraController implements ICameraController{
 
 	@Override
 	public double getAllResources() {
-		if(!isOffline()){//isOfflineFor <= 0){
+		if(!isOffline()){
 			return this.resources.getAllResources();
 		}
 		else{
@@ -615,7 +512,7 @@ public class CameraController implements ICameraController{
 	}
 
 	public int currentlyMissidentified() {
-		if(!isOffline()){//isOfflineFor <= 0){
+		if(!isOffline()){
 			return this.camAINode.currentlyMissidentified();
 		}
 		else{
@@ -662,14 +559,6 @@ public class CameraController implements ICameraController{
 		if(range != -1d)
 			this.range = range;
 		
-	}
-
-	public Map<String, Double> getCamUtility() {
-		Map<String, Double> res = new HashMap<String, Double>();
-		for(ITrObjectRepresentation tor : this.camAINode.getTrackedObjects().values()){
-			//res.put(tor.getFeatures().toString(), camAINode.getObjectUtility(tor));
-		}
-		return res;
 	}
 	
 	@Override
