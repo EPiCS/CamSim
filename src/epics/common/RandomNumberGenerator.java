@@ -8,21 +8,35 @@ import java.util.Random;
  */
 public class RandomNumberGenerator {
     
-    private static Random ranUniversal = null;
-    private static Random ranFalseObj = null;
-    private static Random ranTurn = null;
-    private static Random ranComm = null;
-    private static Random ranError = null;
+    private Random ranUniversal = null;
+    private Random ranFalseObj = null;
+    private Random ranTurn = null;
+    private Random ranComm = null;
+    private Random ranError = null;
+    private Random ranBandit = null;
+    private long _seed;
+    long threadId;
 
-    public static void init(long seed){
-        ranUniversal = new Random( seed );
+    public RandomNumberGenerator(long seed) {
+    	init(seed);
+        _seed = seed;
+    	threadId = Thread.currentThread().getId();
+	}
+    
+    private void init( long seed ){
+    	ranUniversal = new Random( seed );
     	ranFalseObj = new Random(seed);
     	ranTurn = new Random(seed);
     	ranComm = new Random(seed);
     	ranError = new Random(seed);
+    	ranBandit = new Random(seed);
+        _seed = seed;
     }
 
-    public static double nextDouble(RandomUse.USE u){
+    public double nextDouble(RandomUse.USE u)  {
+//    	if(threadId != Thread.currentThread().getId()){
+//    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
+//    	}
     	switch (u) {
 			case UNIV:
 				return ranUniversal.nextDouble();
@@ -34,16 +48,18 @@ public class RandomNumberGenerator {
 				return ranComm.nextDouble();
 			case ERROR:
 				return ranError.nextDouble();
+			case BANDIT:
+				return ranBandit.nextDouble();
 			default:
 				return ranUniversal.nextDouble();
 		}
     }
     
-    public static double nextDouble(){
-    	return RandomNumberGenerator.nextDouble(RandomUse.USE.UNIV);
-    }
-    
-    public static int nextInt(RandomUse.USE u){
+
+    public int nextInt(RandomUse.USE u){
+//    	if(threadId != Thread.currentThread().getId()){
+//    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
+//    	}
     	switch (u) {
 			case UNIV:
 				return ranUniversal.nextInt();
@@ -55,16 +71,21 @@ public class RandomNumberGenerator {
 				return ranComm.nextInt();
 			case ERROR:
 				return ranError.nextInt();
+			case BANDIT:
+				return ranBandit.nextInt();
 			default:
 				return ranUniversal.nextInt();
 		}
     }
     
-    public static double nextInt(){
-    	return RandomNumberGenerator.nextInt(RandomUse.USE.UNIV);
-    }
+//    public static double nextInt(){
+//    	return RandomNumberGenerator.nextInt(RandomUse.USE.UNIV);
+//    }
 
-    public static int nextInt( int n, RandomUse.USE u ){
+    public int nextInt( int n, RandomUse.USE u ){
+//    	if(threadId != Thread.currentThread().getId()){
+//    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
+//    	}
     	switch (u) {
 			case UNIV:
 				return ranUniversal.nextInt(n);
@@ -76,13 +97,16 @@ public class RandomNumberGenerator {
 				return ranComm.nextInt(n);
 			case ERROR:
 				return ranError.nextInt(n);
+			case BANDIT:
+				return ranBandit.nextInt(n);
 			default:
 				return ranUniversal.nextInt(n);
 		}
     }
-	
-	public static double nextDouble(int n){
-    	return RandomNumberGenerator.nextInt(n, RandomUse.USE.UNIV);
+
+    public long getSeed() {
+        return _seed;
     }
+    
 
 }

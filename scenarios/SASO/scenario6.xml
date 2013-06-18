@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		<root>
+	    <simulation max_x="20.0" max_y="20.0" min_x="-20.0" min_y="-20.0">
+	        <cameras>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="137.5507933352151" name="C7" range="27.18713102709296" viewing_angle="41.570471086168475" x="-19.820575912684593" y="-17.140067404804235" comm="0"/>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="241.8373266827478" name="C8" range="14.35140824419372" viewing_angle="28.428955555799625" x="18.86187955406851" y="14.62983520856153" comm="0"/>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="273.3063243306422" name="C9" range="24.253748562913785" viewing_angle="77.14573260319712" x="14.179486681691628" y="-19.613060107961026" comm="0"/>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="373.20260382928046" name="C10" range="17.88407105554662" viewing_angle="14.87867716529049" x="-11.550585002804151" y="11.323699590687177" comm="0"/>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="392.2070071793692" name="C11" range="13.40583060495408" viewing_angle="86.34020998953694" x="14.151631012322909" y="11.441698032582103" comm="0"/>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="267.408704438718" name="C12" range="18.828535473515835" viewing_angle="79.86665514087169" x="18.482756728301545" y="8.971801343154752" comm="0"/>
+	        	     <camera ai_algorithm="epics.ai.ActiveAINodeMulti" heading="198.11645784842165" name="C13" range="29.38539819880832" viewing_angle="95.2918239327883" x="-1.5164803885602218" y="14.113098663978427" comm="0"/>
+	        </cameras>
+        <objects>
+	        	     <object features="1.0" heading="2.271688716159595" speed="1.0" x="-30.0" y="-2.0"/>
+	        	     <object features="3.996" heading="6.396800144580231" speed="0.5936606789459328" x="-8.018355329160237" y="-1.3417852945847173"/>
+	        	     <object features="4.107" heading="6.772838730035056" speed="0.7643729491375706" x="-29.300709703407133" y="12.062336290944273"/>
+	        	     <object features="4.218" heading="8.282289570940723" speed="0.5004334531506441" x="-15.895096448150035" y="-6.657408986782286"/>
+	        	     <object features="4.329" heading="8.112808828670602" speed="0.578540958946469" x="-29.765188162966748" y="-14.106250352851701"/>
+	        	     <object features="4.44" heading="3.7119069652069814" speed="0.6118314996659319" x="-4.26573124021575" y="11.253098291031826"/>
+	        	     <object features="4.551" heading="8.127513627386934" speed="0.7479746699612003" x="10.30551404997221" y="14.425030810162966"/>
+	        	     <object features="4.662" heading="4.908932166375343" speed="0.9838645907049757" x="0.645328796895587" y="-11.281815783972512"/>
+	        	     <object features="4.773" heading="6.260933252079585" speed="0.7781735655737227" x="6.818256151635524" y="-28.369856287866806"/>
+        </objects>
+    </simulation>
+</root>

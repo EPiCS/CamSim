@@ -42,8 +42,8 @@ public class SimCoreModel extends Observable {
         sim.add_random_camera();
     }
 
-    public void add_camera( double x_pos, double y_pos,  double heading_degrees, double angle_degrees, double range, int comm, int limit, Map<String, Double> vg){
-        sim.add_camera("C" + sim.getNextID(), x_pos, y_pos, heading_degrees, angle_degrees, range, comm, limit, vg);
+    public void add_camera( double x_pos, double y_pos,  double heading_degrees, double angle_degrees, double range, int comm, int limit, Map<String, Double> vg, String bs){
+        sim.add_camera("C" + sim.getNextID(), x_pos, y_pos, heading_degrees, angle_degrees, range, comm, limit, vg, bs, null, null);
     }
 
     public void recreate_cameras(){
@@ -106,21 +106,21 @@ public class SimCoreModel extends Observable {
 		
 		switch (i) {
 		case 1:
-			this.add_camera(-15, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(-5, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(5, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(15, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(26, 8, -135, 70, 20, 0, 0, null);
+			this.add_camera(-15, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(-5, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(5, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(15, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(26, 8, -135, 70, 20, 0, 0, null, "");
 
 			this.add_object(-30, -2, 90, 1);
 		
 			break;
 		case 2:
-	        this.add_camera(-15, 10, -180, 70, 20, 0, 0, null);
-	        this.add_camera(-5, 10, -180, 70, 20, 0, 0, null);
-	        this.add_camera(5, 10, -180, 70, 20, 0, 0, null);
-	        this.add_camera(15, 10, -180, 70, 20, 0, 0, null);
-	        this.add_camera(26, 8, -135, 70, 20, 0, 0, null);
+	        this.add_camera(-15, 10, -180, 70, 20, 0, 0, null, "");
+	        this.add_camera(-5, 10, -180, 70, 20, 0, 0, null, "");
+	        this.add_camera(5, 10, -180, 70, 20, 0, 0, null, "");
+	        this.add_camera(15, 10, -180, 70, 20, 0, 0, null, "");
+	        this.add_camera(26, 8, -135, 70, 20, 0, 0, null, "");
 
 	        this.add_object(-30, -2, 90, 1);
 	        this.add_object(30, -2, -90, 1);
@@ -128,25 +128,25 @@ public class SimCoreModel extends Observable {
 		case 3:
 	      	double d = 11;
 
-	      	this.add_camera(-20, d, -180, 70, 20, 0, 0, null);
-	      	this.add_camera(-10, d, -180, 70, 20, 0, 0, null);
-	      	this.add_camera(10, d, -180, 70, 20, 0, 0, null);
-	      	this.add_camera(20, d, -180, 70, 20, 0, 0, null);
+	      	this.add_camera(-20, d, -180, 70, 20, 0, 0, null, "");
+	      	this.add_camera(-10, d, -180, 70, 20, 0, 0, null, "");
+	      	this.add_camera(10, d, -180, 70, 20, 0, 0, null, "");
+	      	this.add_camera(20, d, -180, 70, 20, 0, 0, null, "");
 
-	      	this.add_camera(-20, -d, 0, 70, 20, 0, 0, null);
-	      	this.add_camera(-10, -d, 0, 70, 20, 0, 0, null);
-	      	this.add_camera(10, -d, 0, 70, 20, 0, 0, null);
-	      	this.add_camera(20, -d, 0, 70, 20, 0, 0, null);
+	      	this.add_camera(-20, -d, 0, 70, 20, 0, 0, null, "");
+	      	this.add_camera(-10, -d, 0, 70, 20, 0, 0, null, "");
+	      	this.add_camera(10, -d, 0, 70, 20, 0, 0, null, "");
+	      	this.add_camera(20, -d, 0, 70, 20, 0, 0, null, "");
 
-	      	this.add_camera(d, -20, -90, 70, 20, 0, 0, null);
-	      	this.add_camera(d, -10, -90, 70, 20, 0, 0, null);
-	      	this.add_camera(d, 10, -90, 70, 20, 0, 0, null);
-	      	this.add_camera(d, 20, -90, 70, 20, 0, 0, null);
+	      	this.add_camera(d, -20, -90, 70, 20, 0, 0, null, "");
+	      	this.add_camera(d, -10, -90, 70, 20, 0, 0, null, "");
+	      	this.add_camera(d, 10, -90, 70, 20, 0, 0, null, "");
+	      	this.add_camera(d, 20, -90, 70, 20, 0, 0, null, "");
 
-	      	this.add_camera(-d, -20, 90, 70, 20, 0, 0, null);
-	      	this.add_camera(-d, -10, 90, 70, 20, 0, 0, null);
-	      	this.add_camera(-d, 10, 90, 70, 20, 0, 0, null);
-	      	this.add_camera(-d, 20, 90, 70, 20, 0, 0, null);
+	      	this.add_camera(-d, -20, 90, 70, 20, 0, 0, null, "");
+	      	this.add_camera(-d, -10, 90, 70, 20, 0, 0, null, "");
+	      	this.add_camera(-d, 10, 90, 70, 20, 0, 0, null, "");
+	      	this.add_camera(-d, 20, 90, 70, 20, 0, 0, null, "");
 
 	      	double ln = 27;
 	      	double ss = 3;
@@ -169,11 +169,11 @@ public class SimCoreModel extends Observable {
 	      	this.add_object(0.9, waypoints, SimCore.getNextID());
 			break;
 		default:
-			this.add_camera(-15, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(-5, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(5, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(15, 10, -180, 70, 20, 0, 0, null);
-			this.add_camera(26, 8, -135, 70, 20, 0, 0, null);
+			this.add_camera(-15, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(-5, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(5, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(15, 10, -180, 70, 20, 0, 0, null, "");
+			this.add_camera(26, 8, -135, 70, 20, 0, 0, null, "");
 
 			this.add_object(-30, -2, 90, 1);
 			break;

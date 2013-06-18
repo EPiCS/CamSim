@@ -2,6 +2,7 @@ package epics.camsim.core;
 
 import epics.common.*;
 import epics.common.IMessage.MessageType;
+
 import java.util.*;
 
 /**
@@ -32,9 +33,32 @@ public class CameraController implements ICameraController{
     private Map<TraceableObject, Double> visible_objects
             = new HashMap<TraceableObject, Double>();
 	private boolean sleepForever = false;
+	
+	private Statistics stats;
+	private RandomNumberGenerator randomGen;
+	
+	private ArrayList<ArrayList<Double>> predefConf;
+	private ArrayList<ArrayList<Integer>> predefVis;
+	private int step;
     
+	/**
+	 * instantiates a new camera in the simulator
+	 * @param name
+	 * @param x
+	 * @param y
+	 * @param heading
+	 * @param viewing_angle
+	 * @param range
+	 * @param ai
+	 * @param limit
+	 * @param detectionRate
+	 * @param stats
+	 * @param rg
+	 * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
+	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+	 */
     public CameraController( String name, double x, double y,
-                double heading, double viewing_angle, double range, AbstractAINode ai, int limit, int detectionRate){
+                double heading, double viewing_angle, double range, AbstractAINode ai, int limit, int detectionRate, Statistics stats, RandomNumberGenerator rg, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
     	this.DETECTIONRATE = detectionRate;
     	this.LIMIT = limit;
         this.x = x;
@@ -46,6 +70,11 @@ public class CameraController implements ICameraController{
         this.camAINode = ai;
         this.resources = new Resources();
         ai.setController(this);
+        this.stats = stats;
+        this.randomGen = rg;
+        this.predefConf = predefConfidences;
+        this.predefVis = predefVisibility;
+        this.step = -1;
     }
     
     public double getAvailableResources(){
@@ -187,7 +216,7 @@ public class CameraController implements ICameraController{
 
     private boolean gotDetection() {
     	if(!isOffline()){
-			int res = RandomNumberGenerator.nextInt(100, RandomUse.USE.UNIV);
+			int res = randomGen.nextInt(100, RandomUse.USE.UNIV);
 			if(res > DETECTIONRATE){
 				return false;
 			}
@@ -204,8 +233,8 @@ public class CameraController implements ICameraController{
 	
 	            this.visible_objects.put( tc, confidence );
 	
-	            this.camAINode.addVisibleObject(
-	                    new TraceableObjectRepresentation(tc, tc.getFeatures()));
+//	            this.camAINode.addVisibleObject(
+//	                    new TraceableObjectRepresentation(tc, tc.getFeatures()));
 	            
 	        }else{
 	            this.visible_objects.put(tc, confidence);
@@ -255,7 +284,7 @@ public class CameraController implements ICameraController{
     public Map<List<Double>, TraceableObject> getTrackedObjects(){
     	Map<List<Double>, TraceableObject> retVal = new HashMap<List<Double>, TraceableObject>();
     	if(!isOffline()){
-	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getTracedObjects().entrySet()){
+	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getTrackedObjects().entrySet()){
 	    		retVal.put(e.getKey(), ((TraceableObjectRepresentation)e.getValue()).getTraceableObject());
 	    	}	
     	}
@@ -360,11 +389,17 @@ public class CameraController implements ICameraController{
     public IMessage sendMessage( String to, MessageType msgType, Object content){
     	if(DELAY_COMM > 0){
     		IMessage msg = this.createMessage(to, msgType, content);
-    		if (msgType == MessageType.StartSearch) {
-    			Statistics.addCommunication(1.0);
-    		} else if (msgType == MessageType.StartTracking) {
-    			Statistics.addHandover(1.0);
-    		}
+
+    		try {
+    			if(msgType == MessageType.StartSearch){
+    				stats.addCommunication(1.0, this.getName());
+    			} else if (msgType == MessageType.StartTracking) {
+        			stats.addHandover(1.0);
+        		}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
     		sendOut.put(msg, DELAY_COMM);
     		return null;
     	}
@@ -382,11 +417,15 @@ public class CameraController implements ICameraController{
 		            return this.createMessage(this.name, MessageType.ErrorBadDestinationAddress, null);
 		        }
 			    if(!cc.isOffline()){
-			    	if (msgType == MessageType.StartSearch) {
-			    		Statistics.addCommunication(1.0);
-			    	} else if (msgType == MessageType.StartTracking) {
-		    			Statistics.addHandover(1.0);
-		    		}
+			    	try {
+			    	    if(msgType == MessageType.StartSearch){
+			    	        stats.addCommunication(1.0, this.getName());
+			    	    } else if (msgType == MessageType.StartTracking) {
+			    			stats.addHandover(1.0);
+			    		}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 			        
 			        IMessage msg = this.createMessage(to, msgType, content);
 			        return cc.getAINode().receiveMessage(msg);
@@ -527,5 +566,57 @@ public class CameraController implements ICameraController{
 		String s = toString()+" visibleObjects="+this.visible_objects.size() 
 				+ " neighbours=" + this.neighbours.size();
 		return s.hashCode();
+	}
+
+	@Override
+	public void setAINode(AbstractAINode ai) {
+		camAINode = ai;
+	}
+
+	public void update_confidence_real(int step, TraceableObject o) {
+		int get = (int) Double.parseDouble(o.getFeatures().get(0).toString());
+		ArrayList<Double> c = predefConf.get(get);
+		double result_confidence = c.get(step);
+		
+		if (result_confidence > 0 ){
+            this.addVisibleObject(o, result_confidence);
+        }else{
+            this.removeVisibleObject(o);
+        }	
+	}
+	
+	public boolean realObjectsUsed(){
+		if(predefConf != null){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	public void nextStep() {
+		step++;
+	}
+
+	@Override
+	public int objectIsVisible(ITrObjectRepresentation tor) {
+		int get = (int) Double.parseDouble(tor.getFeatures().get(0).toString());
+		try{
+			if(predefVis != null){
+				if(!predefVis.isEmpty()){
+					ArrayList<Integer> v = predefVis.get(get);
+					return v.get(step);
+				}
+				else{
+					return -1;
+				}
+			}
+			else{
+				return -1;
+			}
+		}
+		catch(IndexOutOfBoundsException e){
+			return 1;
+		}
 	}
 }

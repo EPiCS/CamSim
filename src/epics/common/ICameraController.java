@@ -3,6 +3,8 @@ package epics.common;
 import java.util.List;
 import java.util.Map;
 
+import epics.camsim.core.TraceableObjectRepresentation;
+
 /**
  *
  * @author Lukas Esterle & Marcin Bogdanski <mxb039@cs.bham.ac.uk>
@@ -35,4 +37,8 @@ public interface ICameraController{
 	
 	public void change(double xCoord, double yCoord, double head, double angle, double range); // e.x, e.y, e.heading, e.angle, e.range, e.comm, e.limit
 
+	public void setAINode(AbstractAINode ai);
+	public int objectIsVisible(ITrObjectRepresentation tor);
+	
+	public boolean realObjectsUsed();
 }

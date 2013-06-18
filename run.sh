@@ -19,7 +19,7 @@ chmod u+x $RUNJAR
 if [ $# -gt 0 ]; then
     ARGS=$*
 else
-    ARGS=scenarios/scenario1_hist_unweighted.xml
+    ARGS=scenarios/scenario1_active.xml
     echo "Using default ScenarioFile: $ARGS"
 fi
 

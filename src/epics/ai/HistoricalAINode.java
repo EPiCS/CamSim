@@ -13,9 +13,11 @@ import java.util.Set;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.AbstractAINode;
+import epics.common.IBanditSolver;
 import epics.common.ICameraController;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
+import epics.common.RandomNumberGenerator;
 
 /** An AI node which takes into account historical trends in objects'
  * appearance and time steps seen for. 
@@ -35,7 +37,7 @@ import epics.common.ITrObjectRepresentation;
 public class HistoricalAINode {
 
 	/** Whether to display debug msgs about historical positions/bidding */
-    private static boolean DEBUG_HIST = true;
+    private static boolean DEBUG_HIST = false;
     public static final String KEY_DEBUG_HIST = "DebugHist";
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
@@ -82,11 +84,28 @@ public class HistoricalAINode {
 	    
 	public static class Active extends ActiveAINodeMulti {
 		private HistoricalAINode histNode;
+
+		public Active(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+	    	super(comm, staticVG, vg, r, auctionDuration, rg);
+	    	histNode = new HistoricalAINode();
+	    }
 		
-		// Overriding AbstractAINode's constructor
-	    public Active(int comm, boolean staticVG, 
-	    		Map<String, Double> vg, IRegistration r){
-	    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+		public Active(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
+	    	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
+	    	histNode = new HistoricalAINode();
+	    }
+		
+		public Active(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+	    	super(comm, staticVG, vg, r, rg);
+	    	histNode = new HistoricalAINode();
+	    }
+		
+		public Active(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
+	    	super(comm, staticVG, vg, r, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 
@@ -182,10 +201,27 @@ public class HistoricalAINode {
 	public static class Passive extends PassiveAINodeMulti {
 		private HistoricalAINode histNode;
 		
-		// Overriding AbstractAINode's constructor
-	    public Passive(int comm, boolean staticVG, 
-	    		Map<String, Double> vg, IRegistration r){
-	    	super(comm, staticVG, vg, r); // Goes through to instantiateAINode()
+		public Passive(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+	    	super(comm, staticVG, vg, r, auctionDuration, rg);
+	    	histNode = new HistoricalAINode();
+	    }
+		
+		public Passive(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
+	    	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
+	    	histNode = new HistoricalAINode();
+	    }
+		
+		public Passive(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+	    	super(comm, staticVG, vg, r, rg);
+	    	histNode = new HistoricalAINode();
+	    }
+		
+		public Passive(int comm, boolean staticVG, 
+	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
+	    	super(comm, staticVG, vg, r, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 	    

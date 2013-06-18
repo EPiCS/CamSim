@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 
+import javax.naming.LimitExceededException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,14 +29,14 @@ import org.xml.sax.SAXException;
  *
  * @author Lukas Esterle <Lukas.Esterle@aau.at> & Marcin Bogdanski <mxb039@cs.bham.ac.uk>
  */
-public class SimSettings {
+public class SimSettings implements Cloneable{
     
     public static final int FIX_LIMIT = 0;
     public int usePredefVG = -1; //-1 = as defined in "static" attribute in file, 0 = static VG as predefined in file, 1 = do not use VG if defined in file (dynamic though), 2 = dynamic but starting with VG as predefined in file 
     private boolean fixAlgo = false;
     private boolean fixComm = false;
     
-    public class CameraSettings {
+    public class CameraSettings implements Cloneable{
 
         public String name;
         public Double x;
@@ -45,8 +47,35 @@ public class SimSettings {
         public String ai_algorithm;
         public Integer comm;
         public Integer limit;
+        public String bandit;
+        
+        public ArrayList<ArrayList<Double>> predefConfidences;
+        public ArrayList<ArrayList<Integer>> predefVisibility;
 
         CameraSettings(){}
+        /**
+         * 
+         * @param name
+         * @param conf defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
+         * @param vis defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+	 	 * @param ai_algorithm
+         * @param comm
+         * @param limit
+         */
+        CameraSettings(String name, ArrayList<ArrayList<Double>> conf, ArrayList<ArrayList<Integer>> vis, String ai_algorithm, int comm, int limit){
+        	this.name = name;
+        	this.predefConfidences = conf;
+        	this.predefVisibility = vis;
+        	this.ai_algorithm = ai_algorithm;
+        	this.comm = comm;
+        	this.limit = limit;
+        	
+        	this.x = 0.0;
+            this.y = 0.0;
+            this.heading = 0.0;
+            this.viewing_angle = 0.0;
+            this.range = 0.0;
+        }
 
         CameraSettings(
                 String name,
@@ -88,11 +117,14 @@ public class SimSettings {
         }
         
         public CameraSettings clone(){
+        	if(predefConfidences != null){
+        		return new CameraSettings(name, predefConfidences, predefVisibility, ai_algorithm, comm, limit);
+        	}
         	return new CameraSettings(name, x, y, heading, viewing_angle, range, ai_algorithm, comm, limit);
         }
     }
 
-    public class TrObjectSettings {
+    public class TrObjectSettings implements Cloneable{
 
         public Double x;
         public Double y;
@@ -149,7 +181,7 @@ public class SimSettings {
         }
     }
     
-    public class StaticVisionGraph{
+    public class StaticVisionGraph implements Cloneable{
     	Map<String, ArrayList<String>> vg;
     	
     	boolean isStatic = false;
@@ -173,9 +205,17 @@ public class SimSettings {
     			System.out.println("");
     		}
     	}
+    	
+    	public StaticVisionGraph clone(){
+    		StaticVisionGraph svg = new StaticVisionGraph();
+    		for (Map.Entry<String, ArrayList<String>> element : vg.entrySet()) {
+				svg.addValue(element.getKey(), (ArrayList<String>) element.getValue().clone());
+			}
+    		return svg;
+    	}
     }
     
-    public class Event{
+    public class Event implements Cloneable{
     	int timestep;
     	int participant; //1 = camera, 2 = object, 3=GRC
     	String name;
@@ -190,6 +230,7 @@ public class SimSettings {
     	int limit;
     	int comm;
     	ArrayList<Point2D> waypoints;
+    	String bandit;
     	
     	public Event(){
     	}
@@ -202,7 +243,7 @@ public class SimSettings {
     		duration = dur;
     	}
     	
-    	public Event(int ts, int part, String n, String ev, double heading, double ran, double ang, double xPos, double yPos, int limit, int comm){
+    	public Event(int ts, int part, String n, String ev, double heading, double ran, double ang, double xPos, double yPos, int limit, int comm, String bandit){
     		timestep = ts;
     		participant = part;
     		name = n;
@@ -215,6 +256,7 @@ public class SimSettings {
     		x = xPos;
     		y = yPos;
     		this.comm = comm;
+    		this.bandit = bandit;
     	}
     	
     	public Event(int ts, int part, String n, String ev, double head, double sp, double xPos, double yPos, ArrayList<Point2D> waypoints){
@@ -327,6 +369,26 @@ public class SimSettings {
         System.out.println("");
 
     }
+    
+    public boolean loadRealFromLists(ArrayList<String> names, ArrayList<ArrayList<ArrayList<Double>>> conf, ArrayList<ArrayList<ArrayList<Integer>>> vis){
+    	
+    	if(algorithm.equals("")){
+    		algorithm = "epics.ai.ActiveAINodeMulti";
+    	}
+    	int maxObj = 0;
+    	for(int i = 0; i < names.size(); i++){
+    		CameraSettings cs = new CameraSettings(names.get(i), conf.get(i), vis.get(i), algorithm, communication, this.FIX_LIMIT);
+    		if (conf.get(i).size() > maxObj) {
+    			maxObj = conf.get(i).size();
+    		}
+    		cameras.add(cs);
+    	}
+    	for(int i = 0; i < maxObj; i++){
+    		TrObjectSettings tos = new TrObjectSettings(0, 0, 0, 0, i);
+    		objects.add(tos);
+    	}
+    	return true;
+    }
 
     public boolean loadFromXML(String filename) {
 
@@ -374,6 +436,10 @@ public class SimSettings {
                 cs.heading = Double.parseDouble(eCamera.getAttribute("heading"));
                 cs.viewing_angle = Double.parseDouble(eCamera.getAttribute("viewing_angle"));
                 cs.range = Double.parseDouble(eCamera.getAttribute("range"));
+                cs.bandit = "";
+                if(eCamera.hasAttribute("bandit"))
+                	cs.bandit = eCamera.getAttribute("bandit");
+                
                 if(fixAlgo){
                 	cs.ai_algorithm = algorithm;
                 }
@@ -515,11 +581,14 @@ public class SimSettings {
             			double y = Double.parseDouble(eEvent.getAttribute("y"));
             			int comm = Integer.parseInt( eEvent.getAttribute("comm"));
             			int limit = FIX_LIMIT;
+            			String bs = "";
+            			if(eEvent.hasAttribute("bandit"))
+            				bs = eEvent.getAttribute("bandit");
             			if(eEvent.hasAttribute("limit")){
             				limit = Integer.parseInt(eEvent.getAttribute("limit"));
             			}
             			
-            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm);
+            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, bs);
             			events.add(e);
             		}
             		else if(event.equals("change")){
@@ -528,10 +597,13 @@ public class SimSettings {
             			double angle = Double.parseDouble(eEvent.getAttribute("viewing_angle"));
             			double x = Double.parseDouble(eEvent.getAttribute("x"));
             			double y = Double.parseDouble(eEvent.getAttribute("y"));
+            			String bs = "";
+            			if(eEvent.hasAttribute("bandit"))
+            				bs = eEvent.getAttribute("bandit");
             			int comm = -1;
             			double heading = Double.parseDouble(eEvent.getAttribute("heading"));
             			int limit = FIX_LIMIT;
-            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm);
+            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, bs);
             			events.add(e);
             		}
             		else{
@@ -582,6 +654,7 @@ public class SimSettings {
             		}
             	}
             }
+            
             return true;
 
             
@@ -669,4 +742,32 @@ public class SimSettings {
         }
 
     }
+
+	public SimSettings copy() {
+		
+		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.usePredefVG);
+		
+		
+		ss.cameras = (ArrayList<CameraSettings>) this.cameras.clone();
+		ss.objects = (ArrayList<TrObjectSettings>) this.objects.clone();
+		ss.events = (ArrayList<Event>) events.clone();
+		if(this.visionGraph != null){
+			ss.visionGraph = this.visionGraph.clone();
+		}
+		
+		ss.min_x = this.min_x;
+	    ss.max_x = this.max_x;
+	    ss.min_y = this.min_y;
+	    ss.max_y = this.max_y;
+	        
+	    
+	    ss.algorithm = this.algorithm;
+	    ss.communication = this.communication;
+	    
+	    ss.fixAlgo = this.fixAlgo;
+	    ss.fixComm = this.fixComm;
+		
+		return ss;
+		
+	}
 }

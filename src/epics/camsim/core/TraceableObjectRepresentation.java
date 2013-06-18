@@ -16,8 +16,11 @@ public class TraceableObjectRepresentation implements ITrObjectRepresentation {
     // private double x/y relative to camera?
     private List<Double> features;
 
+	private double _price;
+
     public TraceableObjectRepresentation( TraceableObject to, List<Double> features ){
         this.to = to;
+        _price = 0;
         this.features = features;
     }
 
@@ -57,5 +60,16 @@ public class TraceableObjectRepresentation implements ITrObjectRepresentation {
 
     	  return hash;
     }
+
+	@Override
+	public void setPrice(double price) {
+		_price = price;
+	}
+
+	@Override
+	public double getPrice() {
+		return _price;
+	}
+    
     
 }
