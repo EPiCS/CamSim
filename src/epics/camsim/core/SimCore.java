@@ -26,7 +26,8 @@ import epics.common.RandomUse;
 import epics.common.RunParams;
 
 /**
- *
+ * SimCore represents the main core of the simulation. each object and camera is controlled from here. 
+ * the SimCore drives the simulation in discrete time steps. 
  * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
  */
 public class SimCore {
@@ -53,11 +54,36 @@ public class SimCore {
     /*
      * Simulation area
      */
-    private double min_x;     public double get_min_x(){return min_x;}
-    private double max_x;     public double get_max_x(){return max_x;}
-    private double min_y;     public double get_min_y(){return min_y;}
-    private double max_y;     public double get_max_y(){return max_y;}
-    private long sim_time;    public long get_sim_time(){return sim_time;}
+    private double min_x;     
+    /**
+     * returns the minimum x value for the simulation environment
+     * @return minimum x of simulation environment
+     */
+    public double get_min_x(){return min_x;}
+    private double max_x;     
+    /**
+     * returns the maximum x value for the simulation environment
+     * @return maximum x of simulation environment
+     */
+    public double get_max_x(){return max_x;}
+    private double min_y;     
+    /**
+     * returns the minimum y value for the simulation environment
+     * @return minimum y of simulation environment
+     */
+    public double get_min_y(){return min_y;}
+    private double max_y;     
+    /**
+     * returns the maximum y value for the simulation environment
+     * @return maximum y of simulation environment
+     */
+    public double get_max_y(){return max_y;}
+    private long sim_time;    
+    /**
+     * returns the maximum simulation time
+     * @return maximum simulation time
+     */
+    public long get_sim_time(){return sim_time;}
     private String ai_alg; 	  public boolean staticVG = false;
    
     private boolean firstUpdate;
@@ -69,6 +95,13 @@ public class SimCore {
     private SimSettings settings;
     private String paramFile;
 
+
+    /**
+     * checks if the given coordinates are in range
+     * throws a IllegalArgumentException if they are not
+     * @param x
+     * @param y
+     */
     private void checkCoordInRange( double x, double y ){
         if ( x < min_x || x > max_x || y < min_y || y > max_y ){
             throw new IllegalArgumentException("x/y value out of simulation field.");
@@ -80,22 +113,68 @@ public class SimCore {
 	private int _comm = -1;
 	private String outputFile;
     
+
+	/**
+	 * Constructor pure simulation
+	 * @param seed for the random number generators
+	 * @param output outputfilename for statistics
+	 * @param ss settings of simulations - generated from an scenariofile
+	 * @param global global coordination used
+	 * @param camError the probability of failing cameras
+	 * @param camReset probability of a reset after a camera failed
+	 * @param trackError probability of a tracking error
+	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError){
 		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
 		this.interpretFile(ss);
 	}
 	
-	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha){
+
+	/**
+	 * Constructor  pure simulation
+	 * @param seed for the random number generators
+     * @param output outputfilename for statistics
+     * @param ss settings of simulations - generated from an scenariofile
+     * @param global global coordination used
+	 * @param banditParam the epsilon/temperature value for bandit solvers
+	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
+	 */
+	public SimCore( long seed, String output, SimSettings ss, boolean global, double banditParam, double alpha){
 		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
 		this.epsilon = epsilon;
 		this.interpretFile(ss);
 	}
+
+	/**
+	 * Constructor
+     * @param seed for the random number generators
+     * @param output outputfilename for statistics
+     * @param ss settings of simulations - generated from an scenariofile
+     * @param global global coordination used
+     * @param banditParam the epsilon/temperature value for bandit solvers
+     * @param alpha the alpha value for the weighted reward function used in bandit solvers
+	 * @param realData indicates if real data has been used
+	 * @param allStatistics indicates if statistics are also taken for each camera seperately
+	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, boolean realData, boolean allStatistics){
 		initSimCore(seed, output, global, -1, 50, -1, alpha, realData, allStatistics, "", null);
 		this.epsilon = epsilon;
 		this.interpretFile(ss);
 	}
 	
+	/**
+     * Constructor pure simulation
+     * @param seed for the random number generators
+     * @param output outputfilename for statistics 
+     * @param ss settings of simulations - generated from an scenariofile
+     * @param global global coordination used
+     * @param camError the probability of failing cameras
+     * @param camReset probability of a reset after a camera failed
+     * @param trackError probability of a tracking error
+     * @param alpha the alpha value for the weighted reward function used in bandit solvers
+     * @param realData indicates if real data has been used
+     * @param allStatistics indicates if statistics are also taken for each camera seperately
+	 */
 	public SimCore( long seed, String output, SimSettings ss, 
 			boolean global, int camError, int camReset, int trackError, double alpha, boolean realData, boolean allStatistics) {
 	    initSimCore(seed, output, global, camError, camReset, trackError,
@@ -103,6 +182,20 @@ public class SimCore {
 		this.interpretFile(ss);
 	}
 	
+    /**
+     * Constructor pure simulation
+     * @param seed for the random number generators
+     * @param output outputfilename for statistics
+	 * @param summaryFile File for a summarised statistics file
+	 * @param paramFile parameterfile for simulations
+	 * @param ss settings of simulations - generated from an scenariofile
+     * @param global global coordination used
+     * @param camError the probability of failing cameras
+     * @param camReset probability of a reset after a camera failed
+     * @param trackError probability of a tracking error
+	 * @param realData indicates if real data has been used
+     * @param allStatistics indicates if statistics are also taken for each camera seperately
+     */
 	public SimCore(long seed, String output, String summaryFile, String paramFile, SimSettings ss, 
     		boolean global, int camError, int camReset, int trackError, boolean realData, boolean allStatistics) {
     	initSimCore(seed, output, global, camError, camReset, trackError,
@@ -110,6 +203,20 @@ public class SimCore {
     	this.interpretFile(ss);
     }
 
+	/**
+	 * Initiation method for the simcore. Sets all the parameters
+     * @param seed for the random number generators
+     * @param output outputfilename for statistics
+	 * @param global global coordination used
+     * @param camError the probability of failing cameras
+     * @param camReset probability of a reset after a camera failed
+     * @param trackError probability of a tracking error
+	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
+     * @param realData indicates if real data has been used
+     * @param allStatistics indicates if statistics are also taken for each camera seperately
+	 * @param summaryFile File for a summarised statistics file
+	 * @param paramFile parameterfile for simulations
+	 */
 	private void initSimCore(long seed, String output, boolean global,
 			int camError, int camReset, int trackError, double alpha,
 			boolean realData, boolean allStatistics, String summary, String paramFile) {
@@ -139,6 +246,10 @@ public class SimCore {
 	    
 	}
 	
+    /**
+     * Interprets the SimSettings object and creates cameras and trackable objects with their corresponding behaviour
+     * @param ss stores the settings for this simulation
+     */
     public void interpretFile(SimSettings ss){
     	settings = ss;
     	
@@ -211,6 +322,9 @@ public class SimCore {
         events = ss.events;
     }
 
+    /**
+     * writes statistics and closes all statistics files  
+     */
     public void close_files(){
         try {
 			stats.close();
@@ -220,6 +334,9 @@ public class SimCore {
 		}
     }
     
+    /**
+     * allows to print all information from all bandit solvers into files
+     */
     private void printAllBanditResults(){
     	for(CameraController cc : this.cameras){
 			IBanditSolver bs = cc.getAINode().getBanditSolver();
@@ -231,6 +348,11 @@ public class SimCore {
 		}
     }
     
+    /**
+     * actually prints arrayLists of ArrayLists into specific files
+     * @param res results to be stored in file
+     * @param filename the filename to store results to
+     */
     private void printResults(ArrayList<ArrayList<Double>> res, String filename){
 		File f = new File(filename);
 		PrintWriter out;
@@ -254,7 +376,7 @@ public class SimCore {
 	}
 
     /**
-     * 
+     * crates a new camera and adds it to the list of cameras WITH an AINODE as parameter
      * @param name defines the name of the camera
      * @param x_pos defines the x position in the internal coordinates
      * @param y_pos defines the y position in the internal coordinates
@@ -263,7 +385,7 @@ public class SimCore {
      * @param range defines the range of the camera
      * @param ai_algorithm defines the initial algorithm approach used
      * @param comm defines the initial/predefined communication strategy
-     * @param limit 
+     * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
      * @param bandit defines the used bandit solver algorithm 
      * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
@@ -285,23 +407,26 @@ public class SimCore {
     }
 
     /**
-     * 
-     * @param name
-     * @param x_pos
-     * @param y_pos
-     * @param heading_degrees
-     * @param angle_degrees
-     * @param range
-     * @param comm
-     * @param limit
-     * @param vg
-     * @param bandit
+     * crates a new camera and adds it to the list of cameras all having the same predefined aiNode
+     * @param name defines the name of the camera
+     * @param x_pos defines the x position in the internal coordinates
+     * @param y_pos defines the y position in the internal coordinates
+     * @param heading_degrees defines the direction of the viewing point
+     * @param angle_degrees defines the with of the viewing angle
+     * @param range defines the range of the camera
+     * @param comm defines the initial/predefined communication strategy
+     * @param limit sets limit for amount of objects being tracked (0 = unlimited)
+     * @param vg contains the predefined vision graph
+     * @param bandit defines the used bandit solver algorithm 
      * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
-	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
-	 */
+     * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+     */
     public void add_camera(String name,
             double x_pos, double y_pos,
-            double heading_degrees, double angle_degrees, double range, int comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            double heading_degrees, 
+            double angle_degrees, 
+            double range, 
+            int comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
 
     	if(_comm == -1){
     		_comm = comm;
@@ -348,7 +473,22 @@ public class SimCore {
 	}
     
     /** Given a node's class name, dynamically loads the class and 
-     * instantiates a new node of that type. */
+     * instantiates a new node of that type. 
+     * @param fullyQualifiedClassName the class name - has to include package name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
+     * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
+     * @param staticVG defines if VG is static as predefined or can change dynamically
+     * @param vg a predefined VG - may or may not change over time
+     * @param r a global registration
+     * @param banditS the class name of a bandit solver
+     * @return AbstractAINode the created AINode
+     * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
+     * @throws SecurityException
+     * @throws NoSuchMethodException
+     * @throws IllegalArgumentException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
     		int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
@@ -376,6 +516,19 @@ public class SimCore {
     	return node;
     }
     
+    /**
+     * @param fullyQualifiedClassName
+     * @param comm
+     * @param ai
+     * @return
+     * @throws ClassNotFoundException
+     * @throws SecurityException
+     * @throws NoSuchMethodException
+     * @throws IllegalArgumentException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
     		int comm, AbstractAINode ai)
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
@@ -396,6 +549,11 @@ public class SimCore {
      * running of experiments, where the necessary parameters can be applied
      * to the node for a particular run, then the params file is changed for 
      * the next run */
+    /**
+     * @param node
+     * @param paramsFilepath
+     * @throws IOException
+     */
     public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
     	RunParams.loadIfNotLoaded(paramsFilepath);
     	System.out.println("Setting params for " + node.getName() + "...");
@@ -409,6 +567,9 @@ public class SimCore {
     	}
     }
     
+  	/**
+  	 * 
+  	 */
   	public void add_random_camera(){
         this.add_camera(
         		"C"+getNextID(),
@@ -421,6 +582,9 @@ public class SimCore {
                 0, null, "", null, null);//RandomNumberGenerator.nextInt(5));
     }
 
+    /**
+     * @param remove_index
+     */
     public void remove_camera_index( int remove_index ){
     	CameraController cc = null;
         if ( remove_index < this.cameras.size() ){
@@ -433,6 +597,9 @@ public class SimCore {
     	}
     }
 
+    /**
+     * @param name
+     */
     public void remove_camera( String name ){
         int remove_index = -1;
         for ( int i = 0; i < this.cameras.size(); i++ ){
@@ -451,6 +618,9 @@ public class SimCore {
     	}
     }
 
+    /**
+     * 
+     */
     public void remove_random_camera(){
         if ( this.cameras.isEmpty()){
             return;
@@ -466,6 +636,9 @@ public class SimCore {
     	}
     }
 
+    /**
+     * 
+     */
     public void recreate_cameras(){
         int num_camers = cameras.size();
         cameras.clear();
@@ -479,6 +652,13 @@ public class SimCore {
         }
     }
 
+    /**
+     * @param pos_x
+     * @param pos_y
+     * @param heading_degrees
+     * @param speed
+     * @param features
+     */
     public void add_object(
             double pos_x, double pos_y,
             double heading_degrees, double speed,
@@ -497,6 +677,12 @@ public class SimCore {
         
     }
 
+    /**
+     * @param pos_x
+     * @param pos_y
+     * @param heading_degrees
+     * @param speed
+     */
     public void add_object( double pos_x, double pos_y, double heading_degrees, double speed ){
         double id = 0.111 * getNextID();
         TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
@@ -512,6 +698,11 @@ public class SimCore {
         }
     }
 
+    /**
+     * @param speed
+     * @param waypoints
+     * @param id
+     */
     public void add_object( double speed, List<Point2D> waypoints, double id){
 //        double id = 0.111 * getNextID();
         TraceableObject to = new TraceableObject(id, this, speed, waypoints, randomGen);
@@ -527,6 +718,9 @@ public class SimCore {
         }
     }
 
+    /**
+     * 
+     */
     public void add_random_object(){
         add_object(
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
@@ -535,6 +729,9 @@ public class SimCore {
         		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4);
     }
 
+    /**
+     * 
+     */
     public void remove_random_object(){
     	if(this.objects.isEmpty()){
     		return;
@@ -552,6 +749,9 @@ public class SimCore {
 
     }
 
+    /**
+     * @throws Exception
+     */
     public void update_original() throws Exception{
     	
         /*
@@ -587,6 +787,9 @@ public class SimCore {
         stats.nextTimeStep();
     }
 
+    /**
+     * @throws Exception
+     */
     public void update() throws Exception{
     	if(_runReal){
     		updateReal();
@@ -598,6 +801,9 @@ public class SimCore {
     	step ++;
     }
     
+    /**
+     * @throws Exception
+     */
     public void updateReal() throws Exception{
     	if(firstUpdate)
     		setSearchFor();
@@ -699,6 +905,9 @@ public class SimCore {
          stats.nextTimeStep();
     }
     
+    /**
+     * 
+     */
     private void setSearchFor() {
     	IMessage im = new Message("", "3.cvs", MessageType.StartSearch, new TraceableObjectRepresentation(this.objects.get(0), this.objects.get(0).getFeatures()));
     	CameraController cc = this.cameras.get(2);
@@ -706,6 +915,9 @@ public class SimCore {
 		ai.receiveMessage(im);
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public void updateSim() throws Exception{
     	    	
         // Print messages on the screen, one per step
@@ -871,6 +1083,10 @@ public class SimCore {
         stats.nextTimeStep();
     }
 
+	/**
+	 * @param ai
+	 * @return
+	 */
 	private int getStratForAI(AbstractAINode ai) {
 		if(ai.getClass() == epics.ai.ActiveAINodeMulti.class){
 			switch (ai.getComm()) {
@@ -891,6 +1107,9 @@ public class SimCore {
 		return -1;
 	}
 
+	/**
+	 * @param currentTimeStep
+	 */
 	private void checkAndProcessEvent(int currentTimeStep) {
 		for(SimSettings.Event e : events){
 			if(e.timestep == currentTimeStep){
@@ -985,6 +1204,9 @@ public class SimCore {
 		}
 	}
 
+	/**
+	 * @param c
+	 */
 	private void addFalseObject(CameraController c) {
     	double id = 0.111 * getNextID();
 
@@ -1007,6 +1229,9 @@ public class SimCore {
     	TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	private void printObjects() throws Exception {
 		Map<TraceableObject, List<CameraController>> traced = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
@@ -1062,6 +1287,9 @@ public class SimCore {
 		System.out.println("############################ END OBJECT INFO #########################################");
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public void checkConsistency() throws Exception{
     	
     	Map<TraceableObject, Boolean> tracing = new HashMap<TraceableObject, Boolean>();
@@ -1094,6 +1322,9 @@ public class SimCore {
     	}
     }
 
+    /**
+     * @return
+     */
     public double computeUtility(){
         double utility_sum = 0;
         for (CameraController c : this.cameras){
@@ -1109,10 +1340,17 @@ public class SimCore {
         return utility_sum;
     }
 
+    /**
+     * @return
+     */
     public ArrayList<CameraController> getCameras() {
         return cameras;
     }
 
+    /**
+     * @param name
+     * @return
+     */
     public CameraController getCameraByName( String name ){
         for ( int i = 0; i < cameras.size(); i++ ){
             if ( cameras.get(i).getName().compareTo(name) == 0 ){
@@ -1122,6 +1360,9 @@ public class SimCore {
         return null;
     }
 
+    /**
+     * @return
+     */
     public ArrayList<TraceableObject> getObjects() {
         return objects;
     }
@@ -1129,6 +1370,9 @@ public class SimCore {
     /** Save the scenario currently active in the simulation to an XML file.
      * Note that this does not fully support scenario XML features such as 
      * objects with waypoints. It also does not represent angles 100% correctly. */
+	/**
+	 * @param absolutePath
+	 */
 	public void save_to_xml(String absolutePath) {
 		File f = new File(absolutePath + ".xml");
 		
@@ -1153,6 +1397,9 @@ public class SimCore {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void reset() {
 		this.min_x = -70;
 		this.max_x = 70;
@@ -1160,10 +1407,20 @@ public class SimCore {
 		this.max_y = 70;	
 	}
 
+	/**
+	 * @param spaces
+	 * @return
+	 * @throws Exception
+	 */
 	public String getStatSummary(boolean spaces) throws Exception{
 	    return stats.getSummary(spaces);
 	}
 	
+	/**
+	 * @param spaces
+	 * @return
+	 * @throws Exception
+	 */
 	public String getStatSumDesc(boolean spaces) throws Exception{
 	    return stats.getSummaryDesc(spaces);
 	}
