@@ -43,17 +43,6 @@ public class CameraController implements ICameraController{
     
 	/**
 	 * instantiates a new camera in the simulator
-	 * @param name
-	 * @param x
-	 * @param y
-	 * @param heading
-	 * @param viewing_angle
-	 * @param range
-	 * @param ai
-	 * @param limit
-	 * @param detectionRate
-	 * @param stats
-	 * @param rg
 	 * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
 	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
 	 */
@@ -513,7 +502,7 @@ public class CameraController implements ICameraController{
 
 	public int currentlyMissidentified() {
 		if(!isOffline()){
-			return this.camAINode.currentlyMissidentified();
+			return this.camAINode.currentlyMisidentified();
 		}
 		else{
 			return 0;

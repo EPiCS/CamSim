@@ -46,10 +46,8 @@ public abstract class AbstractAINode {
     public static final int DELAY_FOUND = 0;
     public static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
     
-    
     public int AUCTION_DURATION;
     
-
     public static final int STEPS_TILL_RESOURCES_FREED = 5;
     public static final boolean DECLINE_VISION_GRAPH = true;
     public static final double EVAPORATIONRATE = 0.995;
@@ -87,9 +85,7 @@ public abstract class AbstractAINode {
     
 	protected IBanditSolver banditSolver;
     
-    
     protected int addedObjectsInThisStep = 0;
-	
 	
 	public AbstractAINode(AbstractAINode old){
 		AUCTION_DURATION = 0;
@@ -331,7 +327,7 @@ public abstract class AbstractAINode {
             if (!this.trackedObjects.containsKey(visible.getFeatures())) {
                 if(!wrongIdentified.containsValue(visible)){
                     ITrObjectRepresentation wrong = visibleIsMisidentified(visible);
-                    if(wrong != null){ //missidentified 
+                    if(wrong != null){ //misidentified 
                         visible = wrong;
                     }
                 }
@@ -352,14 +348,6 @@ public abstract class AbstractAINode {
                             this.startTracking(visible);
                             found.add(visible);
                             broadcast(MessageType.StopSearch, visible);
-                            //sendMessage(MessageType.StopSearch, visible);
-                            
-//                          if(USE_MULTICAST_STEP){
-//                              multicast(MessageType.StopSearch, visible);
-//                          }
-//                          else{
-//                              broadcast(MessageType.StopSearch, visible);
-//                          }
                             addedObjectsInThisStep++;
                         }
                     }
@@ -373,10 +361,9 @@ public abstract class AbstractAINode {
     }
 
     /**
-     * returns the number of currently missidentified objects
-     * @return the number of currently missidentified objects
+     * returns the number of currently misidentified objects
      */
-    public int currentlyMissidentified() {
+    public int currentlyMisidentified() {
         return this.wrongIdentified.size();
     }
     
@@ -424,26 +411,25 @@ public abstract class AbstractAINode {
         ITrObjectRepresentation target = bid.getTrObject();
         double conf = bid.getBid();
 
-            //if object is searched - if not searched, do not add to auctions
-            for (ICameraController c : this.camController.getNeighbours()) {
-                if (c.getName().equals(from)) {
-                    if(this.advertised.containsKey(target)){
-                        Map<ICameraController, Double> bids = biddings.get(target);
-                        
-                        if (bids == null) {
-                            bids = new HashMap<ICameraController, Double>();
-                        }
-                        if(!runningAuction.containsKey(target)){
-                            runningAuction.put(target, AUCTION_DURATION);
-                        }
-                        if(!bids.containsKey(c)){
-                            bids.put(c, conf);
-                            biddings.put(target, bids);
-                        }
-                    }
-                }
-            }
-//      }
+        //if object is searched - if not searched, do not add to auctions
+        for (ICameraController c : this.camController.getNeighbours()) {
+        	if (c.getName().equals(from)) {
+        		if(this.advertised.containsKey(target)){
+        			Map<ICameraController, Double> bids = biddings.get(target);
+
+        			if (bids == null) {
+        				bids = new HashMap<ICameraController, Double>();
+        			}
+        			if(!runningAuction.containsKey(target)){
+        				runningAuction.put(target, AUCTION_DURATION);
+        			}
+        			if(!bids.containsKey(c)){
+        				bids.put(c, conf);
+        				biddings.put(target, bids);
+        			}
+        		}
+        	}
+        }
     }
     
     /**
@@ -472,7 +458,6 @@ public abstract class AbstractAINode {
     public IBanditSolver getBanditSolver() {
 		return banditSolver;
 	}
-    
     
     /**
      * returns the bids already received for a given object
@@ -507,7 +492,6 @@ public abstract class AbstractAINode {
 
     /**
      * returns the number of bids received overall by this camera
-     * @return
      */
     public int getNrOfBids() {
         return _nrBids;
@@ -521,10 +505,8 @@ public abstract class AbstractAINode {
         return _paidUtility;
     }
     
-    
     /**
      * the utility received from other cameras for selling objects in this timestep
-     * @return the received utility
      */
     public double getReceivedUtility() {
         return _receivedUtility;
@@ -540,7 +522,6 @@ public abstract class AbstractAINode {
 	
 	/**
 	 * get the number of sent messages in this timestep
-	 * @return the sent messages 
 	 */
 	public int getSentMessages(){
 		return sentMessages;
@@ -610,7 +591,7 @@ public abstract class AbstractAINode {
      */
     public Map<List<Double>, ITrObjectRepresentation> getTrackedObjects() {
         
-        //make sure all tracked objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
+        //make sure all tracked objects are really existent within FoV --> if misidentified, send real anyway --> map first ;)
         
         Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
         for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()){
@@ -974,10 +955,8 @@ public abstract class AbstractAINode {
         } else {
             for (ICameraController cc : this.camController.getNeighbours()) {
                 if (cc.getName().equals(from)) {
-                    //if (!searchForTheseObjects.containsKey(content)) {
-                        searchForTheseObjects.put(content, cc);
-                   //}
-                    break;
+                	searchForTheseObjects.put(content, cc);
+                	break;
                 }
             }
         }
@@ -1462,7 +1441,7 @@ public abstract class AbstractAINode {
                     if(x == random){
                         if(!tr.equals(visible)){
                             if (DEBUG_CAM) {
-                                CmdLogger.println(this.camController.getName() + " missidentified object " + visible.getFeatures() + " as " + tr.getFeatures());
+                                CmdLogger.println(this.camController.getName() + " misidentified object " + visible.getFeatures() + " as " + tr.getFeatures());
                             }
                             wrongIdentified.put(visible, tr);
                             return tr;
