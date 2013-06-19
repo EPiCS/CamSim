@@ -59,6 +59,10 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	 */
 	public PassiveAINodeMulti(AbstractAINode ai){
 		super(ai);
+		if (ai instanceof PassiveAINodeMulti) {
+			PassiveAINodeMulti pass = (PassiveAINodeMulti) ai;
+			lastConfidence = pass.lastConfidence;
+		}
 	}
 	
 	@Override
