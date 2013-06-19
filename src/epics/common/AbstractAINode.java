@@ -1,9 +1,11 @@
 package epics.common;
 
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import epics.camsim.core.Bid;
 import epics.common.IMessage.MessageType;
@@ -87,10 +89,13 @@ public abstract class AbstractAINode {
 	
 	
 	public AbstractAINode(AbstractAINode old){
+		AUCTION_DURATION = 0;
 		instantiateAINode(old);
 	}
 
 	/**
+	 * Creates an AI Node WITHOUT bandit solver 
+	 * for switching to another node automatically.
 	 * This constructor simply calls instantiateAINode(). Overriding classes
      * should only call super and do real handling in instantiateAINode().
      * This is painful but is to enforce these arguments in the constructor. 
@@ -103,7 +108,30 @@ public abstract class AbstractAINode {
 	 */
 	public AbstractAINode(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
         AUCTION_DURATION = 0;
-    	instantiateAINode(comm, staticVG, vg, r, rg);
+        reg = r;
+        if(vg != null){
+            visionGraph = vg;
+        }
+                
+        if(comm == 3){
+            USE_BROADCAST_AS_FAILSAVE = false;
+        }
+        randomGen = rg;
+    }
+	
+    /**
+     * Creates an AI Node WITHOUT bandit solver for switching to another node automatically
+     * @param comm the used communication policy
+     * @param staticVG if static vision graph or not
+     * @param vg the initial vision graph
+     * @param r the global registration component - can be null
+     * @param auctionDuration the duration of auctions
+     * @param rg the random number generator for this instance
+     */
+    public AbstractAINode(int comm, boolean staticVG, 
+    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+    	this(comm, staticVG, vg, r, rg);
+    	AUCTION_DURATION = auctionDuration;
     }
 	
 	/**
@@ -117,12 +145,17 @@ public abstract class AbstractAINode {
 	 */
 	public AbstractAINode(int comm, boolean staticVG, Map<String, Double> vg,
 			IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
-		//super(6, 0.01, comm);
-	    communication = comm;
+		this(comm, staticVG, vg, r, rg);
+		communication = comm;
 		banditSolver = bs;
-		instantiateAINode(comm, staticVG, vg, r, rg);
 	}
 	
+	
+	public AbstractAINode(int comm, boolean staticVG, 
+			Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
+		this(comm, staticVG, vg, r, rg, bs);
+		AUCTION_DURATION = auctionDuration;
+	}
 	
     /**
      * sets the latest confidence for a certain object
@@ -324,7 +357,8 @@ public abstract class AbstractAINode {
     /**
      * Checks if ANY searched object is visible. if so, sends a bid to the search-initiating camera. 
      */
-    protected void checkIfSearchedIsVisible() {
+    public void checkIfSearchedIsVisible() {
+		addedObjectsInThisStep = 0;
         ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
 
         for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
@@ -346,11 +380,11 @@ public abstract class AbstractAINode {
                     ICameraController searcher = this.searchForTheseObjects.get(visible);
                     
                     if (searcher != null) {
-                        double conf = this.calculateValue(visible); //this.getConfidence(visible);
+                        double bidValue = this.calculateValue(visible); //this.getConfidence(visible);
                         if (this.camController.getName().equals(searcher.getName())) {
-                            this.addOwnBidFor(visible, conf);
+                            this.addOwnBidFor(visible, bidValue);
                         } else {
-                            this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, conf));
+                            this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, bidValue));
                         }
                     } else {
                         if(trackingPossible()){
@@ -670,6 +704,8 @@ public abstract class AbstractAINode {
         
         return retVal;
     }
+    
+    public abstract void advertiseTrackedObjects();
 	
 	/**
 	 * Depricated - returned a single tracked object. the one object that has been added latest.
@@ -722,7 +758,7 @@ public abstract class AbstractAINode {
 	@SuppressWarnings("unused")
     protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
         if(VISION_ON_BID && BIDIRECTIONAL_VISION){
-            strengthenVisionEdge(from);
+            strengthenVisionEdge(from, iTrObjectRepresentation);
         }
         
         if(trackingPossible()){
@@ -740,8 +776,7 @@ public abstract class AbstractAINode {
             }
             
             addedObjectsInThisStep ++;
-            double test = pair.confidence;
-            return conf; //pair.confidence;//this.calculateValue(iTrObjectRepresentation);
+            return conf;
         }
         else{
             return 0.0;
@@ -757,7 +792,7 @@ public abstract class AbstractAINode {
     protected Object handle_Found(String from, IBid content) {
 //      if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
         if(VISION_ON_BID) {
-            strengthenVisionEdge(from);
+            strengthenVisionEdge(from, content.getTrObject());
         }
         this.foundObject(content, from);
         return null;
@@ -785,7 +820,7 @@ public abstract class AbstractAINode {
             ITrObjectRepresentation content) {
         if(!VISION_ON_BID){
             if(VISION_RCVER_BOUND || BIDIRECTIONAL_VISION){
-                strengthenVisionEdge(from);
+                strengthenVisionEdge(from, content);
             }
         }
         if(DEBUG_CAM)
@@ -841,28 +876,13 @@ public abstract class AbstractAINode {
 		this.banditSolver = ai.banditSolver;
     }
     
-    /** Subclasses implement this instead of a constructor. */
-	/**
-	 * @param comm The communication policy
-	 * @param staticVG if a static vision graph is used
-	 * @param vg the initial vision graph
-	 * @param r the global registration
-	 * @param rg the random number generator for this instant
-	 */
-	public abstract void instantiateAINode(int comm, boolean staticVG, 
-			Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg);
-    
     /**
      * decides if a given object is being tracked by this camera
      * @param rto the object in question if tracked or not
      * @return true if tracked, false otherwise
      */
     protected boolean isTracked(ITrObjectRepresentation rto) {
-        if (this.trackedObjects.containsKey(rto.getFeatures())) {
-            return true;
-        } else {
-            return false;
-        }
+        return this.trackedObjects.containsKey(rto.getFeatures());
     }
     
     /**
@@ -874,7 +894,7 @@ public abstract class AbstractAINode {
     private void multicastFix(MessageType mt, Object o){
         
         List<String> cams = new ArrayList<String>();
-        for(String name : visionGraph.keySet()){
+		for (String name : vgGetCamSet()) {
             this.camController.sendMessage(name, mt, o);
             cams.add(name);
         }
@@ -886,13 +906,6 @@ public abstract class AbstractAINode {
         if(mt == MessageType.StopSearch){
             advertised.remove((ITrObjectRepresentation) o);
         }
-        
-//      for(ICameraController icc : this.camController.getNeighbours()){
-//          String name = icc.getName();
-//          if(visionGraph.containsKey(name)){
-//              this.camController.sendMessage(name, mt, o);
-//          }
-//      }
     }
     
     
@@ -910,8 +923,9 @@ public abstract class AbstractAINode {
                 }
             }
             //get max strength
-            double highest = 0;
-            for(Double d : visionGraph.values()){
+        	double highest = 0;
+			Collection<Double> vgValues = vgGetValues(io); 
+			for(Double d : vgValues){
                 if(d > highest){
                     highest = d;
                 }
@@ -923,9 +937,9 @@ public abstract class AbstractAINode {
                 for(ICameraController icc : this.camController.getNeighbours()){
                     String name = icc.getName();
                     double ratPart = 0.0;
-                    if(visionGraph.containsKey(name)){
-                        ratPart = visionGraph.get(name);
-                    }
+					if(vgContainsKey(name, io)){
+						ratPart = vgGet(name, io);
+					}
                     double ratio = (1+ratPart)/(1+highest);
                     if(ratio > ran){
                         sent ++;
@@ -993,9 +1007,9 @@ public abstract class AbstractAINode {
             for(ICameraController icc : this.camController.getNeighbours()){
                 String name = icc.getName();
                 double prop = 0.1;
-                if(visionGraph.containsKey(name)){
-                    prop = visionGraph.get(name);
-                }
+				if(vgContainsKey(name, io)){
+					prop = vgGet(name, io);
+				}
                 if(prop > ran){
                     sent ++;
                     sentMessages++;
@@ -1064,7 +1078,6 @@ public abstract class AbstractAINode {
         }
     }
     
-
     /**
      * helper method - prints the current status of this camera
      */
@@ -1096,8 +1109,8 @@ public abstract class AbstractAINode {
         }
         System.out.println(output);
     }
-	
-	/**
+
+    /**
 	 * processes all messages. checks their status and calls the corresponding handle method
 	 * @param message the received message
 	 * @return an outgoing message
@@ -1196,11 +1209,6 @@ public abstract class AbstractAINode {
             wrongIdentified.remove(original);
             rto = wrong;
         }
-        
-        if (this.isTracked(rto)) {
-            this.removeTrackedObject(rto);
-            callForHelp(rto);
-        }
     }
 	
 	
@@ -1210,8 +1218,6 @@ public abstract class AbstractAINode {
 	 * @param resources the amount of resources to reserve 
 	 */
 	protected void reserveResources(ITrObjectRepresentation target, double resources) {
-//      double res = calcResources();
-        
         this.reservedResources.put(target, resources);
         this.stepsTillFreeResources.put(target, STEPS_TILL_RESOURCES_FREED);
     }
@@ -1274,7 +1280,7 @@ public abstract class AbstractAINode {
 	public void setController(ICameraController controller) {
         this.camController = controller;
     }
-    
+
     /**
      * start tracking reserves resources for the given target, pays the utility price and starts to track the object
      * @param target the object to start tracking
@@ -1294,20 +1300,21 @@ public abstract class AbstractAINode {
         this.searchForTheseObjects.remove(content);
     }
 
-
-	/**
-	 * strengthens the link to another camera in the vision graph 
-	 * @param destinationName the name of the remote camera and link to be strengthened
-	 */
-	public void strengthenVisionEdge(String destinationName) {
-        if(!staticVG){
-            if (this.visionGraph.containsKey(destinationName)) {
-                double val = this.visionGraph.get(destinationName);
-                this.visionGraph.put(destinationName, val + 1);
-            } else {
-                this.visionGraph.put(destinationName, 1.0);
-            }
-        }
+	/** Called when communication is made with the given camera about the 
+     * given object, in order to strengthen the pheromone link.
+     * @param destinationName the name of the remote camera and link to be strengthened
+     */
+    public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
+    	if(!staticVG){
+    		double val;
+	        if (vgContainsKey(destinationName, itro)) {
+	            val = vgGet(destinationName, itro);
+	            val = val + 1.0;
+	        } else {
+	            val = 1.0;
+	        }
+	        vgPut(destinationName, itro, val);
+    	}
     }
 	
 	/**
@@ -1317,21 +1324,11 @@ public abstract class AbstractAINode {
 	protected boolean trackingPossible() {
         if(this.camController.getLimit() == 0){
             //check if enough resources
-            if(this.enoughResourcesForOneMore()){
-                return true;
-            }
-            else{
-                return false;
-            }
+            return this.enoughResourcesForOneMore();
         }
         if(this.camController.getLimit() > this.addedObjectsInThisStep + this.trackedObjects.size()){
             //check if enough resources
-            if(this.enoughResourcesForOneMore()){
-                return true;
-            }
-            else{
-                return false;
-            }
+            return this.enoughResourcesForOneMore();
         }
         else{
             return false;
@@ -1339,8 +1336,7 @@ public abstract class AbstractAINode {
     }
 
 	/**
-	 * abstract method. is implemented in subclasses.
-	 * is called in every timestep
+	 * Called in every timestep
 	 * 
 	 * the following is handled:
 	 *     the delay for receiving messages is updated
@@ -1353,13 +1349,142 @@ public abstract class AbstractAINode {
 	 * 
 	 * also, all temporary variables (received payments, paid payments and so on) are reset.
 	 */
-	public abstract void update();
+    public void update() {
+        sentMessages = 0;
+        _nrBids = 0;
+        _receivedUtility = 0.0;
+        _paidUtility = 0.0;
+        if(DECLINE_VISION_GRAPH)
+            this.updateVisionGraph();
+
+        if(DEBUG_CAM) {
+            printStatus();
+        }
+        
+        printBiddings();
+        
+        for (Map.Entry<ITrObjectRepresentation, Map<ICameraController, Double>> bids : biddings.entrySet()) {
+            _nrBids += bids.getValue().size();
+        }
+        
+        checkBidsForObjects();       
+        
+        updateReservedResources();
+        
+        if(USE_BROADCAST_AS_FAILSAVE)
+            updateBroadcastCountdown(); 
+        
+        updateTotalUtilComm();
+    }
+    
+    /**
+     * Checks if there are bids for any objects owned by this camera and if 
+     * the corresponding auctions have already ended or if they are still running.
+     * If the auction has ended, the winner is selected, the needed payments 
+     * have to be announced. The winner is notified, this camera stops tracking.
+     * All non-winning cameras are notified to stop searching for the given object.
+     */
+    protected void checkBidsForObjects() {
+   	 if (this.searchForTheseObjects.containsValue(this.camController)) { //this camera is looking for an object --> is owner of at least one object that is searched for by the network
+            List<ITrObjectRepresentation> delete = new ArrayList<ITrObjectRepresentation>(); 
+            for (Map.Entry<ITrObjectRepresentation, ICameraController> entry : this.searchForTheseObjects.entrySet()) { 
+                if (entry.getValue() != null) { // object is searched for by camera
+               	                  
+               	 if (entry.getValue().getName().equals(this.camController.getName())) {  //this camera initiated the auction --> own value is calculated
+               		 
+               		 //CHECK HERE IF AUCTION IS OVER 
+                   	 if((AUCTION_DURATION <= 0) || (runningAuction.containsKey(entry.getKey()) && (runningAuction.get(entry.getKey()) <= 0))){
+	                         ITrObjectRepresentation tor = entry.getKey();
+	                         double highest = 0;
+	                         double secondHighest = 0;
+	                         highest = this.calculateValue(entry.getKey()); //this.getConfidence(entry.getKey());
+	                         secondHighest = highest;
+	                         ICameraController giveTo = null;
+	
+	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor); // Bids from other cams
+	                         
+	                         if (bids != null) {
+	                             for (Map.Entry<ICameraController, Double> e : bids.entrySet()) { // iterate over bids
+	                            	 if(!e.getKey().getName().equals("Offline")){
+	                            		 
+		                            	 if (e.getKey().getName().equals(this.camController.getName())) {
+		                            		 if(giveTo == null){
+		                            			 // If this cam's bid is still highest, claim object for now
+		                            		     giveTo = e.getKey();
+		                                     }
+		                                 }
+		                                 if (e.getValue() > highest) {
+		                                	 secondHighest = highest;
+		                                     highest = e.getValue();
+		                                     giveTo = e.getKey();
+		                                 }
+	                            	 }
+	                             }
+	                         }
+	
+	                         if (giveTo != null) {
+	                             delete.add(tor);
+	                             
+	                             // If this cam won auction
+	                             if (giveTo.getName().equals(this.camController.getName())) { 
+	                            	 tor.setPrice(secondHighest);
+	                                 this.startTracking(tor);
+	                                 _receivedUtility += secondHighest;
+	                                 //_paidUtility += secondHighest;
+	                                 sendMessage(MessageType.StopSearch, tor);
+	                                 stepsTillBroadcast.remove(tor);
+	                             } else {
+	                            	 tor.setPrice(secondHighest);
+	                                 IMessage reply = this.camController.sendMessage(giveTo.getName(), MessageType.StartTracking, tor);
+	                                 _receivedUtility += secondHighest; //highest;
+	                                 if(DEBUG_CAM)
+	                             		CmdLogger.println(this.camController.getName() + " sent StartTracking msg to: " + giveTo.getName() + " for object " + tor.getFeatures());
+	                                 
+	                                 if(reply != null){
+	                                	 if(reg != null){
+	                                		 reg.objectTrackedBy(tor, this.camController);
+	                                	 }
+	                                	 
+	                                	 delete.remove(tor); // do not delete if other camera does not respond (or responds irrationally)
+	                                	 this.getBiddingsFor(tor).remove(giveTo);
+	                                 }
+	                                 else{
+	                                	 if(!VISION_ON_BID){
+		                                	 if(BIDIRECTIONAL_VISION || (!VISION_RCVER_BOUND))
+		                                		 strengthenVisionEdge(giveTo.getName(), tor);
+	                                	 }
+	                                	 this.removeTrackedObject(tor);
+	                                	 
+	                                	 List<String> cams = advertised.get(tor);
+	                                	 if(cams != null){
+		                                	 if(cams.contains(giveTo.getName())){
+		                                    	 cams.remove(giveTo.getName());
+		                                     }
+	                                	 }
+	                                	 
+	                                	 sendMessage(MessageType.StopSearch, tor);
+	                                	 stepsTillBroadcast.remove(tor);
+	                                 }
+	                             }
+	                         }
+	                         removeRunningAuction(tor); 
+                   	 }
+                    }
+                }
+            }
+        
+            for (ITrObjectRepresentation o : delete) {
+                this.removeFromBiddings(o); 
+                this.stopSearch(o);
+            }
+        }
+	}
 
 	/**
 	 * reduces the duration of all auctions
 	 * needed to identify when auctions have ended.
 	 */
-	protected void updateAuctionDuration(){
+	public void updateAuctionDuration(){
         if(AUCTION_DURATION > 0){
             for(Map.Entry<ITrObjectRepresentation, Integer> entry : runningAuction.entrySet()){
                 int dur = entry.getValue();
@@ -1401,7 +1526,7 @@ public abstract class AbstractAINode {
      * if the counter for a messages arrives at 0, the message is received
      * by the receiver
      */
-    protected void updateReceivedDelay(){
+    public void updateReceivedDelay(){
         List<IMessage> rem = new ArrayList<IMessage>();
         for (Map.Entry<IMessage, Integer> entry : delayedCommunication.entrySet()) {
             int dur = entry.getValue();
@@ -1452,13 +1577,21 @@ public abstract class AbstractAINode {
         this.tmpTotalBids += getNrOfBids();
     }
 
+	/** Get a mapping between camera names and values for the pheromone links
+	 * between the AI node and those cameras. This is used for drawing the 
+	 * vision graph.
+	 * Here, it's the same as the actual vision graph */
+    public Map<String, Double> getDrawableVisionGraph() {
+        return getVisionGraph();
+    }
+    
     /**
      * updates the vision graph. reduces every link by the evaporationrate
      */
     protected void updateVisionGraph() {
         if(!staticVG){
             ArrayList<String> toRemove = new ArrayList<String>();
-            for (Map.Entry<String, Double> e : visionGraph.entrySet()) {
+            for (Map.Entry<String, Double> e : vgEntrySet()) {
                 double val = e.getValue();
                 e.setValue( e.getValue() * EVAPORATIONRATE); //0.995);
                 if (val < 0) {
@@ -1466,10 +1599,66 @@ public abstract class AbstractAINode {
                 }
             }
             for (int i = 0; i < toRemove.size(); i++) {
-                visionGraph.remove(toRemove.get(i));
+                vgRemove(toRemove.get(i));
             }
         }
     }
+    
+    /** Whether the key exists for this cam name (ignoring object here) */
+    public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
+    	return getVisionGraph().containsKey(camName);
+    }
+    
+	/** Get all values in the vision graph (ignoring object here) */
+    public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
+    	return getVisionGraph().values();
+    }
+    
+	/** Get all cameras with values in the vision graph */
+    public Set<String> vgGetCamSet() {
+    	return getVisionGraph().keySet();
+    }
+    
+	/** Get the pheromone value for this camera name (ignoring object here) */
+    public Double vgGet(String camName, ITrObjectRepresentation itro) {
+    	return getVisionGraph().get(camName);
+    }
+    
+    /** Put a value in the vision graph under this camera name (ignoring 
+     * object here) */
+    public Double vgPut(String camName, ITrObjectRepresentation itro, Double value) {
+    	return getVisionGraph().put(camName, value);
+    }
+    
+    /** Get all entries (key-value pairs) in the vision graph */
+    public Set<Map.Entry<String, Double>> vgEntrySet() {
+    	return getVisionGraph().entrySet();
+    }
+    
+    /** Remove from the vision graph the key-value pair for the given key */
+    public Double vgRemove(String name) {
+    	return getVisionGraph().remove(name);
+    }
+    
+    /**
+     * helper class to print a human readable version of the vision graph.
+     */
+    private void printVisionGraph(){
+    	String neighbours = "";
+    	for (String neighbour : visionGraph.keySet()) {
+			neighbours += "; " + neighbour; 
+		}
+    	System.out.println(this.camController.getName() + 
+    			" has the following neighbours:" + neighbours);
+	}
+    
+	/** For specifying params of an AI node after construction time. 
+	 * For example, setting a 'debug' field to true. This method should handle
+	 * strings for keys and convert the value string to the appropriate type.
+	 * This method should return whether the param was successfully applied. */
+	public boolean setParam(String key, String value) {
+		return false; // No params settable for AbstractAINode yet
+	}
     
     /**
      * allocates and uses resources. removes the counter for reserved resources
@@ -1524,4 +1713,9 @@ public abstract class AbstractAINode {
             return null;
         }
     }
+	
+	/** Returns the name of the underlying CameraController object */
+	public String getName() {
+		return this.camController.getName();
+	}
 }
