@@ -56,7 +56,6 @@ public abstract class AbstractAINode {
     boolean staticVG = false;
     private int communication;
 	protected Map<String, Double> visionGraph = new HashMap<String, Double>();
-    protected Map<ITrObjectRepresentation, Double> lastConfidence = new HashMap<ITrObjectRepresentation, Double>();
     protected Map<List<Double>, ITrObjectRepresentation> trackedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
     protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
     protected Map<ITrObjectRepresentation, Map<ICameraController, Double>> biddings = new HashMap<ITrObjectRepresentation, Map<ICameraController, Double>>();
@@ -158,12 +157,36 @@ public abstract class AbstractAINode {
 	}
 	
     /**
-     * sets the latest confidence for a certain object
-     * @param io the object the confidence is set for
-     * @param conf the confidence to be set
+     * copies the given abstractAINode
+     * @param ai the given AiNode
      */
-    protected void addLastConfidence(ITrObjectRepresentation io, double conf) {
-        this.lastConfidence.put(io, conf);
+    public void instantiateAINode(AbstractAINode ai){
+		this.trackedObjects = ai.trackedObjects;
+		this.searchForTheseObjects = ai.searchForTheseObjects;
+		this.biddings = ai.biddings;
+		this.advertised = ai.advertised;
+		this.runningAuction = ai.runningAuction;
+		this.reservedResources = ai.reservedResources;
+		this.stepsTillFreeResources = ai.stepsTillFreeResources;
+		this.stepsTillBroadcast = ai.stepsTillBroadcast;
+		this.wrongIdentified = ai.wrongIdentified;
+		this.delayedCommunication = ai.delayedCommunication;
+		this.trObject = ai.trObject;
+		this.last_confidence = ai.last_confidence;
+		this.camController = ai.camController;
+		this.visionGraph = ai.visionGraph;
+		this.sentMessages = ai.sentMessages;
+		this.randomGen = ai.randomGen;
+		this._receivedUtility = ai._receivedUtility;
+		this._nrBids = ai._nrBids;
+		this._paidUtility = ai._paidUtility;
+		this.tmpTotalComm = ai.tmpTotalComm;
+		this.tmpTotalUtil = ai.tmpTotalUtil;
+		this.tmpTotalRcvdPay = ai.tmpTotalRcvdPay;
+		this.tmpTotalPaid = ai.tmpTotalPaid;
+		this.tmpTotalBids = ai.tmpTotalBids;
+		
+		this.banditSolver = ai.banditSolver;
     }
 
     /**
@@ -288,35 +311,6 @@ public abstract class AbstractAINode {
         }
     }
 
-    /**
-     * Checks the confidence of all objects and calls for help (see {@link AbstractAINode#callForHelp(ITrObjectRepresentation) callForHelp}) if needed
-     */
-    protected void checkConfidences() {
-        if (!this.getAllTracedObjects_bb().isEmpty()) {
-            for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
-                double conf = 0.0;
-                @SuppressWarnings("unused")
-                double lastConf = 0.0;
-                if(wrongIdentified.containsValue(io)){
-                    for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvp : wrongIdentified.entrySet()){
-                        if (kvp.getValue().equals(io)){
-                            conf = this.calculateValue(kvp.getKey()); //this.getConfidence(kvp.getKey());
-                            lastConf = this.getLastConfidenceFor(kvp.getKey());
-                        }
-                    }   
-                }
-                else{
-                    conf = this.calculateValue(io); //this.getConfidence(io);
-                    lastConf = this.getLastConfidenceFor(io);
-                }
-                
-                
-                callForHelp(io); 
-                this.addLastConfidence(io, conf);
-            }
-        }
-    }
-    
     /**
      * compares two objects for equality. returens true if they are the same
      * @param first first object to be compared
@@ -570,19 +564,6 @@ public abstract class AbstractAINode {
             return 0;
         } else {
             return pair.confidence;
-        }
-    }
-
-    /**
-     * returns the latest confidence for a given object by this camera
-     * @param io the object the confidence shall be returned
-     * @return the confidence for the given object
-     */
-    protected double getLastConfidenceFor(ITrObjectRepresentation io) {
-        if (lastConfidence.containsKey(io)) {
-            return lastConfidence.get(io);
-        } else {
-            return 0.0;
         }
     }
 
@@ -842,40 +823,6 @@ public abstract class AbstractAINode {
         return null;
     }
 
-    /**
-     * copies the given abstractAINode
-     * @param ai the given AiNode
-     */
-    public void instantiateAINode(AbstractAINode ai){
-    	this.lastConfidence = ai.lastConfidence;
-		this.trackedObjects = ai.trackedObjects;
-		this.searchForTheseObjects = ai.searchForTheseObjects;
-		this.biddings = ai.biddings;
-		this.advertised = ai.advertised;
-		this.runningAuction = ai.runningAuction;
-		this.reservedResources = ai.reservedResources;
-		this.stepsTillFreeResources = ai.stepsTillFreeResources;
-		this.stepsTillBroadcast = ai.stepsTillBroadcast;
-		this.wrongIdentified = ai.wrongIdentified;
-		this.delayedCommunication = ai.delayedCommunication;
-		this.trObject = ai.trObject;
-		this.last_confidence = ai.last_confidence;
-		this.camController = ai.camController;
-		this.visionGraph = ai.visionGraph;
-		this.sentMessages = ai.sentMessages;
-		this.randomGen = ai.randomGen;
-		this._receivedUtility = ai._receivedUtility;
-		this._nrBids = ai._nrBids;
-		this._paidUtility = ai._paidUtility;
-		this.tmpTotalComm = ai.tmpTotalComm;
-		this.tmpTotalUtil = ai.tmpTotalUtil;
-		this.tmpTotalRcvdPay = ai.tmpTotalRcvdPay;
-		this.tmpTotalPaid = ai.tmpTotalPaid;
-		this.tmpTotalBids = ai.tmpTotalBids;
-		
-		this.banditSolver = ai.banditSolver;
-    }
-    
     /**
      * decides if a given object is being tracked by this camera
      * @param rto the object in question if tracked or not
