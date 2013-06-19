@@ -54,23 +54,6 @@ public class SimSim {
 	static Random ran = new Random(initialSeed);
 	
 	
-    private static boolean diffSeed = true;
-    public static boolean runSequential = true;
-    public static int runRandomConfigs = 0;
-    private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
-    private static boolean runAllErrorVersions = false;
-    static boolean showgui = false;
-	
-	static int startCamError = 20;
-    static int endCamError = -1;
-    static int camRate = 1;
-    static int startReset = 70;
-    static int endReset = 100;
-    static int resetRate = 5;
-    static int startTrackError = 30;
-    static int endTrackError = -1;
-    static int trackRate = 5;
-	
 	/**
 	 * @param args
 	 */
@@ -154,22 +137,9 @@ public class SimSim {
 				    }
 				}
 			}
-//			int nbRunning = 1;
-//			while(nbRunning > 0){
-//			    nbRunning = 0;
-//    			for (Thread t : Thread.getAllStackTraces().keySet()) {
-//    			    if (t.getState()==Thread.State.RUNNABLE) nbRunning++;
-//    			}
-//			}
+
 			exService.shutdown();
-//			try {
-//				exService.awaitTermination(2, TimeUnit.MINUTES);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-			
-			
-			
+
 			System.out.println("############ ALL SIMULATIONS COMPLETED! ############");				
 		}
 
@@ -1050,6 +1020,24 @@ public class SimSim {
 		
 		
 	}
+	
+	private static boolean diffSeed = true;
+    public static boolean runSequential = true;
+    public static int runRandomConfigs = 0;
+    private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
+    private static boolean runAllErrorVersions = false;
+    static boolean showgui = false;
+    
+    static int startCamError = 20;
+    static int endCamError = -1;
+    static int camRate = 1;
+    static int startReset = 70;
+    static int endReset = 100;
+    static int resetRate = 5;
+    static int startTrackError = 30;
+    static int endTrackError = -1;
+    static int trackRate = 5;
+	
 }
 
 enum States{
