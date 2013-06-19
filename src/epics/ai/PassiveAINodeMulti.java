@@ -68,19 +68,8 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	@Override
 	public void advertiseTrackedObjects() {
 		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
-			double conf = 0.0;
-			double lastConf = 0.0;
-			if(wrongIdentified.containsValue(io)){
-				for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvp : wrongIdentified.entrySet()){
-					if (kvp.getValue().equals(io)){
-						conf = this.getConfidence(kvp.getKey());
-						lastConf = this.getLastConfidenceFor(kvp.getKey());
-					}
-				}
-			} else {
-				conf = this.getConfidence(io);
-				lastConf = this.getLastConfidenceFor(io);
-			}
+			double conf = this.getConfidence(io);
+			double lastConf = this.getLastConfidenceFor(io);
 			
 			if (this.camController.realObjectsUsed()){
 				if(this.camController.objectIsVisible(io) == 1){

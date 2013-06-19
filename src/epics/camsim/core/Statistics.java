@@ -25,7 +25,6 @@ public class Statistics {
     private double util_tmp = 0;
     private double comm_tmp = 0;
     private double handover_tmp = 0;
-    private int ident_tmp = 0;
     private int visible_tmp = 0;
     private double util_cumulative = 0;
     private double comm_cumulative = 0;
@@ -36,7 +35,6 @@ public class Statistics {
     private ArrayList<Double> utility = new ArrayList<Double>();
     private ArrayList<Double> communication = new ArrayList<Double>();
     private ArrayList<Double> handover = new ArrayList<Double>();
-    private ArrayList<Integer> identification = new ArrayList<Integer>();
     private ArrayList<Integer> visible = new ArrayList<Integer>();
     private ArrayList<Integer> strategy = new ArrayList<Integer>();
     
@@ -74,7 +72,6 @@ public class Statistics {
         util_tmp = 0;
         comm_tmp = 0;
         handover_tmp = 0;
-        ident_tmp = 0;
         util_cumulative = 0;
         comm_cumulative = 0;
         handover_cumulative = 0;
@@ -84,7 +81,6 @@ public class Statistics {
         utility.clear();
         communication.clear();
         handover.clear();
-        identification.clear();
         visible.clear();
         strategy.clear();
         totComOH.clear();
@@ -156,7 +152,6 @@ public class Statistics {
         utility.add(util_tmp);
         communication.add(comm_tmp);
         handover.add(handover_tmp);
-        identification.add(ident_tmp);
         visible.add(visible_tmp);
         util_cumulative += util_tmp;
         comm_cumulative += comm_tmp;
@@ -175,7 +170,6 @@ public class Statistics {
         comm_tmp = 0;
         handover_tmp = 0;
         comm_oh_tmp = 0;
-        ident_tmp = 0;
         visible_tmp = 0;
         tmp_totutil = 0.0;
         tmp_camUtil = new HashMap<String, Map<String,Double>>();
@@ -201,7 +195,6 @@ public class Statistics {
     			+ handover_tmp + comma 
     			+ handover_cumulative + comma
     			+ comm_oh_cumulative + comma
-    			+ ident_tmp + comma 
     			+ visible_tmp;
     	return summary;
     }
@@ -223,7 +216,6 @@ public class Statistics {
     			+ "COMMUNICATION" + comma 
     			+ "CUMULATIVE_COMM" + comma
     			+ "CUMULATIVE_COMM_OH" + comma 
-    			+ "MISIDENTIFICATION" + comma 
     			+ "VISIBLE";
     	return desc;
     }
@@ -278,19 +270,6 @@ public class Statistics {
     public void addHandover(double handover) {
         handover_tmp += handover;
     }
-
-	public void addMissidentified(int currentlyMissidentified, String camName)  throws Exception{
-		ident_tmp += currentlyMissidentified;
-		
-		if(addPerCam){
-			if(!camName.isEmpty()){
-	        	if(!perCam.containsKey(camName)){
-	        		createCamStatistics(camName);	
-	        	}
-	        	perCam.get(camName).addMissidentified(currentlyMissidentified, "");
-	        }
-		}
-	}
 
 	public void addCamUtility(String cam, Map<String, Double> camUtility, String camName)  throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){

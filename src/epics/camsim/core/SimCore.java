@@ -31,7 +31,6 @@ import epics.common.RunParams;
  */
 public class SimCore {
 
-	int TRACKERERROR = -1; //percent of missdetected objects
 	int CAMERRORRATE = -1; //percent of camera error. -1 = no camera error
 	int RESETRATE = 50; //looses knowledge about everything - happens in x percentage of cameraerror (only when error occurs, knowledgeloss can happen)
 	static final boolean BIDIRECTIONAL_VISION = true;
@@ -115,7 +114,6 @@ public class SimCore {
 			boolean realData, boolean allStatistics, String summary, String paramFile) {
 		this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
-	    this.TRACKERERROR = trackError;
 	    this.alpha = alpha;
 		
 		USEGLOBAL = global;
@@ -324,7 +322,7 @@ public class SimCore {
                 x_pos, y_pos,
                 Math.toRadians(heading_degrees),
                 Math.toRadians(angle_degrees),
-                range, aiNode, limit, 100 - TRACKERERROR, stats, randomGen, predefConfidences, predefVisibility);
+                range, aiNode, limit, stats, randomGen, predefConfidences, predefVisibility);
 
     	try {
     		if (paramFile != null) {
@@ -691,8 +689,6 @@ public class SimCore {
  				
  				//bs.setCurrentReward(utility, commOverhead);
  			}
- 		    
- 		    stats.addMissidentified(c.currentlyMissidentified(), c.getName());
          }
       
          this.computeUtility();
@@ -853,7 +849,6 @@ public class SimCore {
 				//bs.setCurrentReward(utility, commOverhead);
 			}
 		    
-		    stats.addMissidentified(c.currentlyMissidentified(), c.getName());
 //		    if(step == 999){
 //		        String armsCount = ""; 
 //		        IBanditSolver bso = c.getAINode().getBanditSolver();

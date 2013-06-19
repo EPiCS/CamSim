@@ -44,7 +44,6 @@ public abstract class AbstractAINode {
     public static boolean USE_BROADCAST_AS_FAILSAVE = false;
     public static final int DELAY_COMMUNICATION = 0;
     public static final int DELAY_FOUND = 0;
-    public static final int MISIDENTIFICATION = -1; //percentage of misidentified object. -1 = no misidentification
     
     public int AUCTION_DURATION;
     
@@ -66,7 +65,6 @@ public abstract class AbstractAINode {
     protected Map<ITrObjectRepresentation, Double> reservedResources = new HashMap<ITrObjectRepresentation, Double>();
     protected Map<ITrObjectRepresentation, Integer> stepsTillFreeResources = new HashMap<ITrObjectRepresentation, Integer>();
 	protected Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = new HashMap<ITrObjectRepresentation, Integer>();
-    protected Map<ITrObjectRepresentation, ITrObjectRepresentation> wrongIdentified = new HashMap<ITrObjectRepresentation, ITrObjectRepresentation>();
     protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
     protected ICameraController camController;
     protected ITrObjectRepresentation trObject;
@@ -169,7 +167,6 @@ public abstract class AbstractAINode {
 		this.reservedResources = ai.reservedResources;
 		this.stepsTillFreeResources = ai.stepsTillFreeResources;
 		this.stepsTillBroadcast = ai.stepsTillBroadcast;
-		this.wrongIdentified = ai.wrongIdentified;
 		this.delayedCommunication = ai.delayedCommunication;
 		this.trObject = ai.trObject;
 		this.camController = ai.camController;
@@ -259,10 +256,6 @@ public abstract class AbstractAINode {
      * @param io the object which this camera tries to find with the help of other cameras
      */
     public void callForHelp(ITrObjectRepresentation io) {
-        if(wrongIdentified.containsKey(io)){
-            io = wrongIdentified.get(io);
-        }
-        
         if (DEBUG_CAM) {
             CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +")" );
         }
@@ -309,7 +302,6 @@ public abstract class AbstractAINode {
 
         return result;
     }
-
     
     /**
      * Checks if ANY searched object is visible. if so, sends a bid to the search-initiating camera. 
@@ -319,19 +311,7 @@ public abstract class AbstractAINode {
         ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
 
         for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
-            
-            if(wrongIdentified.containsKey(visible)){
-                visible = wrongIdentified.get(visible);
-            }
-            
-            if (!this.trackedObjects.containsKey(visible.getFeatures())) {
-                if(!wrongIdentified.containsValue(visible)){
-                    ITrObjectRepresentation wrong = visibleIsMisidentified(visible);
-                    if(wrong != null){ //misidentified 
-                        visible = wrong;
-                    }
-                }
-            
+            if (!this.trackedObjects.containsKey(visible.getFeatures())) {            
                 if(this.searchForTheseObjects.containsKey(visible)){
                 
                     ICameraController searcher = this.searchForTheseObjects.get(visible);
@@ -361,13 +341,6 @@ public abstract class AbstractAINode {
     }
 
     /**
-     * returns the number of currently misidentified objects
-     */
-    public int currentlyMisidentified() {
-        return this.wrongIdentified.size();
-    }
-    
-	/**
 	 * checks if there are enough resources left on this camera to track another object
 	 * @return true if there are enough resources left, false otherwise
 	 */
@@ -590,24 +563,10 @@ public abstract class AbstractAINode {
      * @return returns all currently tracked objects by this camera
      */
     public Map<List<Double>, ITrObjectRepresentation> getTrackedObjects() {
-        
-        //make sure all tracked objects are really existent within FoV --> if misidentified, send real anyway --> map first ;)
-        
         Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
         for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()){
-            if(wrongIdentified.containsValue(kvp.getValue())){
-                for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> wrongSet : wrongIdentified.entrySet()){
-                    if(wrongSet.getValue().equals(kvp.getValue())){
-                        retVal.put(wrongSet.getKey().getFeatures(), wrongSet.getKey());
-                        break;
-                    }
-                }
-            }
-            else{
-                retVal.put(kvp.getKey(), kvp.getValue());
-            }
+        	retVal.put(kvp.getKey(), kvp.getValue());
         }
-        
         return retVal;
     }
     
@@ -806,26 +765,11 @@ public abstract class AbstractAINode {
         if(this.camController.isOffline()){
             output += " should be offline!! but";
         }
-        output += " tracked objects [real name] (identified as): ";      
-    
-        //      ITrObjectRepresentation realITO;
+        output += " tracked objects: ";      
+
         for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()) {
-            String wrong = "NONE";
-            String real = "" + kvp.getValue().getFeatures();
-            if(wrongIdentified.containsValue(kvp.getValue())){
-                //kvp.getValue is not real... find real...
-                for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvpWrong : wrongIdentified.entrySet()){
-                    if(kvpWrong.getValue().equals(kvp.getValue())){
-                        wrong = "" + kvp.getValue().getFeatures();
-                        real = "" + kvpWrong.getKey().getFeatures();
-                        break;
-                    }
-                    else{
-                        wrong = "ERROR";
-                    }
-                }
-            }
-            output = output + real + "(" + wrong + "); ";
+            String features = "" + kvp.getValue().getFeatures();
+            output = output + features + "; ";
         }
         System.out.println(output);
     }
@@ -915,22 +859,6 @@ public abstract class AbstractAINode {
         this.freeResources(rto);
     }
 
-	
-	/**
-	 * removes a given object from the list of currently visible objects.
-	 * in case the object is currently tracked, it is removed from tracked objects as well
-	 * @param rto the object not visible anymore
-	 */
-	public void removeVisibleObject(ITrObjectRepresentation rto) {
-        if(wrongIdentified.containsKey(rto)){
-            ITrObjectRepresentation original = rto;
-            ITrObjectRepresentation wrong = wrongIdentified.get(rto);
-            wrongIdentified.remove(original);
-            rto = wrong;
-        }
-    }
-	
-	
 	/**
 	 * reserves a certain amount of resources for a given object
 	 * @param target the obeject to reserve resources for
@@ -1421,43 +1349,6 @@ public abstract class AbstractAINode {
         }
         this.camController.reduceResources(resRes);
         stepsTillFreeResources.remove(target);
-    }
-	
-	/**
-	 * decides if a visible object has been misidentified as a different object.
-	 * 
-	 * @param visible the object which might have been misidentified
-	 * @return the object as which given object has been identified.
-	 */
-	protected ITrObjectRepresentation visibleIsMisidentified(ITrObjectRepresentation visible){
-        //object is not visible --> would send wrong bid!
-        
-        int random = randomGen.nextInt(100, RandomUse.USE.FALSEOBJ);
-        if(random <= MISIDENTIFICATION){
-            if(this.searchForTheseObjects.size() > 0){
-                random = randomGen.nextInt(this.searchForTheseObjects.size(), RandomUse.USE.FALSEOBJ);
-                int x = 0;
-                for (ITrObjectRepresentation tr : this.searchForTheseObjects.keySet()) {
-                    if(x == random){
-                        if(!tr.equals(visible)){
-                            if (DEBUG_CAM) {
-                                CmdLogger.println(this.camController.getName() + " misidentified object " + visible.getFeatures() + " as " + tr.getFeatures());
-                            }
-                            wrongIdentified.put(visible, tr);
-                            return tr;
-                        }
-                        else{
-                            return null;
-                        }
-                    }
-                    x++;
-                }
-            }
-            return null;
-        }
-        else{
-            return null;
-        }
     }
 	
 	/** Returns the name of the underlying CameraController object */
