@@ -15,12 +15,10 @@ public class RandomNumberGenerator {
     private Random ranError = null;
     private Random ranBandit = null;
     private long _seed;
-    long threadId;
-
+    
     public RandomNumberGenerator(long seed) {
     	init(seed);
         _seed = seed;
-    	threadId = Thread.currentThread().getId();
 	}
     
     private void init( long seed ){
@@ -34,9 +32,6 @@ public class RandomNumberGenerator {
     }
 
     public double nextDouble(RandomUse.USE u)  {
-//    	if(threadId != Thread.currentThread().getId()){
-//    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
-//    	}
     	switch (u) {
 			case UNIV:
 				return ranUniversal.nextDouble();
@@ -57,9 +52,6 @@ public class RandomNumberGenerator {
     
 
     public int nextInt(RandomUse.USE u){
-//    	if(threadId != Thread.currentThread().getId()){
-//    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
-//    	}
     	switch (u) {
 			case UNIV:
 				return ranUniversal.nextInt();
@@ -78,14 +70,8 @@ public class RandomNumberGenerator {
 		}
     }
     
-//    public static double nextInt(){
-//    	return RandomNumberGenerator.nextInt(RandomUse.USE.UNIV);
-//    }
 
     public int nextInt( int n, RandomUse.USE u ){
-//    	if(threadId != Thread.currentThread().getId()){
-//    		System.out.println("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
-//    	}
     	switch (u) {
 			case UNIV:
 				return ranUniversal.nextInt(n);

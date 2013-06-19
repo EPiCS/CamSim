@@ -64,7 +64,7 @@ public class WindowMain implements ActionListener{
         int w = 300;
         int h = 300;
         dv = new DataView("data", frame.getSize().width - w -16, frame.getSize().height - h-38, w, h, 1000, 80, sim_model);
-        dv.setVisible(true);
+//        dv.setVisible(true);
         desktop.add(dv);
         frame.setContentPane(desktop);
         frame.setVisible(true);

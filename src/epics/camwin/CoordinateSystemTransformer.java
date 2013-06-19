@@ -75,16 +75,24 @@ public class CoordinateSystemTransformer {
     }
     
     public double simToWindowX( double sim_x ){
-        double sim_width = this.sim_max_x - this.sim_min_x;
-        double xx = sim_x - this.sim_min_x;
+        double sim_width = Math.abs(this.sim_max_x) + Math.abs(this.sim_min_x);
+        double xx = sim_x + Math.abs(this.sim_min_x);
         return (xx * this.use_win_width) / sim_width;
     }
 
     public double simToWindowY( double sim_y ){
-        double sim_height = this.sim_max_y - this.sim_min_y;
-        double yy = sim_y - this.sim_min_y;
+        double sim_height = Math.abs(this.sim_max_y) + Math.abs(this.sim_min_y);
+        double yy = sim_y + Math.abs(this.sim_min_y);
         double result = (yy * this.use_win_height) / sim_height;
         return this.use_win_height - result;
+    }
+
+    public int getRealWidth() {
+        return (int) (simToWindowX(sim_max_x) + simToWindowX(sim_min_x));
+    }
+
+    public int getRealHeight() {
+        return (int) (simToWindowY(sim_max_y) + simToWindowY(sim_min_y));
     }
 
 }

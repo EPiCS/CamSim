@@ -61,9 +61,22 @@ public class WorldView extends JPanel implements Observer {
 
         this.cst.setWindowHeight(height);
         this.cst.setWindowWidth(width);
-	
-		g2.setColor(Color.white);
-		g2.fill(new Rectangle(0, 0, width, height));
+  
+    	g2.setColor(Color.white);
+    	g2.fill( new Rectangle( 0, 0, width, height ) );
+    	
+    	
+    	g2.setColor(Color.BLUE);
+    	int bbx = (int) this.cst.getRealHeight();
+    	int bby = (int) this.cst.getRealWidth();
+        g2.drawRect(0, 0, bby, bbx);
+        
+        
+//    	g2.setColor(Color.green);
+//
+//	
+//		g2.setColor(Color.white);
+//		g2.fill(new Rectangle(0, 0, width, height));
 		
         g2.setColor(Color.GREEN);
         ArrayList<CameraController> cameras = sim_model.getCameras();
