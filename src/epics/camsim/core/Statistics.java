@@ -213,8 +213,6 @@ public class Statistics {
     			+ "CUMULATIVE_COMM" + comma 
     			+ "HANDOVER" + comma
     			+ "CUMULATIVE_HANDOVER" + comma
-    			+ "COMMUNICATION" + comma 
-    			+ "CUMULATIVE_COMM" + comma
     			+ "CUMULATIVE_COMM_OH" + comma 
     			+ "VISIBLE";
     	return desc;
