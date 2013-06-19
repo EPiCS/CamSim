@@ -12,7 +12,6 @@ import java.util.*;
 public class CameraController implements ICameraController{
 
 	private int LIMIT = 0;
-	private int DETECTIONRATE = 80; //percent to detect object that is there
 	private AbstractAINode camAINode;
 
     private String name;
@@ -43,23 +42,11 @@ public class CameraController implements ICameraController{
     
 	/**
 	 * instantiates a new camera in the simulator
-	 * @param name
-	 * @param x
-	 * @param y
-	 * @param heading
-	 * @param viewing_angle
-	 * @param range
-	 * @param ai
-	 * @param limit
-	 * @param detectionRate
-	 * @param stats
-	 * @param rg
 	 * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
 	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
 	 */
     public CameraController( String name, double x, double y,
-                double heading, double viewing_angle, double range, AbstractAINode ai, int limit, int detectionRate, Statistics stats, RandomNumberGenerator rg, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
-    	this.DETECTIONRATE = detectionRate;
+                double heading, double viewing_angle, double range, AbstractAINode ai, int limit, Statistics stats, RandomNumberGenerator rg, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
     	this.LIMIT = limit;
         this.x = x;
         this.y = y;
@@ -216,38 +203,21 @@ public class CameraController implements ICameraController{
 
     private boolean gotDetection() {
     	if(!isOffline()){
-			int res = randomGen.nextInt(100, RandomUse.USE.UNIV);
-			if(res > DETECTIONRATE){
-				return false;
-			}
-			return true;
-    	}
-    	else{
+    		return true;
+    	} else {
     		return false;
     	}
 	}
     
-    private void addVisibleObject( TraceableObject tc, double confidence ){
+    private void addVisibleObject(TraceableObject tc, double confidence){
     	if(!isOffline()){
-	        if ( ! this.visible_objects.containsKey(tc)){
-	
-	            this.visible_objects.put( tc, confidence );
-	
-//	            this.camAINode.addVisibleObject(
-//	                    new TraceableObjectRepresentation(tc, tc.getFeatures()));
-	            
-	        }else{
-	            this.visible_objects.put(tc, confidence);
-	        }
+    		this.visible_objects.put(tc, confidence);
     	}
     }
     
-    private void removeVisibleObject( TraceableObject tc ){
+    private void removeVisibleObject(TraceableObject tc){
     	if(!isOffline()){
 	        if (this.visible_objects.containsKey(tc)){
-	
-	            this.camAINode.removeVisibleObject( new TraceableObjectRepresentation(tc, tc.getFeatures()));
-	        
 	            this.visible_objects.remove(tc);
 	        }
     	}
@@ -267,7 +237,7 @@ public class CameraController implements ICameraController{
 		}
     }
 
-    public TraceableObject getTraced(){
+    public TraceableObject getTracked(){
     	if(!isOffline()){
 	        ITrObjectRepresentation itro = this.camAINode.getTrackedObject();
 	        if ( itro == null ){
@@ -508,15 +478,6 @@ public class CameraController implements ICameraController{
 		}
 		else{
 			return -1;
-		}
-	}
-
-	public int currentlyMissidentified() {
-		if(!isOffline()){
-			return this.camAINode.currentlyMissidentified();
-		}
-		else{
-			return 0;
 		}
 	}
 

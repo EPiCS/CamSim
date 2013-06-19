@@ -32,7 +32,6 @@ import epics.common.RunParams;
  */
 public class SimCore {
 
-	int TRACKERERROR = -1; //percent of missdetected objects
 	int CAMERRORRATE = -1; //percent of camera error. -1 = no camera error
 	int RESETRATE = 50; //looses knowledge about everything - happens in x percentage of cameraerror (only when error occurs, knowledgeloss can happen)
 	static final boolean BIDIRECTIONAL_VISION = true;
@@ -122,10 +121,9 @@ public class SimCore {
 	 * @param global global coordination used
 	 * @param camError the probability of failing cameras
 	 * @param camReset probability of a reset after a camera failed
-	 * @param trackError probability of a tracking error
 	 */
-	public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
+	public SimCore( long seed, String output, SimSettings ss, boolean global){
+		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null);
 		this.interpretFile(ss);
 	}
 	
@@ -140,8 +138,7 @@ public class SimCore {
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
 	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double banditParam, double alpha){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
-		this.epsilon = epsilon;
+		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null);
 		this.interpretFile(ss);
 	}
 
@@ -157,7 +154,7 @@ public class SimCore {
 	 * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, boolean realData, boolean allStatistics){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, realData, allStatistics, "", null);
+		initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null);
 		this.epsilon = epsilon;
 		this.interpretFile(ss);
 	}
@@ -170,14 +167,13 @@ public class SimCore {
      * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
-     * @param trackError probability of a tracking error
      * @param alpha the alpha value for the weighted reward function used in bandit solvers
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
 	public SimCore( long seed, String output, SimSettings ss, 
-			boolean global, int camError, int camReset, int trackError, double alpha, boolean realData, boolean allStatistics) {
-	    initSimCore(seed, output, global, camError, camReset, trackError,
+			boolean global, int camError, int camReset, double alpha, boolean realData, boolean allStatistics) {
+	    initSimCore(seed, output, global, camError, camReset,
 				alpha, realData, allStatistics, "", null);
 		this.interpretFile(ss);
 	}
@@ -192,13 +188,12 @@ public class SimCore {
      * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
-     * @param trackError probability of a tracking error
 	 * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
      */
 	public SimCore(long seed, String output, String summaryFile, String paramFile, SimSettings ss, 
-    		boolean global, int camError, int camReset, int trackError, boolean realData, boolean allStatistics) {
-    	initSimCore(seed, output, global, camError, camReset, trackError,
+    		boolean global, int camError, int camReset, boolean realData, boolean allStatistics) {
+    	initSimCore(seed, output, global, camError, camReset,
 				alpha, realData, allStatistics, summaryFile, paramFile);
     	this.interpretFile(ss);
     }
@@ -210,7 +205,6 @@ public class SimCore {
 	 * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
-     * @param trackError probability of a tracking error
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
@@ -218,11 +212,10 @@ public class SimCore {
 	 * @param paramFile parameterfile for simulations
 	 */
 	private void initSimCore(long seed, String output, boolean global,
-			int camError, int camReset, int trackError, double alpha,
+			int camError, int camReset, double alpha,
 			boolean realData, boolean allStatistics, String summary, String paramFile) {
 		this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
-	    this.TRACKERERROR = trackError;
 	    this.alpha = alpha;
 		
 		USEGLOBAL = global;
@@ -449,7 +442,7 @@ public class SimCore {
                 x_pos, y_pos,
                 Math.toRadians(heading_degrees),
                 Math.toRadians(angle_degrees),
-                range, aiNode, limit, 100 - TRACKERERROR, stats, randomGen, predefConfidences, predefVisibility);
+                range, aiNode, limit, stats, randomGen, predefConfidences, predefVisibility);
 
     	try {
     		if (paramFile != null) {
@@ -897,8 +890,6 @@ public class SimCore {
  				
  				//bs.setCurrentReward(utility, commOverhead);
  			}
- 		    
- 		    stats.addMissidentified(c.currentlyMissidentified(), c.getName());
          }
       
          this.computeUtility();
@@ -1065,7 +1056,6 @@ public class SimCore {
 				//bs.setCurrentReward(utility, commOverhead);
 			}
 		    
-		    stats.addMissidentified(c.currentlyMissidentified(), c.getName());
 //		    if(step == 999){
 //		        String armsCount = ""; 
 //		        IBanditSolver bso = c.getAINode().getBanditSolver();
@@ -1233,18 +1223,18 @@ public class SimCore {
 	 * @throws Exception
 	 */
 	private void printObjects() throws Exception {
-		Map<TraceableObject, List<CameraController>> traced = new HashMap<TraceableObject, List<CameraController>>();
+		Map<TraceableObject, List<CameraController>> tracked = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
 		for(CameraController c : this.cameras){
     		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
-    			if(traced.containsKey(tor.getTraceableObject())){
-    				traced.get(tor.getTraceableObject()).add(c);
+    			if(tracked.containsKey(tor.getTraceableObject())){
+    				tracked.get(tor.getTraceableObject()).add(c);
     			}
     			else{
     				List<CameraController> list = new ArrayList<CameraController>();
     				list.add(c);
-    				traced.put(tor.getTraceableObject(), list);
+    				tracked.put(tor.getTraceableObject(), list);
     			}
     		}
     		if(c.getAINode().getSearchedObjects() != null){
@@ -1263,12 +1253,12 @@ public class SimCore {
     	}
 		
 		System.out.println("############################ PRINT OBJECT INFO #########################################");
-		int sum = traced.size() + searched.size();
-		System.out.println("searched size: " + searched.size() + " + traced size: " + traced.size() + " = " + sum + " should be: " + this.objects.size());
-//		if((traced.size() + searched.size()) != this.objects.size())
-//			throw new Exception("INCONSISTENCY: " + traced.size() + searched.size() + " is not " + this.objects.size());
+		int sum = tracked.size() + searched.size();
+		System.out.println("searched size: " + searched.size() + " + tracked size: " + tracked.size() + " = " + sum + " should be: " + this.objects.size());
+//		if((tracked.size() + searched.size()) != this.objects.size())
+//			throw new Exception("INCONSISTENCY: " + tracked.size() + searched.size() + " is not " + this.objects.size());
 		System.out.println("");
-		System.out.println("object + searched + traced");
+		System.out.println("object + searched + tracked");
 		for(TraceableObject to : this.objects){
 			String output = "Object " + to.getFeatures() + " searched by ";
 			if(searched.containsKey(to)){
@@ -1276,9 +1266,9 @@ public class SimCore {
 					output += c.getName() + ", ";
 				}
 			}
-			output += " traced by ";
-			if(traced.containsKey(to)){
-				for(CameraController c : traced.get(to)){
+			output += " tracked by ";
+			if(tracked.containsKey(to)){
+				for(CameraController c : tracked.get(to)){
 					output += c.getName() + ", ";
 				}
 			}
@@ -1300,7 +1290,7 @@ public class SimCore {
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			tracing.put(tor.getTraceableObject(), true);
     			if(c.getVisibleObjects().containsKey(tor)){
-    				throw new Exception("wait what? inconsistent - if its not visible, it cant be traced!!");
+    				throw new Exception("wait what? inconsistent - if its not visible, it cant be tracked!!");
     			}
     		}
     		if(c.getAINode().getSearchedObjects() != null){
