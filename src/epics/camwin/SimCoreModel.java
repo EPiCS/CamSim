@@ -180,4 +180,12 @@ public class SimCoreModel extends Observable {
 		}
 	}
 
+    public double getHeight() {
+        return Math.abs(sim.get_max_y()) + Math.abs(sim.get_min_y());
+    }
+
+    public double getWidth() {
+        return Math.abs(sim.get_max_x()) + Math.abs(sim.get_min_x());
+    }
+
 }

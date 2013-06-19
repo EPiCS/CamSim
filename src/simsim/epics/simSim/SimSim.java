@@ -29,54 +29,30 @@ import epics.common.RandomNumberGenerator;
  * @author Lukas Esterle <Lukas.Esterle@aau.at>
  *
  */
-enum States{
-	ABC,
-	AST,
-	ASM,
-	PBC,
-	PST,
-	PSM
-}
-
 public class SimSim {
 	
+    public static String loadScenariosFrom = "..//..//..//..//scenarios//2Cams"; //can be overwriten using argument [0]
+    public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
     public static boolean allStatistics = false;
-    public static int runRandomConfigs = 0;
 	public static boolean runHomogeneous = false;
-	public static boolean runSequential = false;
 	public static boolean runByParameter = false;
-	private static boolean runAllErrorVersions = false;
 	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = true;
-	private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
-	private static boolean diffSeed = true;
+	public static boolean runBandits = false;
 	
-	static boolean showgui = false;
 	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
-	static int startCamError = 20;
-	static int endCamError = -1;
-	static int camRate = 1;
-	static int startReset = 70;
-	static int endReset = 100;
-	static int resetRate = 5;
-	static int startTrackError = 30;
-	static int endTrackError = -1;
-	static int trackRate = 5;
 	static long initialSeed = 10;
-	
-	static int epsilonRuns = 2; // how many epsilon / temperature values are being tried for the bandits
-	static double standardEpsilon = 0.1;
+	static int banditParamRuns = 10; // how many epsilon / temperature values are being tried for the bandits
+	static double standardBanditParameter = 0.1;
 	
 	static double banditRuns = 20.0d; //how many different alpha values are being tried out 
 	
 	static File directory;
 	static String totalDirName;
-//	static String scenDirName;
-//	static SimSettings ss;
 	
 	static ExecutorService exService;
 	static Random ran = new Random(initialSeed);
+	
 	
 	/**
 	 * @param args
@@ -87,11 +63,9 @@ public class SimSim {
 			folder = new File(args[0]);
 		}
 		else{
-			folder = new File("..//..//..//..//scenarios//2Cams");
+			folder = new File(loadScenariosFrom);
 		}
-		
-		System.out.println("---> " + folder);
-		
+				
 		File[] listOfFiles = folder.listFiles();
 		
 		DateFormat df = new SimpleDateFormat("ddMMYYYY");
@@ -118,8 +92,6 @@ public class SimSim {
 		if(listOfFiles != null){
 			for(File f : listOfFiles){
 				System.out.println(f.getAbsolutePath());
-				//-o output_lukas_1_comm.csv e:\work\JavaStuff\testGIT\handover-simulation\source\scenarios\scenario_1_lukas_SMOOTH.xml
-				//f.getName().substring(8, f.getName().indexOf("_", 9));
 				String scenName;
 				if(f.getName().indexOf("_", 9) != -1){
 					scenName = f.getName().substring(8, f.getName().indexOf("_",9));
@@ -165,22 +137,9 @@ public class SimSim {
 				    }
 				}
 			}
-//			int nbRunning = 1;
-//			while(nbRunning > 0){
-//			    nbRunning = 0;
-//    			for (Thread t : Thread.getAllStackTraces().keySet()) {
-//    			    if (t.getState()==Thread.State.RUNNABLE) nbRunning++;
-//    			}
-//			}
+
 			exService.shutdown();
-//			try {
-//				exService.awaitTermination(2, TimeUnit.MINUTES);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-			
-			
-			
+
 			System.out.println("############ ALL SIMULATIONS COMPLETED! ############");				
 		}
 
@@ -200,7 +159,7 @@ public class SimSim {
 		
 		BigDecimal alphaCoef = BigDecimal.valueOf(1.0d).divide(BigDecimal.valueOf(banditRuns));
 		
-		BigDecimal epsCoef = new BigDecimal(0.1d); //BigDecimal.valueOf(1.0d).divide(BigDecimal.valueOf(epsilonRuns));
+		BigDecimal paraCoef = new BigDecimal(0.1d); //BigDecimal.valueOf(1.0d).divide(BigDecimal.valueOf(epsilonRuns));
 		
 		
 		
@@ -209,9 +168,9 @@ public class SimSim {
 		for (CameraSettings cs : ss.cameras) {
 			cs.bandit = "epics.bandits.SoftMax";
 		}
-		if(epsCoef.doubleValue() > 0){
-			for(int e = 0; e < epsilonRuns; e++){
-				double epsilon = BigDecimal.valueOf(e+1).multiply(epsCoef).doubleValue(); 
+		if(paraCoef.doubleValue() > 0){
+			for(int e = 0; e < banditParamRuns; e++){
+				double epsilon = BigDecimal.valueOf(e+1).multiply(paraCoef).doubleValue(); 
 				for(int i = 0; i <= banditRuns; i++){
 					double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
 					//double alpha = 0.5;
@@ -1061,5 +1020,31 @@ public class SimSim {
 		
 		
 	}
+	
+	private static boolean diffSeed = true;
+    public static boolean runSequential = true;
+    public static int runRandomConfigs = 0;
+    private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
+    private static boolean runAllErrorVersions = false;
+    static boolean showgui = false;
+    
+    static int startCamError = 20;
+    static int endCamError = -1;
+    static int camRate = 1;
+    static int startReset = 70;
+    static int endReset = 100;
+    static int resetRate = 5;
+    static int startTrackError = 30;
+    static int endTrackError = -1;
+    static int trackRate = 5;
+	
+}
 
+enum States{
+    ABC,
+    AST,
+    ASM,
+    PBC,
+    PST,
+    PSM
 }
