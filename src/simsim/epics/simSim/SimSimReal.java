@@ -34,9 +34,6 @@ public class SimSimReal {
 	static int startReset = 70;
 	static int endReset = 100;
 	static int resetRate = 5;
-	static int startTrackError = 30;
-	static int endTrackError = -1;
-	static int trackRate = 5;
 	static long initialSeed = 10;
 	static double banditRuns = 20.0d;
 	
@@ -230,7 +227,7 @@ public class SimSimReal {
         	directory = new File(scenDirName + dirName);
         	//directory for currently used setting 
             if(!runSequential){
-                exService.execute(new SimRunner(seed, scenDirName + dirName, "summary.csv", runs, simS, false, -1, 50, -1, duration, 0.5, false, diffSeed, allStatistics));
+                exService.execute(new SimRunner(seed, scenDirName + dirName, "summary.csv", runs, simS, false, -1, 50, duration, 0.5, false, diffSeed, allStatistics));
             }
             else{	
             	for(int r = 0; r < runs; r++){
@@ -240,11 +237,11 @@ public class SimSimReal {
         			}
         			
             		if(!runSequential){
-            			exService.execute(new SimRunner(seed, scenDirName + dirName, "run" + r + ".csv", simS, false, -1, 50, -1, duration, 0.5, true, false));
+            			exService.execute(new SimRunner(seed, scenDirName + dirName, "run" + r + ".csv", simS, false, -1, 50, duration, 0.5, true, false));
             		}
             		else{
             			directory.mkdirs(); //directory for currently used setting 
-    	                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, -1, 50, -1, 0.5, true, false);
+    	                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, -1, 50, 0.5, true, false);
     	                for (int i = 0; i < duration; i++) {
     	                    try {
     							sim.update();
@@ -554,11 +551,11 @@ public class SimSimReal {
                 }
                     
                 if(!runSequential){
-                    exService.execute(new SimRunner(seed, scenDirName + dirName + "//ucb1//" + alpha, "run" + r + ".csv", ss, false, -1, 50, -1, duration, alpha, false, true));
+                    exService.execute(new SimRunner(seed, scenDirName + dirName + "//ucb1//" + alpha, "run" + r + ".csv", ss, false, -1, 50, duration, alpha, false, true));
                 }
                 else{
                     directory.mkdirs();
-                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, -1, alpha, true, true);//output_file, ss, false);
+                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, true, true);//output_file, ss, false);
                     for (int k = 0; k < duration; k++) {
                         try {
                             sim.update();
@@ -611,7 +608,7 @@ public class SimSimReal {
                     
                     
                     if(!runSequential){
-                        exService.execute(new SimRunner(seed, scenDirName + dirname, "run" + r + ".csv", ss, false, -1, 50, -1, duration, 0.5, false, false));
+                        exService.execute(new SimRunner(seed, scenDirName + dirname, "run" + r + ".csv", ss, false, -1, 50, duration, 0.5, false, false));
                     }
                     else{
                     
@@ -620,8 +617,8 @@ public class SimSimReal {
                         directory.mkdirs();
                         
                         //SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, -1, 0.5, false, true);//output_file, ss, false);
-                        SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, -1, 0.5, true, false);
-                        //new SimCore(seed, run, ss, global, camError, camReset, trackError, alpha);
+                        SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, true, false);
+                        //new SimCore(seed, run, ss, global, camError, camReset, alpha);
                         for (int k = 0; k < duration; k++) {
                             try {
                                 sim.update();
@@ -651,86 +648,83 @@ public class SimSimReal {
 		
 		for(int ce = startCamError; ce >= endCamError; ce=ce-camRate){
 			for(int re = startReset; re <= endReset; re = re + resetRate){
-				for(int te = startTrackError; te >= endTrackError; te = te - trackRate){
+				dirName += ce + "_" + re + "//";
+				directory = new File(scenDirName + dirName);
+				directory.mkdir(); //directory for currently used setting 
 
-					dirName += ce + "_" + re + "_" + te + "//";
-					directory = new File(scenDirName + dirName);
-					directory.mkdir(); //directory for currently used setting 
-					
-					//ADD DIFFERENT KINDS OF RUNS (ASM; ABC; AST; PSM; PBC; PST)...
-					ArrayList<CameraSettings> item = ss.cameras; 
-			        States[] input = {States.ABC, States.ASM, States.AST, States.PBC, States.PSM, States.PST};
-			        String prevDir = dirName; 
-					for (int i = 0; i < input.length; i++) {
-						//set all algos / communication strategies
-						for (int count = 0; count < item.size(); count++) {
-							CameraSettings cs = item.get(count);
-							switch (input[i]) {
-							case ABC: 
-								cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-								cs.comm = 0;
-								dirName += "a0";
-								break;
-							case ASM:
-								cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-								cs.comm = 1;
-								dirName += "a1";
-								break;
-							case AST:
-								cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-								cs.comm = 2;
-								dirName += "a2";
-								break;
-							case PBC:
-								cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-								cs.comm = 0;
-								dirName += "p0";
-								break;
-							case PSM:
-								cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-								cs.comm = 1;
-								dirName += "p1";
-								break;
-							case PST:
-								cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-								cs.comm = 2;
-								dirName += "p2";
-								break;
-							default:
-								break;
-							}
-							item.set(count, cs);
+				//ADD DIFFERENT KINDS OF RUNS (ASM; ABC; AST; PSM; PBC; PST)...
+				ArrayList<CameraSettings> item = ss.cameras; 
+				States[] input = {States.ABC, States.ASM, States.AST, States.PBC, States.PSM, States.PST};
+				String prevDir = dirName; 
+				for (int i = 0; i < input.length; i++) {
+					//set all algos / communication strategies
+					for (int count = 0; count < item.size(); count++) {
+						CameraSettings cs = item.get(count);
+						switch (input[i]) {
+						case ABC: 
+							cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+							cs.comm = 0;
+							dirName += "a0";
+							break;
+						case ASM:
+							cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+							cs.comm = 1;
+							dirName += "a1";
+							break;
+						case AST:
+							cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+							cs.comm = 2;
+							dirName += "a2";
+							break;
+						case PBC:
+							cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+							cs.comm = 0;
+							dirName += "p0";
+							break;
+						case PSM:
+							cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+							cs.comm = 1;
+							dirName += "p1";
+							break;
+						case PST:
+							cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+							cs.comm = 2;
+							dirName += "p2";
+							break;
+						default:
+							break;
 						}
-						directory = new File(scenDirName + dirName);
-						 //directory for currently used setting 
-		            	
-		            	//run all scenarios for a certain amount
-						for(int r = 0; r < runs; r++){
-		        			if(diffSeed){
-		        				seed = r;
-		        			}
-			        		
-			        		if(!runSequential){
-			        			exService.execute(new SimRunner(seed, scenDirName + dirName, "run" + r + ".csv", ss, false, ce, re, te, duration, 0.5, true, true));
-			        		}
-			        		else{
-			        			directory.mkdirs();
-				                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, te, 0.5, true, true);//output_file, ss, false);
-				
-				                for (int dur = 0; dur < duration; dur++) {
-				                    try {
-										sim.update();
-									} catch (Exception e) {
-										e.printStackTrace();
-									}
-				                }
-				                sim.close_files();
-			        		}
-				    	}
-						dirName = prevDir;
+						item.set(count, cs);
 					}
-					dirName = "";
+					directory = new File(scenDirName + dirName);
+					//directory for currently used setting 
+
+					//run all scenarios for a certain amount
+					for(int r = 0; r < runs; r++){
+						if(diffSeed){
+							seed = r;
+						}
+
+						if(!runSequential){
+							exService.execute(new SimRunner(seed, scenDirName + dirName, "run" + r + ".csv", ss, false, ce, re, duration, 0.5, true, true));
+						}
+						else{
+							directory.mkdirs();
+							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, true, true);//output_file, ss, false);
+
+							for (int dur = 0; dur < duration; dur++) {
+								try {
+									sim.update();
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+							sim.close_files();
+						}
+					}
+					dirName = prevDir;
 				}
+				dirName = "";
 			}
 		}
 	}

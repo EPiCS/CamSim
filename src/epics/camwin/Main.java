@@ -29,7 +29,6 @@ public class Main {
     static String algo = "";
     static String comm = "";
     static int predefVG = -1;
-    static int trackErr = -1;
     static int camErr = -1;
     static int camReset = 50;
 
@@ -111,13 +110,12 @@ public class Main {
         longopts[7] = new LongOpt("algo", LongOpt.REQUIRED_ARGUMENT, null, 'a');
         longopts[8] = new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c');
         longopts[9] = new LongOpt("vg", LongOpt.REQUIRED_ARGUMENT, null, 'v');
-        longopts[10] = new LongOpt("deterr", LongOpt.REQUIRED_ARGUMENT, null, 'd');
-        longopts[11] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
-        longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
-        longopts[13] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
+        longopts[10] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
+        longopts[11] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
+        longopts[12] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
         
         
-        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:d:e:r:s:t:f:p:", longopts);
+        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:e:r:s:t:f:p:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -192,10 +190,6 @@ public class Main {
                 	arg = g.getOptarg();
                 	comm = arg;
                 	break;
-                case 'd':
-                	arg = g.getOptarg();
-                	trackErr = Integer.parseInt(arg);
-                	break;
                 case 'r':
                 	arg = g.getOptarg();
                 	camReset = Integer.parseInt(arg);
@@ -267,7 +261,7 @@ public class Main {
         }
         
         SimCore sim = new SimCore(seed, output_file, summaryFile, paramFile, ss, 
-        		useGlobal, camErr, camReset, trackErr, false, true);
+        		useGlobal, camErr, camReset, false, true);
         if (showgui == false) {
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();

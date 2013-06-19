@@ -121,10 +121,9 @@ public class SimCore {
 	 * @param global global coordination used
 	 * @param camError the probability of failing cameras
 	 * @param camReset probability of a reset after a camera failed
-	 * @param trackError probability of a tracking error
 	 */
-	public SimCore( long seed, String output, SimSettings ss, boolean global, int camError, int camReset, int trackError){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
+	public SimCore( long seed, String output, SimSettings ss, boolean global){
+		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null);
 		this.interpretFile(ss);
 	}
 	
@@ -139,8 +138,7 @@ public class SimCore {
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
 	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double banditParam, double alpha){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, false, false, "", null);
-		this.epsilon = epsilon;
+		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null);
 		this.interpretFile(ss);
 	}
 
@@ -156,7 +154,7 @@ public class SimCore {
 	 * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, boolean realData, boolean allStatistics){
-		initSimCore(seed, output, global, -1, 50, -1, alpha, realData, allStatistics, "", null);
+		initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null);
 		this.epsilon = epsilon;
 		this.interpretFile(ss);
 	}
@@ -169,14 +167,13 @@ public class SimCore {
      * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
-     * @param trackError probability of a tracking error
      * @param alpha the alpha value for the weighted reward function used in bandit solvers
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
 	public SimCore( long seed, String output, SimSettings ss, 
-			boolean global, int camError, int camReset, int trackError, double alpha, boolean realData, boolean allStatistics) {
-	    initSimCore(seed, output, global, camError, camReset, trackError,
+			boolean global, int camError, int camReset, double alpha, boolean realData, boolean allStatistics) {
+	    initSimCore(seed, output, global, camError, camReset,
 				alpha, realData, allStatistics, "", null);
 		this.interpretFile(ss);
 	}
@@ -191,13 +188,12 @@ public class SimCore {
      * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
-     * @param trackError probability of a tracking error
 	 * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
      */
 	public SimCore(long seed, String output, String summaryFile, String paramFile, SimSettings ss, 
-    		boolean global, int camError, int camReset, int trackError, boolean realData, boolean allStatistics) {
-    	initSimCore(seed, output, global, camError, camReset, trackError,
+    		boolean global, int camError, int camReset, boolean realData, boolean allStatistics) {
+    	initSimCore(seed, output, global, camError, camReset,
 				alpha, realData, allStatistics, summaryFile, paramFile);
     	this.interpretFile(ss);
     }
@@ -209,7 +205,6 @@ public class SimCore {
 	 * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
-     * @param trackError probability of a tracking error
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
@@ -217,7 +212,7 @@ public class SimCore {
 	 * @param paramFile parameterfile for simulations
 	 */
 	private void initSimCore(long seed, String output, boolean global,
-			int camError, int camReset, int trackError, double alpha,
+			int camError, int camReset, double alpha,
 			boolean realData, boolean allStatistics, String summary, String paramFile) {
 		this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
