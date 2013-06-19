@@ -462,9 +462,9 @@ public abstract class AbstractAINode {
      * @return the pair-object containing both objects
      */
     protected Pair findSimiliarObject(ITrObjectRepresentation pattern) {
-        Map<ITrObjectRepresentation, Double> traced_list = this.camController.getVisibleObjects_bb();
+        Map<ITrObjectRepresentation, Double> tracked_list = this.camController.getVisibleObjects_bb();
 
-        for (Map.Entry<ITrObjectRepresentation, Double> e : traced_list.entrySet()) {
+        for (Map.Entry<ITrObjectRepresentation, Double> e : tracked_list.entrySet()) {
         ITrObjectRepresentation key = e.getKey();
             boolean found = checkEquality(pattern, key);
 
@@ -520,10 +520,10 @@ public abstract class AbstractAINode {
     }
     
     /**
-     * returns all currently traced objects
-     * @return all traced objects
+     * returns all currently tracked objects
+     * @return all tracked objects
      */
-    protected Map<List<Double>, ITrObjectRepresentation> getAllTracedObjects_bb() {
+    protected Map<List<Double>, ITrObjectRepresentation> getAllTrackedObjects_bb() {
         return this.trackedObjects;
     }
 
@@ -666,7 +666,7 @@ public abstract class AbstractAINode {
      */
     public Map<List<Double>, ITrObjectRepresentation> getTrackedObjects() {
         
-        //make sure all traced objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
+        //make sure all tracked objects are really existent within FoV --> if missidentified, send real anyway --> map first ;)
         
         Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
         for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()){
@@ -711,7 +711,7 @@ public abstract class AbstractAINode {
         if (enabled == 1) {
             double visibility = 0.0;
             double classifier_confidence = 1;
-            for (ITrObjectRepresentation obj : this.getAllTracedObjects_bb().values()) {
+            for (ITrObjectRepresentation obj : this.getAllTrackedObjects_bb().values()) {
                 visibility = this.getConfidence(obj);
     //            utility += calculateValue(obj); 
                 utility += visibility * classifier_confidence * enabled;// * resources;
@@ -1033,7 +1033,7 @@ public abstract class AbstractAINode {
         if(this.camController.isOffline()){
             output += " should be offline!! but";
         }
-        output += " traces objects [real name] (identified as): ";      
+        output += " tracked objects [real name] (identified as): ";      
     
         //      ITrObjectRepresentation realITO;
         for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()) {
@@ -1085,7 +1085,7 @@ public abstract class AbstractAINode {
         if (result == null) {
             return null;
         } else {
-            return this.camController.createMessage(message.getFrom(), MessageType.ResponseToAskIfCanTrace, result);
+            return this.camController.createMessage(message.getFrom(), MessageType.ResponseToAskIfCanTrack, result);
         }
     }
 	

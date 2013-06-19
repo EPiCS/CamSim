@@ -67,7 +67,7 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	
 	@Override
 	public void advertiseTrackedObjects() {
-		for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
+		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
 			double conf = 0.0;
 			double lastConf = 0.0;
 			if(wrongIdentified.containsValue(io)){

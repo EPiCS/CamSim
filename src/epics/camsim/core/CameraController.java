@@ -267,7 +267,7 @@ public class CameraController implements ICameraController{
 		}
     }
 
-    public TraceableObject getTraced(){
+    public TraceableObject getTracked(){
     	if(!isOffline()){
 	        ITrObjectRepresentation itro = this.camAINode.getTrackedObject();
 	        if ( itro == null ){

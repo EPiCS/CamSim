@@ -6,7 +6,7 @@ package epics.common;
  */
 public interface IMessage {
 
-    public enum MessageType{ ErrorBadDestinationAddress, TransferObject, AskIfCanTrace, ResponseToAskIfCanTrace, AskIfTraced, AskConfidence, StartTracking, StopSearch, StartSearch, Found, FoundGlobal };
+    public enum MessageType{ ErrorBadDestinationAddress, TransferObject, AskIfCanTrack, ResponseToAskIfCanTrack, AskIfTracked, AskConfidence, StartTracking, StopSearch, StartSearch, Found, FoundGlobal };
 
     
     public MessageType getType();

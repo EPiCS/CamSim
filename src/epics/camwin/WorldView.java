@@ -287,8 +287,8 @@ public class WorldView extends JPanel implements Observer {
 //	                }
 //	            }
 //                else{
-                	for(TraceableObject traced : c.getTrackedObjects().values()){
-                		if(key.equals(traced)){
+                	for(TraceableObject tracked : c.getTrackedObjects().values()){
+                		if(key.equals(tracked)){
                             g2.setColor( Color.green );
 
                             col = (int)(confidence * 128 + 128);
@@ -308,17 +308,17 @@ public class WorldView extends JPanel implements Observer {
         
 
             if (false){
-            	TraceableObject traced = c.getTraced();
+            	TraceableObject tracked = c.getTracked();
                 g2.setColor( Color.green );
 
-                int col = 5;//(int)(traced.get * 128 + 50);
+                int col = 5;//(int)(tracked.get * 128 + 50);
                 if ( col > 255 ){ col = 255; }
 
                 g2.setColor( new Color(255-col, 255-col, 255-col )  );
 
                 Line2D.Double q = new Line2D.Double(
                     this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-                    this.cst.simToWindowX(traced.getX()), this.cst.simToWindowY(traced.getY()) );
+                    this.cst.simToWindowX(tracked.getX()), this.cst.simToWindowY(tracked.getY()) );
                 g2.draw(q);
             }
         }

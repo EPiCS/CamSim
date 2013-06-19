@@ -85,7 +85,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	
     public void advertiseTrackedObjects() {
     	// Active strategy means all objects are advertised every time
-		for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
+		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
 			callForHelp(io);	
 		}
 	}

@@ -1008,18 +1008,18 @@ public class SimCore {
 	}
 
 	private void printObjects() throws Exception {
-		Map<TraceableObject, List<CameraController>> traced = new HashMap<TraceableObject, List<CameraController>>();
+		Map<TraceableObject, List<CameraController>> tracked = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
 		for(CameraController c : this.cameras){
     		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
-    			if(traced.containsKey(tor.getTraceableObject())){
-    				traced.get(tor.getTraceableObject()).add(c);
+    			if(tracked.containsKey(tor.getTraceableObject())){
+    				tracked.get(tor.getTraceableObject()).add(c);
     			}
     			else{
     				List<CameraController> list = new ArrayList<CameraController>();
     				list.add(c);
-    				traced.put(tor.getTraceableObject(), list);
+    				tracked.put(tor.getTraceableObject(), list);
     			}
     		}
     		if(c.getAINode().getSearchedObjects() != null){
@@ -1038,12 +1038,12 @@ public class SimCore {
     	}
 		
 		System.out.println("############################ PRINT OBJECT INFO #########################################");
-		int sum = traced.size() + searched.size();
-		System.out.println("searched size: " + searched.size() + " + traced size: " + traced.size() + " = " + sum + " should be: " + this.objects.size());
-//		if((traced.size() + searched.size()) != this.objects.size())
-//			throw new Exception("INCONSISTENCY: " + traced.size() + searched.size() + " is not " + this.objects.size());
+		int sum = tracked.size() + searched.size();
+		System.out.println("searched size: " + searched.size() + " + tracked size: " + tracked.size() + " = " + sum + " should be: " + this.objects.size());
+//		if((tracked.size() + searched.size()) != this.objects.size())
+//			throw new Exception("INCONSISTENCY: " + tracked.size() + searched.size() + " is not " + this.objects.size());
 		System.out.println("");
-		System.out.println("object + searched + traced");
+		System.out.println("object + searched + tracked");
 		for(TraceableObject to : this.objects){
 			String output = "Object " + to.getFeatures() + " searched by ";
 			if(searched.containsKey(to)){
@@ -1051,9 +1051,9 @@ public class SimCore {
 					output += c.getName() + ", ";
 				}
 			}
-			output += " traced by ";
-			if(traced.containsKey(to)){
-				for(CameraController c : traced.get(to)){
+			output += " tracked by ";
+			if(tracked.containsKey(to)){
+				for(CameraController c : tracked.get(to)){
 					output += c.getName() + ", ";
 				}
 			}
@@ -1072,7 +1072,7 @@ public class SimCore {
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			tracing.put(tor.getTraceableObject(), true);
     			if(c.getVisibleObjects().containsKey(tor)){
-    				throw new Exception("wait what? inconsistent - if its not visible, it cant be traced!!");
+    				throw new Exception("wait what? inconsistent - if its not visible, it cant be tracked!!");
     			}
     		}
     		if(c.getAINode().getSearchedObjects() != null){
