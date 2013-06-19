@@ -69,9 +69,17 @@ public class WorldView extends JPanel implements Observer
         this.cst.setWindowHeight(height);
         this.cst.setWindowWidth(width);
 
+     
 	g2.setColor(Color.white);
 	g2.fill( new Rectangle( 0, 0, width, height ) );
-
+	
+	
+	g2.setColor(Color.BLUE);
+	int bbx = (int) this.cst.getRealHeight();
+	int bby = (int) this.cst.getRealWidth();
+    g2.drawRect(0, 0, bby, bbx);
+    
+    
 	g2.setColor(Color.green);
 	
 	double diameter = 5;//Math.min(height, width);
