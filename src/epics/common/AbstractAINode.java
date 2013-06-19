@@ -405,35 +405,6 @@ public abstract class AbstractAINode {
         }
     }
 
-    
-    /**
-     * checks if ANY of the owned object has been lost 
-     */
-    protected void checkIfTracedGotLost() {
-        List<ITrObjectRepresentation> del = new ArrayList<ITrObjectRepresentation>();
-        for(ITrObjectRepresentation itor : this.trackedObjects.values()){
-            
-            ITrObjectRepresentation mapped = itor;
-            if(wrongIdentified.containsValue(itor)){
-                for(Map.Entry<ITrObjectRepresentation, ITrObjectRepresentation> kvp : wrongIdentified.entrySet()){
-                    if(kvp.getValue().equals(itor)){
-                        mapped = kvp.getKey();
-                        break;
-                    }
-                }
-            }
-            
-            if(!this.camController.getVisibleObjects_bb().containsKey(mapped)){ //wrongIdentified.get(mapped))){
-                callForHelp(mapped);
-                del.add(mapped);
-            }
-        }
-        
-        for(ITrObjectRepresentation tor : del){
-            this.removeTrackedObject(tor);
-        }
-    }
-
     /**
      * returns the number of currently missidentified objects
      * @return the number of currently missidentified objects
