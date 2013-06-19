@@ -1,7 +1,7 @@
 package epics.common;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +9,10 @@ import java.util.Set;
 
 import epics.camsim.core.Bid;
 import epics.common.IMessage.MessageType;
+import epics.commpolicy.Broadcast;
+import epics.commpolicy.Fix;
+import epics.commpolicy.Smooth;
+import epics.commpolicy.Step;
 
 /**
  * Abstract Class of AI - implements all application based methods of a camera.
@@ -68,7 +72,7 @@ public abstract class AbstractAINode {
     protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
     protected ICameraController camController;
     protected ITrObjectRepresentation trObject;
-    double last_confidence = 0;
+    private Multicast multicast = null;
 	protected int sentMessages;
 	public IRegistration reg;
 	
@@ -172,7 +176,6 @@ public abstract class AbstractAINode {
 		this.wrongIdentified = ai.wrongIdentified;
 		this.delayedCommunication = ai.delayedCommunication;
 		this.trObject = ai.trObject;
-		this.last_confidence = ai.last_confidence;
 		this.camController = ai.camController;
 		this.visionGraph = ai.visionGraph;
 		this.sentMessages = ai.sentMessages;
@@ -224,41 +227,6 @@ public abstract class AbstractAINode {
     }
 
     /**
-     * broadcasts a given message to all other cameras in the network
-     * @param mt the message to be sent to other cameras 
-     * @param o the object this message relates to
-     * @throws NullPointerException in case the object can not be casted correctly
-     */
-    protected void broadcast(MessageType mt, Object o) throws ClassCastException{
-        for (ICameraController icc : this.camController.getNeighbours()) {
-            this.camController.sendMessage(icc.getName(), mt, o);
-            if(mt == MessageType.StartSearch){
-                List<String> cams = advertised.get((ITrObjectRepresentation) o);
-                sentMessages++;
-                if(cams != null){
-                    if(!cams.contains(icc.getName()))
-                        cams.add(icc.getName());
-                }
-                else{
-                    cams = new ArrayList<String>();
-                    cams.add(icc.getName());
-                    advertised.put((ITrObjectRepresentation) o, cams);
-                }
-            }
-//            else{
-//              if(mt == MessageType.StopSearch){
-//                  advertised.remove((ITrObjectRepresentation)o);
-////                    if(advertised.get((ITrObjectRepresentation) o) != null)
-////                        advertised.get((ITrObjectRepresentation) o).remove(icc.getName());
-//              }
-//            }
-        }
-        if(mt == MessageType.StopSearch){
-            advertised.remove((ITrObjectRepresentation) o);
-        }
-    }
-    
-    /**
      * Calculates remaining resources on this camera
      * using a very simple resource consumption model
      * @return the remaining resources
@@ -287,7 +255,6 @@ public abstract class AbstractAINode {
      */
     public double calculateValue(ITrObjectRepresentation target){
         double value = this.getConfidence(target); 
-        double res = calcResources(); // Probably not necessary
         return value;
     }
     
@@ -579,6 +546,12 @@ public abstract class AbstractAINode {
 		return sentMessages;
 	}
 	
+	/** Adds one to the number of sent messages in this time step */
+	public int incrementSentMessages() {
+		sentMessages++;
+		return sentMessages;
+	}
+	
 	/**
 	 * the number of total bids. AUTOMATICALLY SETS THEM TO ZERO AFTERWARDS!
 	 * @return the bids since the last check of total bids
@@ -707,7 +680,6 @@ public abstract class AbstractAINode {
 	 * @param iTrObjectRepresentation
 	 * @return
 	 */
-	@SuppressWarnings("unused")
     protected double handle_askConfidence(String from, ITrObjectRepresentation iTrObjectRepresentation) {
         if(VISION_ON_BID && BIDIRECTIONAL_VISION){
             strengthenVisionEdge(from, iTrObjectRepresentation);
@@ -803,170 +775,20 @@ public abstract class AbstractAINode {
         return this.trackedObjects.containsKey(rto.getFeatures());
     }
     
-    /**
-     * sends the given message to the neighbouring cameras in the vision graph. 
-     * this method does not make use of the strength of the links.
-     * @param mt the given message
-     * @param o the object this message relates to
-     */
-    private void multicastFix(MessageType mt, Object o){
-        
-        List<String> cams = new ArrayList<String>();
-		for (String name : vgGetCamSet()) {
-            this.camController.sendMessage(name, mt, o);
-            cams.add(name);
-        }
-        
-        if(mt == MessageType.StartSearch){
-            advertised.put((ITrObjectRepresentation) o, cams);
-        }
-        
-        if(mt == MessageType.StopSearch){
-            advertised.remove((ITrObjectRepresentation) o);
-        }
+    /** Returns the mapping from owned objects to the neighbouring cameras 
+     * to which those objects are being advertised */
+    public Map<ITrObjectRepresentation, List<String>> getAdvertisedObjects() {
+    	return advertised;
     }
     
-    
-    /**
-     * multicast smooth sends the given message based on the ratio of its link strength and the strongest link in the current vision graph.
-     * @param mt the message to be sent to other cameras
-     * @param o the object the message relates to
-     */
-    private void multicastSmooth(MessageType mt, Object o){
-        if(mt == MessageType.StartSearch){
-            ITrObjectRepresentation io = (ITrObjectRepresentation) o;
-            if(USE_BROADCAST_AS_FAILSAVE){
-                if(!stepsTillBroadcast.containsKey(io)){
-                    stepsTillBroadcast.put(io, STEPS_TILL_BROADCAST);
-                }
-            }
-            //get max strength
-        	double highest = 0;
-			Collection<Double> vgValues = vgGetValues(io); 
-			for(Double d : vgValues){
-                if(d > highest){
-                    highest = d;
-                }
-            }
-            
-            if(highest > 0){
-                double ran = randomGen.nextDouble(RandomUse.USE.COMM);
-                int sent = 0;
-                for(ICameraController icc : this.camController.getNeighbours()){
-                    String name = icc.getName();
-                    double ratPart = 0.0;
-					if(vgContainsKey(name, io)){
-						ratPart = vgGet(name, io);
-					}
-                    double ratio = (1+ratPart)/(1+highest);
-                    if(ratio > ran){
-                        sent ++;
-                        sentMessages++;
-                        this.camController.sendMessage(name, mt, o);
-                        List<String> cams = advertised.get((ITrObjectRepresentation) o);
-                        if(cams != null){
-                            if(!cams.contains(name))
-                                cams.add(name);
-                        }
-                        else{
-                            cams = new ArrayList<String>();
-                            cams.add(name);
-                            advertised.put((ITrObjectRepresentation) o, cams);
-                        }
-                    }
-                }
-                if(sent == 0){
-                    if(DEBUG_CAM){
-                        System.out.println(this.camController.getName() + " tried to MC --> now BC");
-                    }
-                    broadcast(mt, o);
-                }
-            }
-            else{
-                if(DEBUG_CAM){
-                    System.out.println(this.camController.getName() + " tried to MC --> now BC 2");
-                }
-                broadcast(mt, o);   
-            }
-        }
-        else{
-            if(mt == MessageType.StopSearch){
-                if(advertised.isEmpty()){
-                    broadcast(mt, o);
-                }
-                else{
-                    if(advertised.get((ITrObjectRepresentation) o) != null){
-                        for (String name : advertised.get((ITrObjectRepresentation) o)){
-                            this.camController.sendMessage(name, mt, o);
-                        }
-                        advertised.remove(o); 
-                    }
-                }
-            }
-        }
+    /** Get the stepsTillBroadcast object */
+    public Map<ITrObjectRepresentation, Integer> getStepsTillBroadcast() {
+    	return stepsTillBroadcast;
     }
     
-    /**
-     * multicast step sends the given message to another camera if the link strength is above a given threshold. 
-     * otherwise communicating with this camera has a very low probability 
-     * @param mt the given message to be sent to other cameras
-     * @param o the object related to the sent message
-     */
-    private void multicastStep(MessageType mt, Object o){
-        if(mt == MessageType.StartSearch){
-            ITrObjectRepresentation io = (ITrObjectRepresentation) o;
-            if(USE_BROADCAST_AS_FAILSAVE){
-                if(!stepsTillBroadcast.containsKey(io)){
-                    stepsTillBroadcast.put(io, STEPS_TILL_BROADCAST);
-                }
-            }
-            int sent = 0;
-            double ran = randomGen.nextDouble(RandomUse.USE.COMM);
-            for(ICameraController icc : this.camController.getNeighbours()){
-                String name = icc.getName();
-                double prop = 0.1;
-				if(vgContainsKey(name, io)){
-					prop = vgGet(name, io);
-				}
-                if(prop > ran){
-                    sent ++;
-                    sentMessages++;
-                    this.camController.sendMessage(name, mt, o);
-                    List<String> cams = advertised.get((ITrObjectRepresentation) o);
-                    if(cams != null){
-                        if(!cams.contains(name))
-                            cams.add(name);
-                    }
-                    else{
-                        cams = new ArrayList<String>();
-                        cams.add(name);
-                        advertised.put((ITrObjectRepresentation) o, cams);
-                    }
-                }
-            }
-            
-            if(sent == 0){
-                if(DEBUG_CAM){
-                    System.out.println(this.camController.getName() + " tried to MC --> now BC");
-                }
-                broadcast(mt, o);
-            }
-        }
-        else{
-            if(mt == MessageType.StopSearch){
-                if(advertised.isEmpty()){
-                    broadcast(mt, o);
-                }
-                else{
-                    if(advertised.get((ITrObjectRepresentation) o) != null){
-                        for (String name : advertised.get((ITrObjectRepresentation) o)){
-                            this.camController.sendMessage(name, mt, o);
-                        }
-                        advertised.remove(o); 
-                    }
-                }
-            }
-        }
+    /** Get the random number generator object for this AI node */
+    public RandomNumberGenerator getRandomGen() {
+    	return randomGen;
     }
     
     /**
@@ -978,7 +800,6 @@ public abstract class AbstractAINode {
             ITrObjectRepresentation tor = entry.getKey();
             Map<ICameraController, Double> bids = this.getBiddingsFor(tor);
             if(bids != null){
-                @SuppressWarnings("unused")
                 String bidString = this.camController.getName() + " biddings for object " + tor.getFeatures() + ": ";
                 for (Map.Entry<ICameraController, Double> e : bids.entrySet()) {
                     if(!e.getKey().getName().equals("Offline")){
@@ -1066,7 +887,6 @@ public abstract class AbstractAINode {
 	 * @param message the sent/received message 
 	 * @return a reply-message
 	 */
-	@SuppressWarnings("unused")
     public IMessage receiveMessage(IMessage message) {
         
         if(DELAY_COMMUNICATION > 0){
@@ -1171,14 +991,42 @@ public abstract class AbstractAINode {
 	 * @param o the object this message is related to
 	 */
 	protected void sendMessage(MessageType mt, Object o){
-        switch(this.communication){
-            case 0: broadcast(mt, o); break;
-            case 1: multicastSmooth(mt, o); break;
-            case 2: multicastStep(mt, o); break;
-            case 3: multicastFix(mt, o); break;
-        }
+		if (multicast == null) {
+			initialiseMulticast();
+		}
+		multicast.multicast(mt, o);
     }
 		
+    /**
+     * broadcasts a given message to all other cameras in the network
+     * @param mt the message to be sent to other cameras 
+     * @param o the object this message relates to
+     * @throws NullPointerException in case the object can not be casted correctly
+     */
+    protected void broadcast(MessageType mt, Object o) throws ClassCastException{
+    	if (multicast == null) {
+    		initialiseMulticast();
+    	}
+    	multicast.broadcast(mt, o);
+    }
+	
+    /** 
+     * Initialises the multicast object used for communication within 
+     * this node. This will create a new object regardless of whether
+     * one already exists.
+     */
+    protected void initialiseMulticast() {
+    	switch(this.communication){
+			case 0: multicast = new Broadcast(this, this.camController); break;
+			case 1: multicast = new Smooth(this, this.camController); break;
+			case 2: multicast = new Step(this, this.camController); break;
+			case 3: multicast = new Fix(this, this.camController); break;
+    	}
+    	if (DEBUG_CAM) { 
+    		System.out.println("Created new multicast object");
+    	}
+    }
+    
 	/**
 	 * sets the communication policy:
 	 * 0 = broadcast
@@ -1188,7 +1036,8 @@ public abstract class AbstractAINode {
 	 * @param com the communication policy
 	 */
 	public void setComm(int com) {
-        communication = com;        
+        communication = com;
+        initialiseMulticast();
     }
 	
 	/**
