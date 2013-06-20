@@ -18,6 +18,14 @@ public abstract class AbstractCommunication {
 	}
 	
 	/**
+	 * Sets a new AINode
+	 * @param ai the new AINode
+	 */
+	public void setAINode(AbstractAINode ai){
+	    this.ai = ai;
+	}
+	
+	/**
 	 * This method allows an implementing class to decide -- based 
 	 * on the vision graph or otherwise -- which nodes to send the
 	 * message to.

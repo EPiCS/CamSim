@@ -3,6 +3,7 @@ package epics.ai;
 import java.util.Map;
 
 import epics.common.AbstractAINode;
+import epics.common.AbstractCommunication;
 import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
@@ -33,7 +34,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
      * @param auctionDuration the duration of auctions
      * @param rg the random number generator for this instance
      */
-    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    public ActiveAINodeMulti(AbstractCommunication comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
     	super(comm, staticVG, vg, r, auctionDuration, rg);
     }
@@ -48,7 +49,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
      * @param rg the random number generator for this instance
      * @param bs the bandit solver 
      */
-    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    public ActiveAINodeMulti(AbstractCommunication comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
     }
@@ -61,7 +62,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
      * @param r the global registration component - can be null
      * @param rg the random number generator for this instance
      */
-    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    public ActiveAINodeMulti(AbstractCommunication comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
     	super(comm, staticVG, vg, r, rg);
     }
@@ -75,7 +76,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
      * @param rg the random number generator for this instance
      * @param bs the bandit solver 
      */
-    public ActiveAINodeMulti(int comm, boolean staticVG, 
+    public ActiveAINodeMulti(AbstractCommunication comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(comm, staticVG, vg, r, rg, bs);
     }

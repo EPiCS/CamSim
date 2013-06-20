@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import epics.common.AbstractAINode;
+import epics.common.AbstractCommunication;
 import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
@@ -26,7 +27,7 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	 * @param r the global registration component - can be null
 	 * @param rg the random number generator for this instance
 	 */
-	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+	public PassiveAINodeMulti(AbstractCommunication comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
     	super(comm, staticVG, vg, r, rg);
     }
 	
@@ -39,16 +40,16 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
      * @param rg the random number generator for this instance
 	 * @param bs the bandit solver to decide the best communication policy and auctioning schedule
 	 */
-	public PassiveAINodeMulti(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
+	public PassiveAINodeMulti(AbstractCommunication comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
     	super(comm, staticVG, vg, r, rg, bs);
     }
 	
-	public PassiveAINodeMulti(int comm, boolean staticVG, 
+	public PassiveAINodeMulti(AbstractCommunication comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
     	super(comm, staticVG, vg, r, auctionDuration, rg);
     }
 	
-	public PassiveAINodeMulti(int comm, boolean staticVG, 
+	public PassiveAINodeMulti(AbstractCommunication comm, boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
     }
