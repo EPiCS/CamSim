@@ -1,24 +1,13 @@
 
 package epics.camwin;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.Line2D;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
-
+import java.util.*;
 import javax.swing.JPanel;
-
-import epics.camsim.core.CameraController;
-import epics.camsim.core.TraceableObject;
+import epics.camsim.core.*;
+import epics.commpolicy.*;
 
 /**
  * Draws a spatial network on a panel
@@ -108,20 +97,28 @@ public class WorldView extends JPanel implements Observer {
 	            	algo = "A";
 	            } // Else actual name
 	            
+	            String comm = "";
+	            if(c.getAINode().getComm() instanceof Broadcast)
+	                comm = "BC";
+	            if(c.getAINode().getComm() instanceof Smooth)
+                    comm = "SM";
+	            if(c.getAINode().getComm() instanceof Step)
+                    comm = "ST";
+	                
 	            if(SHOW_RES_LABELS) {
 	            	if(c.isOffline()){
 	            		g2.setColor(Color.ORANGE);
-	            		g2.drawString("OFFLINE: " + c.getName() + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            		g2.drawString("OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	}
 	            	else{
-	            		g2.drawString(c.getName() + " \n Algo: " + algo + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            		g2.drawString(c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	}
 	            } else{
 	            	if(c.isOffline()) {
 	            		g2.setColor(Color.ORANGE);
 	            		g2.drawString("OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	} else {
-	            		g2.drawString(c.getName() + " \n Algo: " + algo, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
+	            		g2.drawString(c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
 	            	}
 	            }
             } else {

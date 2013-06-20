@@ -34,15 +34,15 @@ public class SimSim {
     public static String loadScenariosFrom = "..//..//..//..//scenarios//2Cams"; //can be overwriten using argument [0]
     public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
     public static boolean allStatistics = false;
-	public static boolean runHomogeneous = false;
+	public static boolean runHomogeneous = true;
 	public static boolean runByParameter = false;
-	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = false;
+	public static boolean runAllPossibleVersions = false;
+	public static boolean runBandits = true;
 	
 	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
 	static long initialSeed = 10;
-	static int banditParamRuns = 10; // how many epsilon / temperature values are being tried for the bandits
+	static int banditParamRuns = 2; // how many epsilon / temperature values are being tried for the bandits
 	static double standardBanditParameter = 0.1;
 	
 	static double banditRuns = 20.0d; //how many different alpha values are being tried out 

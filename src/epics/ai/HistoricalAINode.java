@@ -13,6 +13,7 @@ import java.util.Set;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.AbstractAINode;
+import epics.common.AbstractCommunication;
 import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
@@ -84,25 +85,25 @@ public class HistoricalAINode {
 	public static class Active extends ActiveAINodeMulti {
 		private HistoricalAINode histNode;
 
-		public Active(int comm, boolean staticVG, 
+		public Active(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
 	    	super(comm, staticVG, vg, r, auctionDuration, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Active(int comm, boolean staticVG, 
+		public Active(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Active(int comm, boolean staticVG, 
+		public Active(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 	    	super(comm, staticVG, vg, r, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Active(int comm, boolean staticVG, 
+		public Active(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(comm, staticVG, vg, r, rg, bs);
 	    	histNode = new HistoricalAINode();
@@ -200,25 +201,25 @@ public class HistoricalAINode {
 	public static class Passive extends PassiveAINodeMulti {
 		private HistoricalAINode histNode;
 		
-		public Passive(int comm, boolean staticVG, 
+		public Passive(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
 	    	super(comm, staticVG, vg, r, auctionDuration, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Passive(int comm, boolean staticVG, 
+		public Passive(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Passive(int comm, boolean staticVG, 
+		public Passive(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 	    	super(comm, staticVG, vg, r, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Passive(int comm, boolean staticVG, 
+		public Passive(AbstractCommunication comm, boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(comm, staticVG, vg, r, rg, bs);
 	    	histNode = new HistoricalAINode();
