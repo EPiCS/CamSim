@@ -2,27 +2,18 @@ package simsim.epics.simSim;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import com.sun.jmx.snmp.Timestamp;
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 import epics.camsim.core.SimSettings.CameraSettings;
-import epics.camwin.SimCoreModel;
-import epics.camwin.WindowMain;
-import epics.common.RandomNumberGenerator;
 
 /**
  * 
@@ -37,7 +28,7 @@ public class SimSim {
 	public static boolean runHomogeneous = true;
 	public static boolean runByParameter = false;
 	public static boolean runAllPossibleVersions = false;
-	public static boolean runBandits = true;
+	public static boolean runBandits = false;
 	
 	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
@@ -68,13 +59,14 @@ public class SimSim {
 				
 		File[] listOfFiles = folder.listFiles();
 		
-		DateFormat df = new SimpleDateFormat("ddMMYYYY");
+		
+		DateFormat df = new SimpleDateFormat("ddMMyyyy", Locale.ENGLISH);
 		
 		if(args.length > 1){
 		    totalDirName = args[1] + df.format(new java.util.Date());
         }
         else{
-            totalDirName = "..//..//..//..//..//..//Results//" + df.format(new java.util.Date());
+            totalDirName = writeResultsTo + df.format(new java.util.Date());
         }
 		
 		directory = new File(totalDirName);
@@ -113,7 +105,7 @@ public class SimSim {
 				
 				exService = Executors.newFixedThreadPool(30);//newSingleThreadExecutor();
 				
-				
+				System.out.println(scenName);
 				if(runAllErrorVersions ){
 					runSimulationsForAllErrors(runs, duration, f, scenName);
 				}
@@ -164,22 +156,27 @@ public class SimSim {
 		
 		
 		//Set for all cameras SoftMax bandit solving mechanism
-		System.out.println("SOFTMAX");
+		
 		for (CameraSettings cs : ss.cameras) {
 			cs.bandit = "epics.bandits.SoftMax";
 		}
 		if(paraCoef.doubleValue() > 0){
 			for(int e = 0; e < banditParamRuns; e++){
-				double epsilon = BigDecimal.valueOf(e+1).multiply(paraCoef).doubleValue(); 
+			    
+				double epsilon = BigDecimal.valueOf(e+1).multiply(paraCoef).doubleValue();
+				System.out.println("SOFTMAX " + epsilon);
 				for(int i = 0; i <= banditRuns; i++){
-					double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
+				    double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
+				    
+				    System.out.print(" alpha: " + alpha + " - runs: ");
+				    
 					//double alpha = 0.5;
 					directory = new File(scenDirName + dirName + "//SoftMax-" +epsilon + "//" + alpha + "//");
 					directory.mkdirs();
 					//run all scenarios for a certain amount
 					for(int r = 0; r < runs; r++){
 			        	if (showgui == false) {
-			        		
+			        	    System.out.print(r + "; ");
 			        		if(randomSeed){
 			        			seed = System.currentTimeMillis() % 1000;
 			        		}
@@ -190,7 +187,8 @@ public class SimSim {
 			        		}
 			        		
 			        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, false, true);
-			        				
+			        		sim.setQuiet(true);
+			        		
 			                for (int k = 0; k < duration; k++) {
 			                    try {
 									sim.update();
@@ -201,7 +199,9 @@ public class SimSim {
 			                sim.close_files();
 			            } 
 			    	}
+					System.out.println("");
 				}
+				
 			}
 		}
 		
@@ -331,12 +331,14 @@ public class SimSim {
 //		}
 		for(int i = 0; i <= banditRuns; i++){
 			double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
+            System.out.print(" alpha: " + alpha + " - runs: ");
 			directory = new File(scenDirName + dirName + "//epsilonGreedy//" + alpha + "//");
 			directory.mkdirs();
 			//run all scenarios for a certain amount
 			for(int r = 0; r < runs; r++){
+			    System.out.print(r + "; ");
 	        	if (showgui == false) {
-	        		
+	        	    
 	        		if(randomSeed){
 	        			seed = System.currentTimeMillis() % 1000;
 	        		}
@@ -347,6 +349,7 @@ public class SimSim {
 	        		}
 	        				        		
 	        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, false, true);//output_file, ss, false);
+	        		sim.setQuiet(true);
 	                for (int k = 0; k < duration; k++) {
 	                    try {
 							sim.update();
@@ -357,6 +360,7 @@ public class SimSim {
 	                sim.close_files();
 	            } 
 	    	}
+            System.out.println("");
 		}
 		
 		
@@ -444,10 +448,12 @@ public class SimSim {
 		System.out.println("UCB1");
 		for(int i = 0; i <= banditRuns; i++){
 			double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
+            System.out.print(" alpha: " + alpha + " - runs: ");
 			directory = new File(scenDirName + dirName + "//ucb1//" + alpha + "//");
 			
 			//run all scenarios for a certain amount
 			for(int r = 0; r < runs; r++){
+                System.out.print(r + "; ");
 	        	if (showgui == false) {
 	        		
 	        		if(randomSeed){
@@ -464,6 +470,7 @@ public class SimSim {
 	        		else{
 	        			directory.mkdirs();
 		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, false, true);//output_file, ss, false);
+		        		sim.setQuiet(true);
 		                for (int k = 0; k < duration; k++) {
 		                    try {
 								sim.update();
@@ -476,6 +483,7 @@ public class SimSim {
 	        		}
 	            } 
 	    	}
+            System.out.println("");
 		}
 	}
 
@@ -563,7 +571,7 @@ public class SimSim {
     						else{
     							directory.mkdirs();
     							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, false, false);//output_file, ss, false);
-
+    							sim.setQuiet(true);
     							for (int dur = 0; dur < duration; dur++) {
     								try {
     									sim.update();
@@ -640,7 +648,9 @@ public class SimSim {
 				exService.execute(new SimRunner(seed, scenDirName + dirName, "summary.csv", runs, simS, false, -1, 50, duration, 0.5, false, diffSeed, allStatistics));
 			}
 			else{
+			    System.out.print(dirName + " runs: ");
 	        	for(int r = 0; r < runs; r++){
+	                System.out.print(r + "; ");
 		        	if (showgui == false) {
 		        		if(randomSeed){
 		        			seed = System.currentTimeMillis() % 1000;
@@ -658,7 +668,7 @@ public class SimSim {
 		        			dir.mkdirs();
 		        			
 			                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, false, allStatistics);//output_file, ss, false);
-
+			                sim.setQuiet(true);
 			                for (int i = 0; i < duration; i++) {
 			                    try {
 									sim.update();
@@ -670,6 +680,7 @@ public class SimSim {
 		        		}
 		            } 
 	        	}
+	        	System.out.println("");
 			}
         }
 	}
@@ -771,6 +782,7 @@ public class SimSim {
                     
                         
                         SimCore sim = new SimCore(seed, totalDirName + "//" + scenDirName + "//" + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, false, allStatistics);//output_file, ss, false);
+                        sim.setQuiet(true);
                         //new SimCore(seed, run, ss, global, camError, camReset, alpha);
                         for (int i = 0; i < duration; i++) {
                             try {
@@ -818,7 +830,9 @@ public class SimSim {
 					cs.comm = j;
 				}
 				
-				for(int r = 0; r < runs; r++){
+				System.out.print(dirname + " runs: ");
+                for(int r = 0; r < runs; r++){
+                    System.out.print(r + "; ");
 		        	if (showgui == false) {
 		        		if(randomSeed){
 		        			seed = System.currentTimeMillis() % 1000;
@@ -839,6 +853,7 @@ public class SimSim {
 		        			directory.mkdirs();
 		        			
 			                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
+			                sim.setQuiet(true);
 			                //new SimCore(seed, run, ss, global, camError, camReset, alpha);
 			                for (int k = 0; k < duration; k++) {
 			                    try {
@@ -852,7 +867,7 @@ public class SimSim {
 		        		}
 		            } 
 	        	}
-				
+				System.out.println("");
 				dirname = "";
 			}
 		}
@@ -1020,7 +1035,7 @@ public class SimSim {
 	}
 	
 	private static boolean diffSeed = true;
-    public static boolean runSequential = true;
+    public static boolean runSequential = false;
     public static int runRandomConfigs = 0;
     private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
     private static boolean runAllErrorVersions = false;

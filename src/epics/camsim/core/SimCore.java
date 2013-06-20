@@ -152,7 +152,7 @@ public class SimCore {
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, boolean realData, boolean allStatistics){
 		initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null);
 		this.epsilon = epsilon;
-		this.interpretFile(ss);
+		this.interpretFile(ss); 
 	}
 	
 	/**
@@ -1470,4 +1470,9 @@ public class SimCore {
 	public String getStatSumDesc(boolean spaces) throws Exception{
 	    return stats.getSummaryDesc(spaces);
 	}
+
+
+    public void setQuiet(boolean b) {
+        stats.setQuiet(b);
+    }
 }

@@ -91,7 +91,10 @@ public class SimRunner implements Runnable {
             }
 		}
 		else {
-			for(int r = 0; r < runs; r++){
+		    
+            for(int r = 0; r < runs; r++){
+                System.out.print(r + "; ");
+//			for(int r = 0; r < runs; r++){
 //	        	System.out.println(dir + " - " + r);
     			if(diffSeed){
     				seed =r;
@@ -122,7 +125,7 @@ public class SimRunner implements Runnable {
 //                sim.close_files();
 
             }
-			
+			System.out.println("");
 			
 			String summaryF = "summary.csv";
 			if(outputFile.contains("/")){

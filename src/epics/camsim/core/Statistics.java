@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public class Statistics {
 
+    private boolean quiet = true;
+    
 	private String output = null;
 	private String summary = null;
     private int time_step = 0;
@@ -161,10 +163,12 @@ public class Statistics {
         totUtil.add(tmp_totutil);
         totComOH.add(comm_oh_tmp);
 
-        System.out.println(getSummaryDesc(true));
-        System.out.println(getSummary(true));
-        System.out.println("--------------------------------------------------------------------------");
-        
+        if(!quiet){
+            System.out.println(getSummaryDesc(true));
+            System.out.println(getSummary(true));
+            System.out.println("--------------------------------------------------------------------------");
+        }
+    
         time_step++;
         util_tmp = 0;
         comm_tmp = 0;
@@ -309,7 +313,11 @@ public class Statistics {
 	        }
 		}
 	}
-
+	
+	public void setQuiet(boolean q){
+	    quiet = q;
+	}
+	
 	private void createCamStatistics(String camName) {
 		if(output.contains("/")){
 		    String ocam = output.substring(0, output.lastIndexOf('/')-1) + "_" + camName + output.substring(output.lastIndexOf('/')+1);
