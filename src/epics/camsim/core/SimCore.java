@@ -240,8 +240,10 @@ public class SimCore {
 	}
 	
     /**
-     * Interprets the SimSettings object and creates cameras, vision graphs and trackable objects with their corresponding behaviour as well as the simulation environment itself
-     * @param ss stores the settings for this simulation
+     * Interprets the SimSettings object and creates cameras, vision graphs
+     * and trackable objects with their corresponding behaviour as well as
+     * the simulation environment itself
+     * @param ss The object containing the settings for this simulation
      */
     public void interpretFile(SimSettings ss){
     	settings = ss;
@@ -294,15 +296,14 @@ public class SimCore {
 	    					vg.put(all.getKey(), 1.0);
 	    			}
 	    		}
-	    		
     		}
     		
             this.add_camera(
                     cs.name, cs.x, cs.y,
                     cs.heading, cs.viewing_angle,
-                    cs.range, cs.ai_algorithm, cs.comm, cs.limit, vg, cs.bandit, cs.predefConfidences, cs.predefVisibility);
+                    cs.range, cs.ai_algorithm, cs.comm, cs.limit, vg, cs.bandit, 
+                    cs.predefConfidences, cs.predefVisibility);
         }
-    	
 
         for (SimSettings.TrObjectSettings tro : ss.objects){
             this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features);
@@ -315,21 +316,16 @@ public class SimCore {
         events = ss.events;
     }
 
-    /**
-     * writes statistics and closes all statistics files  
-     */
+    /** Writes statistics and closes all statistics files */
     public void close_files(){
         try {
 			stats.close();
-			//printAllBanditResults();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
     }
     
-    /**
-     * allows to print all information from all bandit solvers into files
-     */
+    /** Outputs all information from all bandit solvers into files */
     private void printAllBanditResults(){
     	for(CameraController cc : this.cameras){
 			IBanditSolver bs = cc.getAINode().getBanditSolver();
@@ -342,7 +338,8 @@ public class SimCore {
     }
     
     /**
-     * actually prints arrayLists of ArrayLists into specific files
+     * Convenience method to print arrayLists within ArrayLists into 
+     * specific files
      * @param res results to be stored in file
      * @param filename the filename to store results to
      */
@@ -368,20 +365,23 @@ public class SimCore {
 	}
 
     /**
-     * crates a new camera and adds it to the list of cameras WITH an AINODE as parameter
+     * Creates a new camera and adds it to the list of cameras WITH an AINODE as parameter
      * @param name defines the name of the camera
      * @param x_pos defines the x position in the internal coordinates
      * @param y_pos defines the y position in the internal coordinates
      * @param heading_degrees defines the direction of the viewing point
-     * @param angle_degrees defines the with of the viewing angle
-     * @param range defines the range of the camera
+     * @param angle_degrees defines the width of the viewing angle
+     * @param range defines the range (distance) of the camera's view
      * @param ai_algorithm defines the initial algorithm approach used
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
      * @param bandit defines the used bandit solver algorithm 
-     * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
-	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+     * @param predefConfidences defines a list of objects represented by an ArrayList of 
+     * 	their confidences where each element is for one frame/timestep 
+	 * @param predefVisibility defines a list of objects represented by an ArrayList of 
+	 * 	their visibility (0 = visible, 1 = not visible or at touching border) where each 
+	 * 	element is for one frame/timestep
 	 */
     public void add_camera(
             String name,
@@ -390,7 +390,9 @@ public class SimCore {
             double angle_degrees,
             double range,
             String ai_algorithm,
-            int comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            int comm, int limit, Map<String, Double> vg, String bandit, 
+            ArrayList<ArrayList<Double>> predefConfidences, 
+            ArrayList<ArrayList<Integer>> predefVisibility){
 
         ai_alg = ai_algorithm;
         add_camera(
@@ -399,26 +401,31 @@ public class SimCore {
     }
 
     /**
-     * crates a new camera and adds it to the list of cameras all having the same predefined aiNode
+     * Creates a new camera and adds it to the list of cameras all having the same predefined aiNode
      * @param name defines the name of the camera
      * @param x_pos defines the x position in the internal coordinates
      * @param y_pos defines the y position in the internal coordinates
      * @param heading_degrees defines the direction of the viewing point
-     * @param angle_degrees defines the with of the viewing angle
-     * @param range defines the range of the camera
+     * @param angle_degrees defines the width of the viewing angle
+     * @param range defines the range (distance) of the camera's view
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
      * @param bandit defines the used bandit solver algorithm 
-     * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
-     * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+     * @param predefConfidences defines a list of objects represented by an ArrayList of 
+     * 	their confidences where each element is for one frame/timestep 
+     * @param predefVisibility defines a list of objects represented by an ArrayList of 
+     * 	their visibility (0 = visible, 1 = not visible or at touching border) where each 
+     * 	element is for one frame/timestep
      */
     public void add_camera(String name,
             double x_pos, double y_pos,
             double heading_degrees, 
             double angle_degrees, 
             double range, 
-            int comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            int comm, int limit, Map<String, Double> vg, String bandit, 
+            ArrayList<ArrayList<Double>> predefConfidences, 
+            ArrayList<ArrayList<Integer>> predefVisibility){
 
     	if(_comm == -1){
     		_comm = comm;
@@ -466,7 +473,8 @@ public class SimCore {
     
     /** Given a node's class name, dynamically loads the class and 
      * instantiates a new node of that type using reflection
-     * @param fullyQualifiedClassName the class name - has to include package name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
+     * @param fullyQualifiedClassName the class name - has to include package 
+     * 	name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param staticVG defines if VG is static as predefined or can change dynamically
      * @param vg a predefined VG - may or may not change over time
@@ -474,12 +482,6 @@ public class SimCore {
      * @param banditS the class name of a bandit solver
      * @return AbstractAINode the created AINode
      * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws IllegalArgumentException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
      */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
     		int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
@@ -514,13 +516,6 @@ public class SimCore {
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param ai the pre-existing AINode
      * @return a specific implementation of an abstract AINode
-     * @throws ClassNotFoundException
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws IllegalArgumentException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
      */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
     		int comm, AbstractAINode ai)
@@ -738,22 +733,18 @@ public class SimCore {
     		return;
     	}
 
-        int rnd = randomGen.nextInt( objects.size() , RandomUse.USE.UNIV);
-        
+        int rnd = randomGen.nextInt(objects.size() , RandomUse.USE.UNIV);
         TraceableObject obj_to_remove = this.objects.get(rnd);
-
        
         for (CameraController c : this.cameras){
             c.removeObject(obj_to_remove.getFeatures());
         }
         this.objects.remove(rnd);
-
     }
 
    
     /**
      * Updates the simulation by one step - decides if it uses pure simulation or works with real data
-     * @throws Exception
      */
     public void update() throws Exception{
     	if(_runReal){
@@ -777,7 +768,6 @@ public class SimCore {
      *      a. AINode is updated 
      *      b. BanditSolver reward is updated if applicable
      * 3. statistics are updated
-     * @throws Exception
      */
     public void updateReal() throws Exception{
     	if(firstUpdate)
@@ -1266,7 +1256,8 @@ public class SimCore {
     }
 
     /**
-     * computes the utility of the entire network
+     * computes the utility of the entire network and 
+     * adds this to the statistics
      * @return the sum of all cameras utilities.
      */
     public double computeUtility(){
@@ -1316,9 +1307,8 @@ public class SimCore {
 
     /** 
      * Save the scenario currently active in the simulation to an XML file.
-     * Note that this does not fully support scenario XML features such as 
-     * objects with waypoints. It also does not represent angles 100% correctly. 
-     * 
+     * This supports regular objects as well as objects with waypoints.
+     * Note that this does not represent angles 100% correctly.
      * This should only be used to store randomised scenarios.
      * 
 	 * @param absolutePath path of XML-File
