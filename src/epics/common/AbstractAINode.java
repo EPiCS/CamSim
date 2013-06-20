@@ -573,15 +573,6 @@ public abstract class AbstractAINode {
     public abstract void advertiseTrackedObjects();
 	
 	/**
-	 * Depricated - returned a single tracked object. the one object that has been added latest.
-	 * @return latest added object
-	 */
-	@Deprecated
-    public ITrObjectRepresentation getTrackedObject() {
-        return this.trObject;
-    }
-	
-	/**
 	 * calculates the utility for all objects currently tracked by this camera
 	 * utility_per_object = visibility + confidence + tracking_decision
 	 * the visibility is the inverse euclidean distance, the confidence is currently alwas optimal (= 1) and the tracking_decision is either 0 or 1

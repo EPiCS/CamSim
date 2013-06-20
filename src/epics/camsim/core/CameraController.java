@@ -236,20 +236,6 @@ public class CameraController implements ICameraController{
 			removeVisibleObject(traceableObject);
 		}
     }
-
-    public TraceableObject getTracked(){
-    	if(!isOffline()){
-	        ITrObjectRepresentation itro = this.camAINode.getTrackedObject();
-	        if ( itro == null ){
-	            return null;
-	        }
-	        TraceableObjectRepresentation tro = (TraceableObjectRepresentation)itro;
-	        return tro.getTraceableObject();
-    	}
-    	else{
-    		return null;
-    	}
-    }
     
     public Map<List<Double>, TraceableObject> getTrackedObjects(){
     	Map<List<Double>, TraceableObject> retVal = new HashMap<List<Double>, TraceableObject>();

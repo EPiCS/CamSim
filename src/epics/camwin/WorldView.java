@@ -316,23 +316,6 @@ public class WorldView extends JPanel implements Observer {
                     	}
                 	}
 //                }
-            
-            }
-        
-
-            if (false){
-            	TraceableObject tracked = c.getTracked();
-                g2.setColor( Color.green );
-
-                int col = 5;//(int)(tracked.get * 128 + 50);
-                if ( col > 255 ){ col = 255; }
-
-                g2.setColor( new Color(255-col, 255-col, 255-col )  );
-
-                Line2D.Double q = new Line2D.Double(
-                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-                    this.cst.simToWindowX(tracked.getX()), this.cst.simToWindowY(tracked.getY()) );
-                g2.draw(q);
             }
         }
 

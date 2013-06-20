@@ -1184,32 +1184,6 @@ public class SimCore {
 	}
 
 	/**
-	 * adds a non-existing object to the given cameraController
-	 * @param c given cameraController
-	 */
-	private void addFalseObject(CameraController c) {
-    	double id = 0.111 * getNextID();
-
-    	double tmp_x = 0;
-        double tmp_y = -1;
-        double tmp_heading = c.getHeading();
-        double tmp_range = c.getRange();
-        
-        double tmp_cos = Math.cos(tmp_heading);
-        double tmp_sin = Math.sin(tmp_heading);
-        
-    	double vcx = tmp_x * Math.cos(tmp_heading) - tmp_y * Math.sin(tmp_heading);
-        double vcy = tmp_x * Math.sin(tmp_heading) - tmp_y * Math.cos(tmp_heading);
- 
-        double pos_x = c.getX() + 10 * vcx; //tmp_heading;
-        double pos_y = c.getY() + 10 * vcy; //tmp_heading;
-
-    	double heading_degrees = randomGen.nextDouble(RandomUse.USE.UNIV) * 360;
-    	double speed = randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4;
-    	TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
-	}
-
-	/**
 	 * Helper method to print the properties of all objects
 	 * @throws Exception
 	 */
