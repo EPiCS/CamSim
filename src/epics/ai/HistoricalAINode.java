@@ -85,27 +85,27 @@ public class HistoricalAINode {
 	public static class Active extends ActiveAINodeMulti {
 		private HistoricalAINode histNode;
 
-		public Active(AbstractCommunication comm, boolean staticVG, 
+		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
-	    	super(comm, staticVG, vg, r, auctionDuration, rg);
+	    	super(staticVG, vg, r, auctionDuration, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Active(AbstractCommunication comm, boolean staticVG, 
+		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
-	    	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
+	    	super(staticVG, vg, r, auctionDuration, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Active(AbstractCommunication comm, boolean staticVG, 
+		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
-	    	super(comm, staticVG, vg, r, rg);
+	    	super(staticVG, vg, r, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Active(AbstractCommunication comm, boolean staticVG, 
+		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
-	    	super(comm, staticVG, vg, r, rg, bs);
+	    	super(staticVG, vg, r, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 
@@ -201,27 +201,27 @@ public class HistoricalAINode {
 	public static class Passive extends PassiveAINodeMulti {
 		private HistoricalAINode histNode;
 		
-		public Passive(AbstractCommunication comm, boolean staticVG, 
+		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
-	    	super(comm, staticVG, vg, r, auctionDuration, rg);
+	    	super(staticVG, vg, r, auctionDuration, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Passive(AbstractCommunication comm, boolean staticVG, 
+		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
-	    	super(comm, staticVG, vg, r, auctionDuration, rg, bs);
+	    	super(staticVG, vg, r, auctionDuration, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Passive(AbstractCommunication comm, boolean staticVG, 
+		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
-	    	super(comm, staticVG, vg, r, rg);
+	    	super(staticVG, vg, r, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
-		public Passive(AbstractCommunication comm, boolean staticVG, 
+		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
-	    	super(comm, staticVG, vg, r, rg, bs);
+	    	super(staticVG, vg, r, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 	    

@@ -9,10 +9,6 @@ import java.util.Set;
 
 import epics.camsim.core.Bid;
 import epics.common.IMessage.MessageType;
-import epics.commpolicy.Broadcast;
-import epics.commpolicy.Fix;
-import epics.commpolicy.Smooth;
-import epics.commpolicy.Step;
 
 /**
  * Abstract Class of AI - implements all application based methods of a camera.
@@ -100,17 +96,11 @@ public abstract class AbstractAINode {
 	 * @param rg random number generator for this node
 	 */
 	public AbstractAINode(
-	        //int comm,
-            AbstractCommunication comm,
             boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
         AUCTION_DURATION = 0;
         reg = r;
         if(vg != null){
             visionGraph = vg;
-        }
-                
-        if(comm instanceof epics.commpolicy.Fix){
-            USE_BROADCAST_AS_FAILSAVE = false;
         }
         randomGen = rg;
     }
@@ -125,11 +115,9 @@ public abstract class AbstractAINode {
      * @param rg the random number generator for this instance
      */
     public AbstractAINode(
-            //int comm,
-            AbstractCommunication comm,
             boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
-    	this(comm, staticVG, vg, r, rg);
+    	this(staticVG, vg, r, rg);
     	AUCTION_DURATION = auctionDuration;
     }
 	
@@ -143,22 +131,17 @@ public abstract class AbstractAINode {
 	 * @param bs the bandit solver to find the best strategy
 	 */
 	public AbstractAINode(
-	        //int comm,
-	        AbstractCommunication comm,
 	        boolean staticVG, Map<String, Double> vg,
 			IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
-		this(comm, staticVG, vg, r, rg);
-		communicationPolicy = comm;
+		this(staticVG, vg, r, rg);
 		banditSolver = bs;
 	}
 	
 	
 	public AbstractAINode(
-	        //int comm,
-            AbstractCommunication comm,
             boolean staticVG, 
 			Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
-		this(comm, staticVG, vg, r, rg, bs);
+		this(staticVG, vg, r, rg, bs);
 		AUCTION_DURATION = auctionDuration;
 	}
 	
@@ -581,15 +564,6 @@ public abstract class AbstractAINode {
     public abstract void advertiseTrackedObjects();
 	
 	/**
-	 * Depricated - returned a single tracked object. the one object that has been added latest.
-	 * @return latest added object
-	 */
-	@Deprecated
-    public ITrObjectRepresentation getTrackedObject() {
-        return this.trObject;
-    }
-	
-	/**
 	 * calculates the utility for all objects currently tracked by this camera
 	 * utility_per_object = visibility + confidence + tracking_decision
 	 * the visibility is the inverse euclidean distance, the confidence is currently alwas optimal (= 1) and the tracking_decision is either 0 or 1
@@ -926,7 +900,9 @@ public abstract class AbstractAINode {
 	 */
 	public void setComm(AbstractCommunication com) {
         communicationPolicy = com;
-        com.setAINode(this);
+        if(com instanceof epics.commpolicy.Fix){
+            USE_BROADCAST_AS_FAILSAVE = false;
+        }
     }
 	
 	/**

@@ -143,7 +143,7 @@ public class SimSim {
 		long seed = initialSeed;
 		String dirName = "";
 		String scenDirName = totalDirName + "//"+ scenName + "//";
-		SimSettings ss = new SimSettings("", "", 1);
+		SimSettings ss = new SimSettings("", "", null, 1);
 		ss.loadFromXML(f.getAbsolutePath());
 		for(int i = 0; i < ss.cameras.size(); i++){
 			dirName += "ex";
@@ -489,7 +489,7 @@ public class SimSim {
 
 
 	private static void runSimulationsForAllErrors(int runs2, int duration2, File f, String scenName) {
-		SimSettings ss = new SimSettings("", "", 1);
+		SimSettings ss = new SimSettings("", "", null, 1);
 		ss.loadFromXML(f.getAbsolutePath());
 		long seed = initialSeed;
        		
@@ -686,7 +686,7 @@ public class SimSim {
 	}
 	
 	private static void runSimulationForAll(int runs, int duration, File f, String scenName) {
-		SimSettings ss = new SimSettings("", "", 1);
+		SimSettings ss = new SimSettings("", "", null, 1);
 		ss.loadFromXML(f.getAbsolutePath());
 		LinkedList<ArrayList<CameraSettings>> items = new LinkedList<ArrayList<CameraSettings>>();
 		
@@ -698,7 +698,7 @@ public class SimSim {
     }
 	
 	private static void runRandomStatic(int runs, int duration, File f, String scenDirName){
-	    SimSettings simS = new SimSettings("", "", 1);
+	    SimSettings simS = new SimSettings("", "", null, 1);
         simS.loadFromXML(f.getAbsolutePath());
         LinkedList<ArrayList<CameraSettings>> items = new LinkedList<ArrayList<CameraSettings>>();
         long seed = initialSeed;
@@ -801,7 +801,7 @@ public class SimSim {
 	
 	
 	private static void runHomogeneous(int runs, int duration, File f, String scenName){
-		SimSettings ss = new SimSettings("", "", 1);
+		SimSettings ss = new SimSettings("", "", null, 1);
 		ss.loadFromXML(f.getAbsolutePath());
 		long seed = initialSeed;
 		

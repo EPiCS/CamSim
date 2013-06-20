@@ -28,6 +28,7 @@ public class Main {
     static String paramFile = null;
     static String algo = "";
     static String comm = "";
+    static String customComm = null;
     static int predefVG = -1;
     static int camErr = -1;
     static int camReset = 50;
@@ -80,7 +81,9 @@ public class Main {
                 "                              1 = dynamic - ignore scenario file, \n" +
                 "                              2 = dynamic - start with scenario file \n" +
                 " -c, --comm [INTEGER]       Defines Communication ((default) 0 = Broadcast, \n" +
-                "                              1 = SMOOTH, 2 = STEP, 3 = Static) \n" +
+                "                              1 = SMOOTH, 2 = STEP, 3 = Static, 4 = Custom) \n" +
+                " -u, --custom-comm [STRING] Provide a fully qualified class name for a custom \n" +
+                "                              communication class" +
                 " -a, --algo [STRING]        Defines the used algorithm ((default) \"active\", \"passive\") \n" +
                 "\n" +
                 "     --no-gui               Will launch simulator in command line mode\n"
@@ -109,13 +112,14 @@ public class Main {
         longopts[6] = new LongOpt("global", LongOpt.NO_ARGUMENT, null, 'g');
         longopts[7] = new LongOpt("algo", LongOpt.REQUIRED_ARGUMENT, null, 'a');
         longopts[8] = new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c');
-        longopts[9] = new LongOpt("vg", LongOpt.REQUIRED_ARGUMENT, null, 'v');
-        longopts[10] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
-        longopts[11] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
-        longopts[12] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
+        longopts[9] = new LongOpt("custom-comm", LongOpt.REQUIRED_ARGUMENT, null, 'u');
+        longopts[10] = new LongOpt("vg", LongOpt.REQUIRED_ARGUMENT, null, 'v');
+        longopts[11] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
+        longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
+        longopts[13] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
         
         
-        Getopt g = new Getopt("guiapp", args, "a:c:v:gho:e:r:s:t:f:p:", longopts);
+        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -190,6 +194,10 @@ public class Main {
                 	arg = g.getOptarg();
                 	comm = arg;
                 	break;
+                case 'u':
+                	arg = g.getOptarg();
+                	customComm = arg;
+                	break;
                 case 'r':
                 	arg = g.getOptarg();
                 	camReset = Integer.parseInt(arg);
@@ -243,7 +251,7 @@ public class Main {
         }
 
         print_parameters();
-        SimSettings ss = new SimSettings(algo, comm, predefVG);
+        SimSettings ss = new SimSettings(algo, comm, customComm, predefVG);
         if (input_file == null) {
             System.err.println("Error, no simulation file provided");
             usage();
