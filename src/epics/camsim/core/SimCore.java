@@ -670,17 +670,7 @@ public class SimCore {
             double heading_degrees, double speed,
             double features ){
     	TraceableObject to = new TraceableObject(features, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
-        this.getObjects().add(to);
-        if(USEGLOBAL){
-        	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
-        }
-        else{
-	        for(CameraController cc : this.getCameras()){
-	        	if(!cc.isOffline())
-	        		cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-	        }
-        }
-        
+        add_object(to);
     }
 
     /**
@@ -694,19 +684,9 @@ public class SimCore {
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
      */
-    public void add_object( double pos_x, double pos_y, double heading_degrees, double speed ){
-        double id = 0.111 * getNextID();
-        TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
-        this.getObjects().add(to); 
-        if(USEGLOBAL){
-        	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
-        }
-        else{
-	        for(CameraController cc : this.getCameras()){
-	        	if(!cc.isOffline())
-	        		cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-	        }  
-        }
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed){
+        double features = 0.111 * getNextID();
+        add_object(pos_x, pos_y, heading_degrees, speed, features);
     }
 
     /**
@@ -717,17 +697,24 @@ public class SimCore {
      * @param waypoints given waypoints. after last waypoint returns to first waypoint
      * @param id unique id/features of object
      */
-    public void add_object( double speed, List<Point2D> waypoints, double id){
-//        double id = 0.111 * getNextID();
-        TraceableObject to = new TraceableObject(id, this, speed, waypoints, randomGen);
-        this.getObjects().add(to);
+    public void add_object(double speed, List<Point2D> waypoints, double features){
+        TraceableObject to = new TraceableObject(features, this, speed, waypoints, randomGen);
+        add_object(to);
+    }
+
+    /** 
+     * Adds the given TraceableObject to the simulation. 
+     * For convenience methods, see other add_object methods 
+     */
+    public void add_object(TraceableObject to) {
+    	this.getObjects().add(to);
         if(USEGLOBAL){
         	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
-        }
-        else{
-        	for(CameraController cc : this.getCameras()){
-        		if(!cc.isOffline())
-        			cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+        } else {
+        	for (CameraController cc : this.getCameras()) {
+        		if (!cc.isOffline())
+        			cc.getAINode().receiveMessage(
+        					new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
         	}
         }
     }
