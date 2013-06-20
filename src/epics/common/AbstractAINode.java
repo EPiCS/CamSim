@@ -9,10 +9,6 @@ import java.util.Set;
 
 import epics.camsim.core.Bid;
 import epics.common.IMessage.MessageType;
-import epics.commpolicy.Broadcast;
-import epics.commpolicy.Fix;
-import epics.commpolicy.Smooth;
-import epics.commpolicy.Step;
 
 /**
  * Abstract Class of AI - implements all application based methods of a camera.
@@ -109,6 +105,7 @@ public abstract class AbstractAINode {
             visionGraph = vg;
         }
                 
+        communicationPolicy = comm;
         if(comm instanceof epics.commpolicy.Fix){
             USE_BROADCAST_AS_FAILSAVE = false;
         }
@@ -148,7 +145,6 @@ public abstract class AbstractAINode {
 	        boolean staticVG, Map<String, Double> vg,
 			IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
 		this(comm, staticVG, vg, r, rg);
-		communicationPolicy = comm;
 		banditSolver = bs;
 	}
 	
