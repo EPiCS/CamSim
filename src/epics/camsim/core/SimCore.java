@@ -240,7 +240,7 @@ public class SimCore {
 	}
 	
     /**
-     * Interprets the SimSettings object and creates cameras and trackable objects with their corresponding behaviour
+     * Interprets the SimSettings object and creates cameras, vision graphs and trackable objects with their corresponding behaviour as well as the simulation environment itself
      * @param ss stores the settings for this simulation
      */
     public void interpretFile(SimSettings ss){
@@ -362,7 +362,6 @@ public class SimCore {
 			out.flush();
 			out.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -466,7 +465,7 @@ public class SimCore {
 	}
     
     /** Given a node's class name, dynamically loads the class and 
-     * instantiates a new node of that type. 
+     * instantiates a new node of that type using reflection
      * @param fullyQualifiedClassName the class name - has to include package name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param staticVG defines if VG is static as predefined or can change dynamically
@@ -510,10 +509,11 @@ public class SimCore {
     }
     
     /**
-     * @param fullyQualifiedClassName
-     * @param comm
-     * @param ai
-     * @return
+     * Creates an AINode from an existing one using reflection. Clones the contents of the existing node into the new one.
+     * @param fullyQualifiedClassName the class name - has to include package name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
+     * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
+     * @param ai the pre-existing AINode
+     * @return a specific implementation of an abstract AINode
      * @throws ClassNotFoundException
      * @throws SecurityException
      * @throws NoSuchMethodException
@@ -537,15 +537,15 @@ public class SimCore {
     	return node;
     }
 
-    /** Given a file which contains parameters for our run, we run through 
+    /** 
+     * Given a file which contains parameters for our run, we run through 
      * the params and apply each one to the AI node. This is mainly to aid
      * running of experiments, where the necessary parameters can be applied
      * to the node for a particular run, then the params file is changed for 
-     * the next run */
-    /**
-     * @param node
-     * @param paramsFilepath
-     * @throws IOException
+     * the next run 
+     * @param node to apply parameters to
+     * @param paramsFilepath contains the filepath for the parameterfile
+     * @throws IOException in case opening of file fails
      */
     public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
     	RunParams.loadIfNotLoaded(paramsFilepath);
@@ -561,7 +561,7 @@ public class SimCore {
     }
     
   	/**
-  	 * 
+  	 * adds a camera with random position, oritentation, range and angle
   	 */
   	public void add_random_camera(){
         this.add_camera(
@@ -576,7 +576,10 @@ public class SimCore {
     }
 
     /**
-     * @param remove_index
+     * removes a certain camera based on the index in the list
+     * 
+     * !! removed cameras can not be recoverd !!
+     * @param remove_index list index
      */
     public void remove_camera_index( int remove_index ){
     	CameraController cc = null;
@@ -591,7 +594,10 @@ public class SimCore {
     }
 
     /**
-     * @param name
+     * removes a camera with a certain name
+     * 
+     * !! removed cameras can not be recoverd !!
+     * @param name name of the camera to remove
      */
     public void remove_camera( String name ){
         int remove_index = -1;
@@ -612,7 +618,9 @@ public class SimCore {
     }
 
     /**
+     * removes a random camera from the list of cameras.
      * 
+     * !! removed cameras can not be recoverd !!
      */
     public void remove_random_camera(){
         if ( this.cameras.isEmpty()){
@@ -630,7 +638,9 @@ public class SimCore {
     }
 
     /**
+     * Removes all cameras and creates the same amount of new random cameras
      * 
+     * !! removed cameras can not be recoverd !!
      */
     public void recreate_cameras(){
         int num_camers = cameras.size();
@@ -646,11 +656,14 @@ public class SimCore {
     }
 
     /**
-     * @param pos_x
-     * @param pos_y
-     * @param heading_degrees
-     * @param speed
-     * @param features
+     * Adds object to the simulation with specified parameters.
+     * starting position has to be within the simulation environment.
+     * 
+     * @param pos_x starting position
+     * @param pos_y starting position
+     * @param heading_degrees initial direction of movement
+     * @param speed speed of the object
+     * @param features unique identification of the object
      */
     public void add_object(
             double pos_x, double pos_y,
@@ -671,10 +684,15 @@ public class SimCore {
     }
 
     /**
-     * @param pos_x
-     * @param pos_y
-     * @param heading_degrees
-     * @param speed
+     * Adds object to the simulation with specified parameters.
+     * starting position has to be within the simulation environment.
+     * 
+     * creates random unique features for this object
+     * 
+     * @param pos_x starting position
+     * @param pos_y starting position
+     * @param heading_degrees initial direction of movement
+     * @param speed speed of the object
      */
     public void add_object( double pos_x, double pos_y, double heading_degrees, double speed ){
         double id = 0.111 * getNextID();
@@ -692,9 +710,12 @@ public class SimCore {
     }
 
     /**
-     * @param speed
-     * @param waypoints
-     * @param id
+     * Adds object to the simulation with specified parameters and a predefined path.
+     * starting position and waypoints have to be within the simulation environment.
+     * 
+     * @param speed speed of the object
+     * @param waypoints given waypoints. after last waypoint returns to first waypoint
+     * @param id unique id/features of object
      */
     public void add_object( double speed, List<Point2D> waypoints, double id){
 //        double id = 0.111 * getNextID();
@@ -712,7 +733,7 @@ public class SimCore {
     }
 
     /**
-     * 
+     * adds an object at random position with random direction and speed.
      */
     public void add_random_object(){
         add_object(
@@ -723,7 +744,7 @@ public class SimCore {
     }
 
     /**
-     * 
+     * removes a random object from all objects
      */
     public void remove_random_object(){
     	if(this.objects.isEmpty()){
@@ -742,45 +763,9 @@ public class SimCore {
 
     }
 
+   
     /**
-     * @throws Exception
-     */
-    public void update_original() throws Exception{
-    	
-        /*
-         * Print messages on the screen, one per step
-         */
-        if( CmdLogger.hasSomething() ){
-            CmdLogger.update();
-            System.out.println("shouldn't be possible...  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            return;
-        }
-
-        /*
-         * Update all traceable objects (move them around)
-         */
-        for ( TraceableObject o : this.objects ){
-            o.update();
-        }
-
-        for( CameraController c : this.cameras ){
-            for ( TraceableObject o : this.objects ){
-            	c.update_confidence( o );
-            }
-        }
-
-        for( CameraController c : this.cameras ){
-            c.updateAI();
-        }
-        
-//        checkConsistency();
-//        printObjects();
-        
-        this.computeUtility();
-        stats.nextTimeStep();
-    }
-
-    /**
+     * Updates the simulation by one step - decides if it uses pure simulation or works with real data
      * @throws Exception
      */
     public void update() throws Exception{
@@ -794,7 +779,17 @@ public class SimCore {
     	step ++;
     }
     
+    //TODO: FIX SEQUENCE!!
     /**
+     * updates the simulation by one timestep. using real data this corresponds to one frame.
+     * 
+     * 1. for all cameras
+     *      a. all objects visibility and confidence is updated. 
+     *      b. banditsolver selects strategy if applicable.
+     * 2. for all cameras
+     *      a. AINode is updated 
+     *      b. BanditSolver reward is updated if applicable
+     * 3. statistics are updated
      * @throws Exception
      */
     public void updateReal() throws Exception{
@@ -827,30 +822,29 @@ public class SimCore {
          				stats.setStrat(strategy, c.getName());
          	}
          	
-//         	System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
          	switch (strategy) {
  			case 0:	//ABC
- 				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", 0, ai); //staticVG, ai.getVisionGraph(), reg);
+ 				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", 0, ai); 
  				c.setAINode(newAI1);
  				break;
  			case 1:	//ASM
- 				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
+ 				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, ai);  
  				c.setAINode(newAI2);
  				break;
  			case 2:	//AST
- 				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", 2,ai); // staticVG, ai.getVisionGraph(), reg);
+ 				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", 2,ai);  
  				c.setAINode(newAI3);
  				break;
  			case 3: //PBC
- 				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", 0, ai); //staticVG, ai.getVisionGraph(), reg);
+ 				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", 0, ai);  
  				c.setAINode(newAI4);
  				break;
  			case 4: //PSM
- 				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", 1, ai); //staticVG, ai.getVisionGraph(), reg);
+ 				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", 1, ai);  
  				c.setAINode(newAI5);
  				break;
  			case 5: //PST
- 				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", 2, ai); //staticVG, ai.getVisionGraph(), reg);
+ 				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", 2, ai);  
  				c.setAINode(newAI6);
  				break;
  			default:
@@ -862,22 +856,9 @@ public class SimCore {
          for( CameraController c : this.cameras ){
  		    c.updateAI();
  		    
-// 		    System.out.println(c.getName() + " util: " + c.getAINode().getUtility() + " rcved " + c.getAINode().getReceivedUtility() + " paid " + c.getAINode().getPaidUtility() + " comm " + c.getAINode().getComm() + " bids " + c.getAINode().getNrOfBids());
- 		    
  		    //check if bandit solvers are used
  			IBanditSolver bs = c.getAINode().getBanditSolver();
- 			if(bs != null){
-// 				if(doSelection){
-// 					int nrMessages = c.getAINode().getTmpTotalComm(); 
-// 					double commOverhead = 0.0;
-// 					if(nrMessages > 0){
-// 						commOverhead = (nrMessages-c.getAINode().getTmpTotalBids()) / nrMessages; 
-// 					}
-// 					double utility = c.getAINode().getTmpTotalUtility() + c.getAINode().getTmpTotalRcvPay() - c.getAINode().getTmpTotalPaid(); 
-// 					bs.setCurrentReward(utility, commOverhead); 
-// 					currentSelectInt = 0;
-// 				}
- 					
+ 			if(bs != null){					
  					int nrMessages = c.getAINode().getSentMessages();
  					double commOverhead = 0.0;
  					if(nrMessages > 0){
@@ -886,9 +867,6 @@ public class SimCore {
  					double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
  					stats.setReward(utility, commOverhead, c.getName());
  					bs.setCurrentReward(utility, commOverhead); 
- 					//currentSelectInt = 0;
- 				
- 				//bs.setCurrentReward(utility, commOverhead);
  			}
          }
       
@@ -897,7 +875,7 @@ public class SimCore {
     }
     
     /**
-     * 
+     * USED ONLY WITH REAL DATA
      */
     private void setSearchFor() {
     	IMessage im = new Message("", "3.cvs", MessageType.StartSearch, new TraceableObjectRepresentation(this.objects.get(0), this.objects.get(0).getFeatures()));
@@ -907,6 +885,25 @@ public class SimCore {
 	}
 
 	/**
+	 * Updates the pure simulation for one timestep.
+	 * 
+	 * 1. Checks and precesses Events
+	 * 2. Moves all trackable objects
+	 * 3. Fails random cameras based on the given failing probability - this rate can be 0
+	 * 4. For all Cameras:
+	 *     a. Updates the visibility and confidence for all objects
+	 *     b. BanditSolver selects strategy if applicable
+	 *     
+	 * 5. All Cameras advertise objects
+	 * 6. All Cameras
+	 *     a. Update their received messages
+	 *     b. process auctions
+	 *     c. check for searched objects
+	 *     d. send messages
+	 * 7. all Cameras
+	 *     a. update their AI
+	 *     b. update rewards for bandit solver if applicable
+	 *  
 	 * @throws Exception
 	 */
 	public void updateSim() throws Exception{
@@ -914,7 +911,7 @@ public class SimCore {
         // Print messages on the screen, one per step
         if( CmdLogger.hasSomething() ){
             CmdLogger.update();
-            System.out.println("W    T    F   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println("CMDLogger is not empty... this shouldn't be");
             return;
         }
         
@@ -1051,31 +1048,21 @@ public class SimCore {
 				double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
 				stats.setReward(utility, commOverhead, c.getName());
 				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
-				//currentSelectInt = 0;
-				
-				//bs.setCurrentReward(utility, commOverhead);
 			}
-		    
-//		    if(step == 999){
-//		        String armsCount = ""; 
-//		        IBanditSolver bso = c.getAINode().getBanditSolver();
-//		        if(bso != null){
-//    		        for(int i = 0; i < bso.getTotalArms().length; i++){
-//    		            armsCount = armsCount + bso.getTotalArms()[i] + "; ";
-//    		        }
-//		        }
-//		        System.out.println(alpha + " - " + epsilon + " - " + c.getName() + "; " + armsCount);//+ getStratForAI(c.getAINode()));
-//		    }
+
         }
      
         double ut = this.computeUtility();
-        //System.out.println(stats.getSummary(false));
         stats.nextTimeStep();
     }
 
 	/**
-	 * @param ai
-	 * @return
+	 * Returns an index for a given AI used by bandit solvers
+	 * 
+	 * 0 = active Broadcast, 1 = active Smooth, 2 = active Step
+	 * 3 = passive Broadcast, 4 = passive smooth, 5 = passive step
+	 * @param ai the ai to get the index for
+	 * @return index for ai 
 	 */
 	private int getStratForAI(AbstractAINode ai) {
 		if(ai.getClass() == epics.ai.ActiveAINodeMulti.class){
@@ -1098,6 +1085,8 @@ public class SimCore {
 	}
 
 	/**
+	 * checks if one of the predefined events should occure in the given timestep.
+	 * if so, this method also processes these events
 	 * @param currentTimeStep
 	 */
 	private void checkAndProcessEvent(int currentTimeStep) {
@@ -1195,7 +1184,8 @@ public class SimCore {
 	}
 
 	/**
-	 * @param c
+	 * adds a non-existing object to the given cameraController
+	 * @param c given cameraController
 	 */
 	private void addFalseObject(CameraController c) {
     	double id = 0.111 * getNextID();
@@ -1220,6 +1210,7 @@ public class SimCore {
 	}
 
 	/**
+	 * Helper method to print the properties of all objects
 	 * @throws Exception
 	 */
 	private void printObjects() throws Exception {
@@ -1278,6 +1269,7 @@ public class SimCore {
 	}
 
 	/**
+	 * helper method to check inconsistencies between objects and cameras
 	 * @throws Exception
 	 */
 	public void checkConsistency() throws Exception{
@@ -1313,7 +1305,8 @@ public class SimCore {
     }
 
     /**
-     * @return
+     * computes the utility of the entire network
+     * @return the sum of all cameras utilities.
      */
     public double computeUtility(){
         double utility_sum = 0;
@@ -1331,15 +1324,17 @@ public class SimCore {
     }
 
     /**
-     * @return
+     * returns all cameras
+     * @return all cameras
      */
     public ArrayList<CameraController> getCameras() {
         return cameras;
     }
 
-    /**
-     * @param name
-     * @return
+    /** 
+     * returns the camera with a specific name
+     * @param name name of camera to return
+     * @return the camera
      */
     public CameraController getCameraByName( String name ){
         for ( int i = 0; i < cameras.size(); i++ ){
@@ -1351,17 +1346,21 @@ public class SimCore {
     }
 
     /**
-     * @return
+     * Returns a list of all objects
+     * @return List of all objects
      */
     public ArrayList<TraceableObject> getObjects() {
         return objects;
     }
 
-    /** Save the scenario currently active in the simulation to an XML file.
+    /** 
+     * Save the scenario currently active in the simulation to an XML file.
      * Note that this does not fully support scenario XML features such as 
-     * objects with waypoints. It also does not represent angles 100% correctly. */
-	/**
-	 * @param absolutePath
+     * objects with waypoints. It also does not represent angles 100% correctly. 
+     * 
+     * This should only be used to store randomised scenarios.
+     * 
+	 * @param absolutePath path of XML-File
 	 */
 	public void save_to_xml(String absolutePath) {
 		File f = new File(absolutePath + ".xml");
@@ -1388,7 +1387,7 @@ public class SimCore {
 	}
 
 	/**
-	 * 
+	 * Resets the simulation environment to a minimum of -70 and maximum of 70 in x and y direction
 	 */
 	public void reset() {
 		this.min_x = -70;
@@ -1398,8 +1397,9 @@ public class SimCore {
 	}
 
 	/**
-	 * @param spaces
-	 * @return
+	 * returns the statistics summary as a string
+	 * @param spaces if spaces should be added after delimiters
+	 * @return the summary as string
 	 * @throws Exception
 	 */
 	public String getStatSummary(boolean spaces) throws Exception{
@@ -1407,8 +1407,9 @@ public class SimCore {
 	}
 	
 	/**
-	 * @param spaces
-	 * @return
+	 * gets a summary description (header)
+	 * @param spaces if spaces should be added after elimiters
+	 * @return the description as string
 	 * @throws Exception
 	 */
 	public String getStatSumDesc(boolean spaces) throws Exception{
