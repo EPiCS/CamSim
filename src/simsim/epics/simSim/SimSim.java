@@ -1035,7 +1035,7 @@ public class SimSim {
 	}
 	
 	private static boolean diffSeed = true;
-    public static boolean runSequential = false;
+    public static boolean runSequential = true;
     public static int runRandomConfigs = 0;
     private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
     private static boolean runAllErrorVersions = false;
