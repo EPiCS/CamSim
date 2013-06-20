@@ -128,7 +128,7 @@ public class WindowMain implements ActionListener{
         b4.addActionListener(this);
         button_panel.add(b4);
 
-        JButton b2 = new JButton("Reset");
+        JButton b2 = new JButton("Randomise");
         b2.setActionCommand("reset");
         b2.addActionListener(this);
         button_panel.add(b2);

@@ -590,14 +590,28 @@ public class SimCore {
   	 * adds a camera with random position, oritentation, range and angle
   	 */
   	public void add_random_camera(){
+  	    AbstractCommunication absCom = null;
+  	    switch(randomGen.nextInt(3, RandomUse.USE.UNIV)){
+  	    case 0: absCom = new Broadcast(null, null); break;
+  	    case 1: absCom = new Smooth(null, null); break;
+  	    case 2: absCom = new Step(null,null); break;
+  	    }
+  	    
+  	    String algo = "";
+  	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
+  	    case 0: algo = "epics.ai.ActiveAINodeMulti"; break;
+  	    case 1: algo = "epics.ai.PassiveAINodeMulti"; break;
+  	    }
+  	    
         this.add_camera(
         		"C"+getNextID(),
                 randomGen.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 360,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 90 + 15,
-                randomGen.nextDouble(RandomUse.USE.UNIV) * 20 + 10, 
-                new Broadcast(null,null), 
+                randomGen.nextDouble(RandomUse.USE.UNIV) * 20 + 10,
+                algo,
+                absCom, 
                 0, null, "", null, null);//RandomNumberGenerator.nextInt(5));
     }
 
@@ -678,6 +692,10 @@ public class SimCore {
         	if(USEGLOBAL){
         		reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         	}
+        	for(CameraController cc : this.getCameras()){
+                if(!cc.isOffline())
+                    cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+            }
         }
     }
 
