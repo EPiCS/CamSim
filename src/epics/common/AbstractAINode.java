@@ -96,18 +96,11 @@ public abstract class AbstractAINode {
 	 * @param rg random number generator for this node
 	 */
 	public AbstractAINode(
-	        //int comm,
-            AbstractCommunication comm,
             boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
         AUCTION_DURATION = 0;
         reg = r;
         if(vg != null){
             visionGraph = vg;
-        }
-                
-        communicationPolicy = comm;
-        if(comm instanceof epics.commpolicy.Fix){
-            USE_BROADCAST_AS_FAILSAVE = false;
         }
         randomGen = rg;
     }
@@ -122,11 +115,9 @@ public abstract class AbstractAINode {
      * @param rg the random number generator for this instance
      */
     public AbstractAINode(
-            //int comm,
-            AbstractCommunication comm,
             boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
-    	this(comm, staticVG, vg, r, rg);
+    	this(staticVG, vg, r, rg);
     	AUCTION_DURATION = auctionDuration;
     }
 	
@@ -140,21 +131,17 @@ public abstract class AbstractAINode {
 	 * @param bs the bandit solver to find the best strategy
 	 */
 	public AbstractAINode(
-	        //int comm,
-	        AbstractCommunication comm,
 	        boolean staticVG, Map<String, Double> vg,
 			IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
-		this(comm, staticVG, vg, r, rg);
+		this(staticVG, vg, r, rg);
 		banditSolver = bs;
 	}
 	
 	
 	public AbstractAINode(
-	        //int comm,
-            AbstractCommunication comm,
             boolean staticVG, 
 			Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
-		this(comm, staticVG, vg, r, rg, bs);
+		this(staticVG, vg, r, rg, bs);
 		AUCTION_DURATION = auctionDuration;
 	}
 	
@@ -913,7 +900,9 @@ public abstract class AbstractAINode {
 	 */
 	public void setComm(AbstractCommunication com) {
         communicationPolicy = com;
-        com.setAINode(this);
+        if(com instanceof epics.commpolicy.Fix){
+            USE_BROADCAST_AS_FAILSAVE = false;
+        }
     }
 	
 	/**

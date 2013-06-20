@@ -14,12 +14,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
-
 import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
-import epics.common.*;
+import epics.common.AbstractAINode;
+import epics.common.AbstractCommunication;
+import epics.common.CmdLogger;
+import epics.common.IBanditSolver;
+import epics.common.ICameraController;
+import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
-import epics.commpolicy.*;
+import epics.common.IRegistration;
+import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
+import epics.common.RunParams;
+import epics.commpolicy.Broadcast;
+import epics.commpolicy.Smooth;
+import epics.commpolicy.Step;
 
 /**
  * SimCore represents the main core of the simulation. each object and camera is controlled from here. 
@@ -294,18 +303,12 @@ public class SimCore {
 	    		}
     		}
     		
-    		AbstractCommunication c = null;
-    		
-    		switch(cs.comm){
-    		case 0: c = new Broadcast(null, null); break;
-    		case 1: c = new Smooth(null,null); break;
-    		case 2: c = new Step(null, null); break;
-    		}
-    		
-            this.add_camera(
+    		this.add_camera(
                     cs.name, cs.x, cs.y,
                     cs.heading, cs.viewing_angle,
-                    cs.range, cs.ai_algorithm, c, cs.limit, vg, cs.bandit, 
+                    cs.range, cs.ai_algorithm, 
+                    cs.comm, cs.customComm, 
+                    cs.limit, vg, cs.bandit, 
                     cs.predefConfidences, cs.predefVisibility);
         }
 
@@ -394,7 +397,8 @@ public class SimCore {
             double angle_degrees,
             double range,
             String ai_algorithm,
-            AbstractCommunication comm, 
+            int commValue,
+            String customComm,
             int limit, 
             Map<String, Double> vg, 
             String bandit, 
@@ -404,7 +408,8 @@ public class SimCore {
         ai_alg = ai_algorithm;
         add_camera(
         	name, x_pos, y_pos, heading_degrees, angle_degrees,
-            range, comm, limit, vg, bandit, predefConfidences, predefVisibility);
+            range, commValue, customComm, limit, vg, bandit, 
+            predefConfidences, predefVisibility);
     }
 
     /**
@@ -430,23 +435,20 @@ public class SimCore {
             double x_pos, double y_pos,
             double heading_degrees, 
             double angle_degrees, 
-            double range, 
-            AbstractCommunication comm,
+            double range,
+            int commValue,
+            String customComm,
             int limit, 
             Map<String, Double> vg, 
             String bandit, 
             ArrayList<ArrayList<Double>> predefConfidences, 
             ArrayList<ArrayList<Integer>> predefVisibility){
 
-    	if(_comm == null){
-    		_comm = comm;
-    	}
-    	
-        checkCoordInRange(x_pos, y_pos);
+    	checkCoordInRange(x_pos, y_pos);
         
         AbstractAINode aiNode = null;
     	try {
-    		aiNode = newAINodeFromName(ai_alg, comm, staticVG, vg, reg, bandit);
+    		aiNode = newAINodeFromName(ai_alg, staticVG, vg, reg, bandit);
     	} catch (Exception e) {
     		System.out.println("Couldn't initialise AI Node from name given in scenario file: "+ai_alg);
     		System.out.println("Is it a fully qualified class name? e.g. 'epics.ai.ActiveAINodeMulti'");
@@ -464,23 +466,15 @@ public class SimCore {
 
         try {
             Class<?>[] commConstructorTypes = {AbstractAINode.class, ICameraController.class};
-            comm = comm.getClass().getConstructor(commConstructorTypes).newInstance(aiNode, cc);
-            aiNode.setComm(comm);
-        } catch (NoSuchMethodException e1) {
-            e1.printStackTrace();
-        } catch (SecurityException e1) {
-            e1.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        
-        
+            Class<?> commClass = getCommClass(commValue, customComm);
+            Constructor<?> cons = commClass.getConstructor(commConstructorTypes); 
+            _comm = (AbstractCommunication) cons.newInstance(aiNode, cc);
+            aiNode.setComm(_comm);
+        } catch (Exception e) {
+        	System.err.println("Failed to create a communication class");
+			e.printStackTrace();
+			System.exit(1);
+		}
         
     	try {
     		if (paramFile != null) {
@@ -503,6 +497,23 @@ public class SimCore {
         }
 	}
     
+    public Class<?> getCommClass(int commValue, String customComm) throws ClassNotFoundException {
+    	switch(commValue){
+    		case 0: return Broadcast.class;
+    		case 1: return Smooth.class;
+    		case 2: return Step.class;
+    		case 4: 
+    			if (customComm == null || customComm.equals("")) {
+    				throw new IllegalArgumentException("No CustomComm value provided");
+    			}
+    			Class<?> nodeType = Class.forName(customComm);
+    			return (Class<?>) nodeType;
+    		default:
+    			throw new IllegalArgumentException("Comm value provided is invalid: "+commValue);
+    			
+		}
+    }
+    
     /** Given a node's class name, dynamically loads the class and 
      * instantiates a new node of that type using reflection
      * @param fullyQualifiedClassName the class name - has to include package 
@@ -516,7 +527,7 @@ public class SimCore {
      * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
      */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
-    		AbstractCommunication comm, boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
+    		boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
     				InvocationTargetException {
@@ -536,10 +547,9 @@ public class SimCore {
 		}
     	
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
-    	Class<?>[] constructorTypes = {AbstractCommunication.class, boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
+    	Class<?>[] constructorTypes = {boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
-    	AbstractAINode node = (AbstractAINode) cons.newInstance(comm, staticVG, vg, r, randomGen, bs);
-    	node.setComm(comm);
+    	AbstractAINode node = (AbstractAINode) cons.newInstance(staticVG, vg, r, randomGen, bs);
     	return node;
     }
     
@@ -561,7 +571,6 @@ public class SimCore {
     	
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
     	AbstractAINode node = (AbstractAINode) cons.newInstance(ai);
-    	node.setComm(comm);
     	return node;
     }
 
@@ -592,12 +601,7 @@ public class SimCore {
   	 * adds a camera with random position, oritentation, range and angle
   	 */
   	public void add_random_camera(){
-  	    AbstractCommunication absCom = null;
-  	    switch(randomGen.nextInt(3, RandomUse.USE.UNIV)){
-  	    case 0: absCom = new Broadcast(null, null); break;
-  	    case 1: absCom = new Smooth(null, null); break;
-  	    case 2: absCom = new Step(null,null); break;
-  	    }
+  	    int absCom = randomGen.nextInt(3, RandomUse.USE.UNIV); // Random comm
   	    
   	    String algo = "";
   	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
@@ -613,8 +617,9 @@ public class SimCore {
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 90 + 15,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 20 + 10,
                 algo,
-                absCom, 
-                0, null, "", null, null);//RandomNumberGenerator.nextInt(5));
+                absCom,
+                null, // No custom comm
+                0, null, "", null, null);
     }
 
     /**
@@ -1128,13 +1133,8 @@ public class SimCore {
 				//process event
 				if(e.event.equals("add")){
 					if(e.participant == 1){ // camera
-					    AbstractCommunication c = null;
-					    switch(e.comm){
-			            case 0: c = new Broadcast(null, null); break;
-			            case 1: c = new Smooth(null,null); break;
-			            case 2: c = new Step(null, null); break;
-			            }
-						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, c, e.limit, null, e.bandit, null, null);
+					    this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, e.comm, null, 
+					    		e.limit, null, e.bandit, null, null);
 					}
 					else{ //object 
 						if(e.waypoints == null){

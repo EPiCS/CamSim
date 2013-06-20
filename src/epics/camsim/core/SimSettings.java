@@ -6,10 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 
-import javax.naming.LimitExceededException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -46,6 +44,7 @@ public class SimSettings implements Cloneable{
         public Double range;
         public String ai_algorithm;
         public Integer comm;
+        public String customComm;
         public Integer limit;
         public String bandit;
         
@@ -60,14 +59,18 @@ public class SimSettings implements Cloneable{
          * @param vis defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
 	 	 * @param ai_algorithm
          * @param comm
+         * @param customComm The custom communication algorithm's fully qualified class name
          * @param limit
          */
-        CameraSettings(String name, ArrayList<ArrayList<Double>> conf, ArrayList<ArrayList<Integer>> vis, String ai_algorithm, int comm, int limit){
+        CameraSettings(String name, ArrayList<ArrayList<Double>> conf, 
+        		ArrayList<ArrayList<Integer>> vis, String ai_algorithm, 
+        		int comm, String customComm, int limit){
         	this.name = name;
         	this.predefConfidences = conf;
         	this.predefVisibility = vis;
         	this.ai_algorithm = ai_algorithm;
         	this.comm = comm;
+        	this.customComm = customComm;
         	this.limit = limit;
         	
         	this.x = 0.0;
@@ -85,6 +88,7 @@ public class SimSettings implements Cloneable{
                 double range,
                 String ai_algorithm,
                 int comm,
+                String customComm,
                 int limit) {
 
             this.name = name;
@@ -95,6 +99,7 @@ public class SimSettings implements Cloneable{
             this.range = range;
             this.ai_algorithm = ai_algorithm;
             this.comm = comm;
+        	this.customComm = customComm;
             this.limit = limit;
         }
 
@@ -107,20 +112,21 @@ public class SimSettings implements Cloneable{
             System.out.println("  range: " + range );
             System.out.println("  ai_algorithm: " + ai_algorithm);
             switch(this.comm){
-            case 0: System.out.println("  communication: broadcast "); break;
-            case 1: System.out.println("  communication: SMOOTH "); break;
-            case 2: System.out.println("  communication: STEP"); break;
-            case 3: System.out.println("  communication: STATIC"); break;
-            default: System.out.println("  communication: UNKNOWN "); break;
+            	case 0: System.out.println("  communication: BROADCAST "); break;
+            	case 1: System.out.println("  communication: SMOOTH "); break;
+            	case 2: System.out.println("  communication: STEP"); break;
+            	case 3: System.out.println("  communication: STATIC"); break;
+            	case 4: System.out.println("  communication: CUSTOM"); break;
+            	default: System.out.println("  communication: UNKNOWN "); break;
             }
             System.out.println(" limit: " + limit + " }");
         }
         
         public CameraSettings clone(){
         	if(predefConfidences != null){
-        		return new CameraSettings(name, predefConfidences, predefVisibility, ai_algorithm, comm, limit);
+        		return new CameraSettings(name, predefConfidences, predefVisibility, ai_algorithm, comm, customComm, limit);
         	}
-        	return new CameraSettings(name, x, y, heading, viewing_angle, range, ai_algorithm, comm, limit);
+        	return new CameraSettings(name, x, y, heading, viewing_angle, range, ai_algorithm, comm, customComm, limit);
         }
     }
 
@@ -308,10 +314,11 @@ public class SimSettings implements Cloneable{
     
     private String algorithm = "";
     private int communication = 0;
+    private String customComm = null;
 
     public SimSettings(){}
     
-    public SimSettings(String algo, String comm, int staticVG){
+    public SimSettings(String algo, String comm, String customComm, int staticVG){
     	usePredefVG = staticVG;
     	if(!algo.equals("")){
     		fixAlgo = true;
@@ -321,6 +328,7 @@ public class SimSettings implements Cloneable{
     		try{
     			communication = Integer.parseInt(comm);
     			fixComm = true;
+    			this.customComm = customComm; 
     		}
     		catch(Exception ex){
     			fixComm =false;
@@ -377,7 +385,8 @@ public class SimSettings implements Cloneable{
     	}
     	int maxObj = 0;
     	for(int i = 0; i < names.size(); i++){
-    		CameraSettings cs = new CameraSettings(names.get(i), conf.get(i), vis.get(i), algorithm, communication, this.FIX_LIMIT);
+    		CameraSettings cs = new CameraSettings(names.get(i), conf.get(i), 
+    				vis.get(i), algorithm, communication, customComm, this.FIX_LIMIT);
     		if (conf.get(i).size() > maxObj) {
     			maxObj = conf.get(i).size();
     		}
@@ -448,6 +457,7 @@ public class SimSettings implements Cloneable{
                 }
                 if(fixComm){
                 	cs.comm = communication;
+                	cs.customComm = customComm;
                 }
                 else{
                 	cs.comm = Integer.parseInt(eCamera.getAttribute("comm"));
@@ -745,7 +755,7 @@ public class SimSettings implements Cloneable{
 
 	public SimSettings copy() {
 		
-		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.usePredefVG);
+		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.customComm, this.usePredefVG);
 		
 		
 		ss.cameras = (ArrayList<CameraSettings>) this.cameras.clone();
