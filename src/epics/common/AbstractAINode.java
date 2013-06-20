@@ -68,7 +68,7 @@ public abstract class AbstractAINode {
     protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
     protected ICameraController camController;
     protected ITrObjectRepresentation trObject;
-    private Multicast multicast = null;
+    private AbstractCommunication multicast = null;
 	protected int sentMessages;
 	public IRegistration reg;
 	

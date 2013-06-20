@@ -1,11 +1,11 @@
 package epics.bandits;
 
 import epics.ai.ActiveAINodeMulti;
-import epics.common.BanditSolver;
+import epics.common.AbstractBanditSolver;
 import epics.common.IBanditSolver;
 import epics.common.RandomNumberGenerator;
 
-public class UCB1 extends BanditSolver {
+public class UCB1 extends AbstractBanditSolver {
 
 
 
@@ -15,7 +15,7 @@ public class UCB1 extends BanditSolver {
 		super(numberOfOptions, epsilon, alpha, interval, rg);
 	}
   
-	public UCB1(BanditSolver eg, int comm, String algo) {
+	public UCB1(AbstractBanditSolver eg, int comm, String algo) {
 		super(eg, comm, algo);
 	}
 

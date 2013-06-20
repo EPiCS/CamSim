@@ -1,6 +1,6 @@
 package epics.bandits;
 
-import epics.common.BanditSolver;
+import epics.common.AbstractBanditSolver;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
 
@@ -14,11 +14,11 @@ import epics.common.RandomUse.USE;
  * @author Lukas Esterle, Peter R. Lewis
  *
  */
-public class EpsilonGreedy extends BanditSolver{ // implements IBanditSolver {
+public class EpsilonGreedy extends AbstractBanditSolver{ // implements IBanditSolver {
 
 
 	/**
-	 * The constructor calling the super constructor {@link BanditSolver BanditSolver}
+	 * The constructor calling the super constructor {@link AbstractBanditSolver BanditSolver}
 	 * The bandit solver is given a number of possible configurations. a configuration is 
 	 * a combination of communication policy and the auction invitation schedule.
 	 * 
@@ -48,7 +48,7 @@ public class EpsilonGreedy extends BanditSolver{ // implements IBanditSolver {
 	 * @param comm the communication policy
 	 * @param algo the auctioning schedule as string
 	 */
-	public EpsilonGreedy(BanditSolver eg, int comm, String algo) {
+	public EpsilonGreedy(AbstractBanditSolver eg, int comm, String algo) {
 		super(eg, comm, algo);
 	}
 

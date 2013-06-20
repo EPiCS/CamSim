@@ -2,7 +2,7 @@ package epics.bandits;
 
 import javax.print.attribute.standard.NumberOfDocuments;
 
-import epics.common.BanditSolver;
+import epics.common.AbstractBanditSolver;
 import epics.common.IBanditSolver;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
@@ -12,12 +12,12 @@ import epics.common.RandomUse.USE;
  * @author Lukas Esterle
  *
  */
-public class SoftMax extends BanditSolver {
+public class SoftMax extends AbstractBanditSolver {
 
 	double temperature = 0.01; // could be alpha? or epsilon??
 	
 	/**
-	  * The constructor calling the super constructor {@link BanditSolver BanditSolver}
+	  * The constructor calling the super constructor {@link AbstractBanditSolver BanditSolver}
      * The bandit solver is given a number of possible configurations. a configuration is 
      * a combination of communication policy and the auction invitation schedule.
      * 
@@ -43,7 +43,7 @@ public class SoftMax extends BanditSolver {
 	 * @param comm
 	 * @param algo
 	 */
-	public SoftMax(BanditSolver eg, int comm, String algo) {
+	public SoftMax(AbstractBanditSolver eg, int comm, String algo) {
 		super(eg, comm, algo);
 		temperature = epsilon;
 	}

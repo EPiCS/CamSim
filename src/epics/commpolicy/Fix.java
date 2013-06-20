@@ -8,13 +8,13 @@ import epics.common.AbstractAINode;
 import epics.common.ICameraController;
 import epics.common.IMessage.MessageType;
 import epics.common.ITrObjectRepresentation;
-import epics.common.Multicast;
+import epics.common.AbstractCommunication;
 
 /** 
  * Sends the given message to the neighbouring cameras in the vision graph. 
  * This method does not make use of the strength of the links.
  */
-public class Fix extends Multicast {
+public class Fix extends AbstractCommunication {
 
 	Broadcast broadcast;
 	

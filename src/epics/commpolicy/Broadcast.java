@@ -8,12 +8,12 @@ import epics.common.AbstractAINode;
 import epics.common.ICameraController;
 import epics.common.IMessage.MessageType;
 import epics.common.ITrObjectRepresentation;
-import epics.common.Multicast;
+import epics.common.AbstractCommunication;
 
 /**
  * Broadcast the message to all nodes
  */
-public class Broadcast extends Multicast {
+public class Broadcast extends AbstractCommunication {
 
 	public Broadcast(AbstractAINode ai, ICameraController camController) {
 		super(ai, camController);

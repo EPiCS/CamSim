@@ -9,7 +9,7 @@ import epics.common.AbstractAINode;
 import epics.common.ICameraController;
 import epics.common.IMessage.MessageType;
 import epics.common.ITrObjectRepresentation;
-import epics.common.Multicast;
+import epics.common.AbstractCommunication;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 
@@ -17,7 +17,7 @@ import epics.common.RandomUse;
  * Sends the given message based on the ratio of its link 
  * strength and the strongest link in the current vision graph.
  */
-public class Smooth extends Multicast {
+public class Smooth extends AbstractCommunication {
 
 	Broadcast broadcast;
 	

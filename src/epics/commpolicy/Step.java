@@ -10,14 +10,14 @@ import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 import epics.common.IMessage.MessageType;
-import epics.common.Multicast;
+import epics.common.AbstractCommunication;
 
 /**
  * Sends the given message to another camera if the link 
  * strength is above a given threshold. 
  * Otherwise communicating with a camera has a very low probability 
  */
-public class Step extends Multicast {
+public class Step extends AbstractCommunication {
 
 	Broadcast broadcast;
 	
