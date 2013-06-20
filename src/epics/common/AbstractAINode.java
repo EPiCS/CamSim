@@ -18,10 +18,6 @@ import epics.commpolicy.Step;
  * Abstract Class of AI - implements all application based methods of a camera.
  * @author Lukas Esterle & Marcin Bogdanski, refactored by Horatio Cane & Lukas Esterle
  */
-/**
- * @author Lukas
- *
- */
 public abstract class AbstractAINode {
 
     protected class Pair {
@@ -55,7 +51,7 @@ public abstract class AbstractAINode {
     public static final boolean BIDIRECTIONAL_VISION = false;
     
     boolean staticVG = false;
-    private int communication;
+//    private int communication;
 	protected Map<String, Double> visionGraph = new HashMap<String, Double>();
     protected Map<List<Double>, ITrObjectRepresentation> trackedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
     protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
@@ -68,7 +64,7 @@ public abstract class AbstractAINode {
     protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
     protected ICameraController camController;
     protected ITrObjectRepresentation trObject;
-    private AbstractCommunication multicast = null;
+    private AbstractCommunication communicationPolicy = null;
 	protected int sentMessages;
 	public IRegistration reg;
 	
@@ -103,14 +99,17 @@ public abstract class AbstractAINode {
 	 * @param r global registration component
 	 * @param rg random number generator for this node
 	 */
-	public AbstractAINode(int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+	public AbstractAINode(
+	        //int comm,
+            AbstractCommunication comm,
+            boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
         AUCTION_DURATION = 0;
         reg = r;
         if(vg != null){
             visionGraph = vg;
         }
                 
-        if(comm == 3){
+        if(comm instanceof epics.commpolicy.Fix){
             USE_BROADCAST_AS_FAILSAVE = false;
         }
         randomGen = rg;
@@ -125,7 +124,10 @@ public abstract class AbstractAINode {
      * @param auctionDuration the duration of auctions
      * @param rg the random number generator for this instance
      */
-    public AbstractAINode(int comm, boolean staticVG, 
+    public AbstractAINode(
+            //int comm,
+            AbstractCommunication comm,
+            boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
     	this(comm, staticVG, vg, r, rg);
     	AUCTION_DURATION = auctionDuration;
@@ -140,15 +142,21 @@ public abstract class AbstractAINode {
      * @param rg random number generator for this node
 	 * @param bs the bandit solver to find the best strategy
 	 */
-	public AbstractAINode(int comm, boolean staticVG, Map<String, Double> vg,
+	public AbstractAINode(
+	        //int comm,
+	        AbstractCommunication comm,
+	        boolean staticVG, Map<String, Double> vg,
 			IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
 		this(comm, staticVG, vg, r, rg);
-		communication = comm;
+		communicationPolicy = comm;
 		banditSolver = bs;
 	}
 	
 	
-	public AbstractAINode(int comm, boolean staticVG, 
+	public AbstractAINode(
+	        //int comm,
+            AbstractCommunication comm,
+            boolean staticVG, 
 			Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 		this(comm, staticVG, vg, r, rg, bs);
 		AUCTION_DURATION = auctionDuration;
@@ -445,8 +453,8 @@ public abstract class AbstractAINode {
      * returns the currently used communication policy
      * @return the communication policy
      */
-    public int getComm(){  
-        return communication;
+    public AbstractCommunication getComm(){  
+        return communicationPolicy;
     }
 
     /**
@@ -898,10 +906,7 @@ public abstract class AbstractAINode {
 	 * @param o the object this message is related to
 	 */
 	protected void sendMessage(MessageType mt, Object o){
-		if (multicast == null) {
-			initialiseMulticast();
-		}
-		multicast.multicast(mt, o);
+		communicationPolicy.multicast(mt, o);
     }
 		
     /**
@@ -911,40 +916,17 @@ public abstract class AbstractAINode {
      * @throws NullPointerException in case the object can not be casted correctly
      */
     protected void broadcast(MessageType mt, Object o) throws ClassCastException{
-    	if (multicast == null) {
-    		initialiseMulticast();
-    	}
-    	multicast.broadcast(mt, o);
+    	communicationPolicy.broadcast(mt, o);
     }
-	
-    /** 
-     * Initialises the multicast object used for communication within 
-     * this node. This will create a new object regardless of whether
-     * one already exists.
-     */
-    protected void initialiseMulticast() {
-    	switch(this.communication){
-			case 0: multicast = new Broadcast(this, this.camController); break;
-			case 1: multicast = new Smooth(this, this.camController); break;
-			case 2: multicast = new Step(this, this.camController); break;
-			case 3: multicast = new Fix(this, this.camController); break;
-    	}
-    	if (DEBUG_CAM) { 
-    		System.out.println("Created new multicast object");
-    	}
-    }
+
     
 	/**
-	 * sets the communication policy:
-	 * 0 = broadcast
-	 * 1 = multicast smooth
-	 * 2 = multicast step
-	 * 3 = multicast fix 
+	 * sets the communication policy
 	 * @param com the communication policy
 	 */
-	public void setComm(int com) {
-        communication = com;
-        initialiseMulticast();
+	public void setComm(AbstractCommunication com) {
+        communicationPolicy = com;
+        com.setAINode(this);
     }
 	
 	/**
@@ -1244,7 +1226,7 @@ public abstract class AbstractAINode {
 	 * updates the all payments made and received, the number of overall messages sent and the number of bids made
 	 */
 	protected void updateTotalUtilComm() {
-        this.tmpTotalComm += getComm();
+        this.tmpTotalComm += getSentMessages();
         this.tmpTotalUtil += getUtility();
         this.tmpTotalRcvdPay += getReceivedUtility();
         this.tmpTotalPaid += getPaidUtility();
