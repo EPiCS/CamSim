@@ -5,7 +5,7 @@ JARNAME=build.jar
 LIBJAR=gnuprologjava-0.2.6.jar
 BUILDCLASSPATH=$LIBJAR
 BUILDMAIN=./src/epics/camwin/Main.java
-INCLUDECLASSES="$BUILDMAIN ./src/epics/ai/*.java"
+INCLUDECLASSES=`find ./src -name "*.java"`
 MANIFESTNAME=MANIFEST.MF
 DASH="--------------------------------------"
 
