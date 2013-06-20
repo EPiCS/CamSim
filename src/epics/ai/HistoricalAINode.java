@@ -14,7 +14,6 @@ import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.AbstractAINode;
 import epics.common.IBanditSolver;
-import epics.common.ICameraController;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;

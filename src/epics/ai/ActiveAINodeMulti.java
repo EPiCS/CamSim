@@ -4,7 +4,6 @@ import java.util.Map;
 
 import epics.common.AbstractAINode;
 import epics.common.IBanditSolver;
-import epics.common.ICameraController;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
@@ -16,8 +15,6 @@ import epics.common.RandomNumberGenerator;
  * @author Marcin Bogdanski & Lukas Esterle, refactored by Horatio Cane 
  */
 public class ActiveAINodeMulti extends AbstractAINode {
-    
-    public static final int DETECTIONRATE = 100;
     
     /**
      * Creates an AI Node with active auction schedule from another, existing ai node
@@ -85,7 +82,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	
     public void advertiseTrackedObjects() {
     	// Active strategy means all objects are advertised every time
-		for (ITrObjectRepresentation io : this.getAllTracedObjects_bb().values()) {
+		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
 			callForHelp(io);	
 		}
 	}

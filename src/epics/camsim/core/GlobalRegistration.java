@@ -18,7 +18,7 @@ public class GlobalRegistration implements IRegistration {
 	Map<ITrObjectRepresentation, Integer> checkObjects = new HashMap<ITrObjectRepresentation, Integer>();
 	List<ICameraController> allCameras = new ArrayList<ICameraController>();
 	List<ITrObjectRepresentation> advertisedObjects = new ArrayList<ITrObjectRepresentation>();
-	Map<ITrObjectRepresentation, ICameraController> traced = new HashMap<ITrObjectRepresentation, ICameraController>();
+	Map<ITrObjectRepresentation, ICameraController> tracked = new HashMap<ITrObjectRepresentation, ICameraController>();
 	
 	boolean offline = false;
 	int offlineFor = -1;
@@ -27,7 +27,7 @@ public class GlobalRegistration implements IRegistration {
 	public void objectTrackedBy(ITrObjectRepresentation to, ICameraController cc){
 		if(!allCameras.contains(cc))
 			allCameras.add(cc);
-		traced.put(to, cc);
+		tracked.put(to, cc);
 		checkObjects.put(to, CHECKINTERVAL); 
 		advertisedObjects.remove(to);
 	}
@@ -79,12 +79,12 @@ public class GlobalRegistration implements IRegistration {
 	
 	private double askCameraFor(ITrObjectRepresentation key) {
 		double retVal = 0.0;
-		CameraController cc = (CameraController) traced.get(key);
+		CameraController cc = (CameraController) tracked.get(key);
 		if(cc != null){
 			if(!cc.isOffline()){
 				IMessage reply = cc.getAINode().receiveMessage(new Message("", "", MessageType.AskConfidence, key));
 				if(reply != null){
-					if(reply.getType().equals(MessageType.ResponseToAskIfCanTrace)){
+					if(reply.getType().equals(MessageType.ResponseToAskIfCanTrack)){
 						retVal = (Double) reply.getContent();
 					}
 				}
@@ -108,8 +108,8 @@ public class GlobalRegistration implements IRegistration {
 	@Override
 	public void removeCamera(ICameraController cc){
 		allCameras.remove(cc);
-		if(traced.containsValue(cc)){
-			for (Map.Entry<ITrObjectRepresentation, ICameraController> kvp : traced.entrySet()) {
+		if(tracked.containsValue(cc)){
+			for (Map.Entry<ITrObjectRepresentation, ICameraController> kvp : tracked.entrySet()) {
 				if(kvp.getValue().equals(cc)){
 					advertiseGlobally(kvp.getKey());
 				}
@@ -132,8 +132,8 @@ public class GlobalRegistration implements IRegistration {
 			cams += cc.getName() + "; ";
 		}
 		System.out.println(cams);
-		String track = "-- TRACED: ";
-		for (Map.Entry<ITrObjectRepresentation, ICameraController> kvp : traced.entrySet()) {
+		String track = "-- TRACKED: ";
+		for (Map.Entry<ITrObjectRepresentation, ICameraController> kvp : tracked.entrySet()) {
 			track += kvp.getKey().getFeatures() + " --> " + kvp.getValue().getName() + "; ";
 		}
 		System.out.println(track);
