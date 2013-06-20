@@ -105,7 +105,7 @@ public class SimCore {
 
     private ArrayList<CameraController> cameras = new ArrayList<CameraController>();
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
-	private int _comm = -1;
+	private AbstractCommunication _comm = null;
 	private String outputFile;
     
 
@@ -293,10 +293,18 @@ public class SimCore {
 	    		
     		}
     		
+    		AbstractCommunication c = null;
+    		
+    		switch(cs.comm){
+    		case 0: c = new Broadcast(null, null); break;
+    		case 1: c = new Smooth(null,null); break;
+    		case 2: c = new Step(null, null); break;
+    		}
+    		
             this.add_camera(
                     cs.name, cs.x, cs.y,
                     cs.heading, cs.viewing_angle,
-                    cs.range, cs.ai_algorithm, cs.comm, cs.limit, vg, cs.bandit, cs.predefConfidences, cs.predefVisibility);
+                    cs.range, cs.ai_algorithm, c, cs.limit, vg, cs.bandit, cs.predefConfidences, cs.predefVisibility);
         }
     	
 
@@ -386,7 +394,7 @@ public class SimCore {
             double angle_degrees,
             double range,
             String ai_algorithm,
-            int comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            AbstractCommunication comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
 
         ai_alg = ai_algorithm;
         add_camera(
@@ -414,9 +422,9 @@ public class SimCore {
             double heading_degrees, 
             double angle_degrees, 
             double range, 
-            int comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            AbstractCommunication comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
 
-    	if(_comm == -1){
+    	if(_comm == null){
     		_comm = comm;
     	}
     	
@@ -439,6 +447,27 @@ public class SimCore {
                 Math.toRadians(angle_degrees),
                 range, aiNode, limit, stats, randomGen, predefConfidences, predefVisibility);
 
+
+        try {
+            Class<?>[] commConstructorTypes = {AbstractAINode.class, ICameraController.class};
+            comm = comm.getClass().getConstructor(commConstructorTypes).newInstance(aiNode, cc);
+            aiNode.setComm(comm);
+        } catch (NoSuchMethodException e1) {
+            e1.printStackTrace();
+        } catch (SecurityException e1) {
+            e1.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        
+        
+        
     	try {
     		if (paramFile != null) {
     			this.applyParamsToAINode(aiNode, paramFile);
@@ -478,7 +507,7 @@ public class SimCore {
      * @throws InvocationTargetException
      */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
-    		int comm, boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
+    		AbstractCommunication comm, boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
     				InvocationTargetException {
@@ -498,9 +527,10 @@ public class SimCore {
 		}
     	
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
-    	Class<?>[] constructorTypes = {int.class, boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
+    	Class<?>[] constructorTypes = {AbstractCommunication.class, boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
     	AbstractAINode node = (AbstractAINode) cons.newInstance(comm, staticVG, vg, r, randomGen, bs);
+    	node.setComm(comm);
     	return node;
     }
     
@@ -567,7 +597,7 @@ public class SimCore {
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 360,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 90 + 15,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 20 + 10, 
-                0, 
+                new Broadcast(null,null), 
                 0, null, "", null, null);//RandomNumberGenerator.nextInt(5));
     }
 
@@ -1047,7 +1077,7 @@ public class SimCore {
 			}
 
         }
-     
+        this.computeUtility();
         stats.nextTimeStep();
     }
 
@@ -1096,7 +1126,13 @@ public class SimCore {
 				//process event
 				if(e.event.equals("add")){
 					if(e.participant == 1){ // camera
-						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, e.comm, e.limit, null, e.bandit, null, null);
+					    AbstractCommunication c = null;
+					    switch(e.comm){
+			            case 0: c = new Broadcast(null, null); break;
+			            case 1: c = new Smooth(null,null); break;
+			            case 2: c = new Step(null, null); break;
+			            }
+						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, c, e.limit, null, e.bandit, null, null);
 					}
 					else{ //object 
 						if(e.waypoints == null){
