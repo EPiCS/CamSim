@@ -571,6 +571,7 @@ public class SimCore {
     	
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
     	AbstractAINode node = (AbstractAINode) cons.newInstance(ai);
+    	node.setComm(comm);
     	return node;
     }
 
