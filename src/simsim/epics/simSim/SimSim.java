@@ -43,13 +43,8 @@ public class SimSim {
 	static double standardBanditParameter = 0.1;
 	
 	static double banditRuns = 20.0d; //how many different alpha values are being tried out 
-	
-	static File directory;
-	static String totalDirName;
-	
-	static ExecutorService exService;
-	static Random ran = new Random(initialSeed);
-	
+
+
 	
 	/**
 	 * @param args
@@ -1076,6 +1071,12 @@ public class SimSim {
 	    }
 	}
 	
+	static File directory;
+    static String totalDirName;
+    
+    static ExecutorService exService;
+    static Random ran = new Random(initialSeed);
+    
 	private static boolean diffSeed = true;
     public static boolean runSequential = true;
     public static int runRandomConfigs = 0;
@@ -1106,10 +1107,11 @@ enum States{
 }
 
 enum CommPolicy{
-    BROADCAST("epics.commpolicy.Broadcast", "0"),
-    SMOOTH("epics.commpolicy.Smooth", "1"),
-    STEP("epics.commpolicy.Step", "2"),
-    FIX("epics.commpolicy.Fix", "3");  
+    BROADCAST("epics.commpolicy.Broadcast", "0")
+    ,SMOOTH("epics.commpolicy.Smooth", "1")
+    ,STEP("epics.commpolicy.Step", "2")
+   // ,FIX("epics.commpolicy.Fix", "3")
+    ;  
     /**
      * @param text
      */
@@ -1145,8 +1147,9 @@ enum CommPolicy{
 }
 
 enum AuctionsSchedule {
-    ACTIVE("epics.ai.ActiveAINodeMulti", "A"),
-    PASSIVE("epics.ai.PassiveAINodeMulti", "P");  
+    ACTIVE("epics.ai.ActiveAINodeMulti", "A")
+    , PASSIVE("epics.ai.PassiveAINodeMulti", "P")
+    ;  
     /**
      * @param text
      */
