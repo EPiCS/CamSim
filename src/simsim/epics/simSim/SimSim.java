@@ -1,19 +1,25 @@
 package simsim.epics.simSim;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 import epics.camsim.core.SimSettings.CameraSettings;
+import epics.common.AbstractAINode;
 
 /**
  * 
@@ -25,9 +31,9 @@ public class SimSim {
     public static String loadScenariosFrom = "..//..//..//..//scenarios//2Cams"; //can be overwriten using argument [0]
     public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
     public static boolean allStatistics = false;
-	public static boolean runHomogeneous = true;
+	public static boolean runHomogeneous = false;
 	public static boolean runByParameter = false;
-	public static boolean runAllPossibleVersions = false;
+	public static boolean runAllPossibleVersions = true;
 	public static boolean runBandits = false;
 	
 	static int duration = 1000; //how many timesteps
@@ -591,40 +597,44 @@ public class SimSim {
 	     
 	}
 
-	public static void doVariation(LinkedList<ArrayList<CameraSettings>> reps, States[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
+	public static void doVariation(LinkedList<ArrayList<CameraSettings>> reps, Object[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
 		long seed = initialSeed;
 		SimSettings simS = ss.copy();
         if (count < simS.cameras.size()){//item.size()){
             for (int i = 0; i < input.length; i++) {
             	CameraSettings cs = simS.cameras.get(count).clone(); //item.get(count);
-            	switch (input[i]) {
-				case ABC: 
-					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-					cs.comm = 0;
-					break;
-				case ASM:
-					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-					cs.comm = 1;
-					break;
-				case AST:
-					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-					cs.comm = 2;
-					break;
-				case PBC:
-					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-					cs.comm = 0;
-					break;
-				case PSM:
-					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-					cs.comm = 1;
-					break;
-				case PST:
-					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-					cs.comm = 2;
-					break;
-				default:
-					break;
-				}
+            	Object[] o = (Object[]) input[i];
+            	cs.customComm = ((CommPolicy) o[0]).toString();
+            	cs.comm = 4;
+            	cs.ai_algorithm = ((AuctionsSchedule) o[1]).toString();
+//            	switch (input[i]) {
+//				case ABC: 
+//					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+//					cs.comm = 0;
+//					break;
+//				case ASM:
+//					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+//					cs.comm = 1;
+//					break;
+//				case AST:
+//					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+//					cs.comm = 2;
+//					break;
+//				case PBC:
+//					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+//					cs.comm = 0;
+//					break;
+//				case PSM:
+//					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+//					cs.comm = 1;
+//					break;
+//				case PST:
+//					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+//					cs.comm = 2;
+//					break;
+//				default:
+//					break;
+//				}
             	simS.cameras.set(count, cs); // item.set(count, cs);
             	
                 doVariation(reps, input, simS, count+1, scenDirName); //item, count+1, scenDirName);
@@ -633,13 +643,20 @@ public class SimSim {
         	String dirName = "";
         	//ss.cameras = item;
         	for (int i = 0; i < simS.cameras.size(); i++){ //item.size(); i++) {
-				if(simS.cameras.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){ // item.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
-					dirName += "a";
+//				if(simS.cameras.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){ // item.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
+//					dirName += "a";
+//				}
+//				else{
+//					dirName += "p";
+//				}
+        	    dirName += AuctionsSchedule.fromString(simS.cameras.get(i).ai_algorithm).toShortString();
+				if(simS.cameras.get(i).comm == 4){
+				    CommPolicy cp = CommPolicy.fromString(simS.cameras.get(i).customComm);
+				    dirName += cp.toShortString(); //simS.cameras.get(i).customComm;
 				}
 				else{
-					dirName += "p";
+				    dirName += simS.cameras.get(i).comm; // item.get(i).comm;
 				}
-				dirName += simS.cameras.get(i).comm; // item.get(i).comm;
 			}
         	
         	File dir = new File(scenDirName + dirName);
@@ -691,10 +708,11 @@ public class SimSim {
 		LinkedList<ArrayList<CameraSettings>> items = new LinkedList<ArrayList<CameraSettings>>();
 		
 //        ArrayList<CameraSettings> item = ss.cameras; 
-		
-        States[] input = {States.ABC, States.ASM, States.AST, States.PBC, States.PSM, States.PST};
+		List l = loadAllCombos();
+		Object[] test = l.toArray();
+//        States[] input = {States.ABC, States.ASM, States.AST, States.PBC, States.PSM, States.PST};
         String scenDirName = totalDirName + "//"+ scenName + "//";
-        doVariation(items, input, ss, 0, scenDirName);//item, 0, scenDirName);
+        doVariation(items, test, ss, 0, scenDirName);//item, 0, scenDirName);
     }
 	
 	private static void runRandomStatic(int runs, int duration, File f, String scenDirName){
@@ -808,68 +826,50 @@ public class SimSim {
 		String scenDirName = totalDirName + "//"+ scenName + "//";
 		String algo = "epics.ai.ActiveAINodeMulti";
 		
-		//for all cameras load the same configuration
-		for(int i = 0; i < 2; i++){
-			String dirname = "";
-			if(i == 0){
-				algo = "epics.ai.ActiveAINodeMulti";
+
+		List<Object[]> input = loadAllCombos();
+        for(Object[] o : input){
+            String dirname = ((AuctionsSchedule) o[1]).toShortString() + ((CommPolicy) o[0]).toShortString();
+			for(CameraSettings cs : ss.cameras){
+			    cs.ai_algorithm = ((AuctionsSchedule) o[1]).toString();
+			    cs.comm = 4;
+			    cs.customComm = ((CommPolicy) o[0]).toString();
 			}
-			else{
-				algo = "epics.ai.PassiveAINodeMulti";
-			}
-			for(int j = 0; j < 3; j++){
-				for(CameraSettings cs : ss.cameras){
-					if(i == 0){
-						dirname += "a"+j;
-					}
-					else{
-						dirname += "p"+j;
-					}
-						
-					cs.ai_algorithm = algo; 
-					cs.comm = j;
-				}
-				
-				System.out.print(dirname + " runs: ");
-                for(int r = 0; r < runs; r++){
-                    System.out.print(r + "; ");
-		        	if (showgui == false) {
-		        		if(randomSeed){
-		        			seed = System.currentTimeMillis() % 1000;
-		        		}
-		        		else{
-		        			if(diffSeed){
-		        				seed =r;
-		        			}
-		        		}
-		        		
-		        		if(!runSequential){
-		        			exService.execute(new SimRunner(seed, scenDirName + dirname, "run" + r + ".csv", ss, false, -1, 50, duration, 0.5, false, false));
-		        		}
-		        		else{
-		        		
-	//	        		testing.put(scenDirName + dirName + "//run" + r + ".csv", simS);
-		        			directory = new File(scenDirName + dirname);
-		        			directory.mkdirs();
-		        			
-			                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
-			                sim.setQuiet(true);
-			                //new SimCore(seed, run, ss, global, camError, camReset, alpha);
-			                for (int k = 0; k < duration; k++) {
-			                    try {
-									sim.update();
-		//							System.out.println(i);
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
-			                }
-			                sim.close_files();
-		        		}
-		            } 
-	        	}
-				System.out.println("");
-				dirname = "";
-			}
+			System.out.print(dirname + " runs: ");
+            for(int r = 0; r < runs; r++){
+                System.out.print(r + "; ");
+	        	if (showgui == false) {
+	        		if(randomSeed){
+	        			seed = System.currentTimeMillis() % 1000;
+	        		}
+	        		else{
+	        			if(diffSeed){
+	        				seed =r;
+	        			}
+	        		}
+	        		
+	        		if(!runSequential){
+	        			exService.execute(new SimRunner(seed, scenDirName + dirname, "run" + r + ".csv", ss, false, -1, 50, duration, 0.5, false, false));
+	        		}
+	        		else{
+	        			directory = new File(scenDirName + dirname);
+	        			directory.mkdirs();
+	        			
+		                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
+		                sim.setQuiet(true);
+		                for (int k = 0; k < duration; k++) {
+		                    try {
+								sim.update();
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+		                }
+		                sim.close_files();
+	        		}
+	            } 
+        	}
+			System.out.println("");
+			dirname = "";
 		}
 	}
 
@@ -1034,6 +1034,48 @@ public class SimSim {
 		
 	}
 	
+	private static List<Object[]> loadAllCombos(){
+	    List<Object[]> result = new ArrayList<Object[]>();
+	    for(CommPolicy p : EnumSet.allOf(CommPolicy.class)){
+	        for(AuctionsSchedule a : EnumSet.allOf(AuctionsSchedule.class)){
+	            Object[] o = new Object[]{p, a};
+	            result.add(o);
+	        }
+	    }
+	    return result;
+	}
+	
+	private static void loadAllFiles(){
+	 // Prepare.
+	    String packageName = "epics.ai";
+	    List<Class<AbstractAINode>> commands = new ArrayList<Class<AbstractAINode>>();
+	    URL root = Thread.currentThread().getContextClassLoader().getResource(packageName.replace(".", "/"));
+
+	    // Filter .class files.
+	    File[] files = new File(root.getFile()).listFiles(new FilenameFilter() {
+	        public boolean accept(File dir, String name) {
+	            return name.endsWith(".class");
+	        }
+	    });
+
+	    // Find classes implementing AbstractAINode.
+	    for (File file : files) {
+	        String className = file.getName().replaceAll(".class$", "");
+	        Class<?> cls;
+            try {
+                cls = Class.forName(packageName + "." + className);
+    	        if (AbstractAINode.class.isAssignableFrom(cls)) {
+    	            commands.add((Class<AbstractAINode>) cls);
+    	        }
+    	        System.out.println(cls.toString());
+	        } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+	    }
+	}
+	
 	private static boolean diffSeed = true;
     public static boolean runSequential = true;
     public static int runRandomConfigs = 0;
@@ -1050,7 +1092,8 @@ public class SimSim {
     static int startTrackError = 30;
     static int endTrackError = -1;
     static int trackRate = 5;
-	
+    
+    
 }
 
 enum States{
@@ -1061,3 +1104,81 @@ enum States{
     PST,
     PSM
 }
+
+enum CommPolicy{
+    BROADCAST("epics.commpolicy.Broadcast", "0"),
+    SMOOTH("epics.commpolicy.Smooth", "1"),
+    STEP("epics.commpolicy.Step", "2"),
+    FIX("epics.commpolicy.Fix", "3");  
+    /**
+     * @param text
+     */
+    private CommPolicy(final String text, final String st) {
+        this.text = text;
+        this.shortText = st;
+    }
+
+    private final String text;
+    private final String shortText;
+
+    /* (non-Javadoc)
+     * @see java.lang.Enum#toString()
+     */
+    @Override
+    public String toString() {
+        return text;
+    }
+    
+    public String toShortString(){
+        return shortText;
+    }
+    
+    public static CommPolicy fromString(String text) {
+        if (text != null) {
+            for (CommPolicy b : CommPolicy.values()) {
+                if (text.equals(b.toString()))
+                    return b;
+            }
+        }
+        return null;
+    }
+}
+
+enum AuctionsSchedule {
+    ACTIVE("epics.ai.ActiveAINodeMulti", "A"),
+    PASSIVE("epics.ai.PassiveAINodeMulti", "P");  
+    /**
+     * @param text
+     */
+    private AuctionsSchedule(final String text, final String st) {
+        this.text = text;
+        this.shortText = st;
+    }
+
+    private final String text;
+    private final String shortText;
+
+    /* (non-Javadoc)
+     * @see java.lang.Enum#toString()
+     */
+    @Override
+    public String toString() {
+        return text;
+    }
+    
+    public String toShortString(){
+        return shortText;
+    }
+    
+    public static AuctionsSchedule fromString(String text) {
+        if (text != null) {
+            for (AuctionsSchedule b : AuctionsSchedule.values()) {
+                if (text.equals(b.toString()))
+                    return b;
+            }
+        }
+        return null;
+    }
+}
+
+
