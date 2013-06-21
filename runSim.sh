@@ -1,5 +1,5 @@
 #!/bin/sh
-RUNJAR="buildSim.jar"
+RUNJAR="build.jar"
 LIBJAR="gnuprologjava-0.2.6.jar"
 
 if [ ! -f $RUNJAR ]; then
@@ -23,4 +23,5 @@ else
     echo "Using default ScenarioFile: $ARGS"
 fi
 
-java -jar $RUNJAR $ARGS
+java -cp $RUNJAR simsim.epics.simSim.SimSim $ARGS
+
