@@ -235,6 +235,7 @@ public class SimSettings implements Cloneable{
     	double y;
     	int limit;
     	int comm;
+    	String customCom;
     	ArrayList<Point2D> waypoints;
     	String bandit;
     	
@@ -249,7 +250,7 @@ public class SimSettings implements Cloneable{
     		duration = dur;
     	}
     	
-    	public Event(int ts, int part, String n, String ev, double heading, double ran, double ang, double xPos, double yPos, int limit, int comm, String bandit){
+    	public Event(int ts, int part, String n, String ev, double heading, double ran, double ang, double xPos, double yPos, int limit, int comm, String cc, String bandit){
     		timestep = ts;
     		participant = part;
     		name = n;
@@ -262,6 +263,7 @@ public class SimSettings implements Cloneable{
     		x = xPos;
     		y = yPos;
     		this.comm = comm;
+    		this.customCom = cc;
     		this.bandit = bandit;
     	}
     	
@@ -461,6 +463,9 @@ public class SimSettings implements Cloneable{
                 }
                 else{
                 	cs.comm = Integer.parseInt(eCamera.getAttribute("comm"));
+                	String cc = "";
+                    if(eCamera.hasAttribute("customcom"))
+                        cs.customComm = eCamera.getAttribute("customcom");
                 }
                 if(eCamera.hasAttribute("limit")){
                 	cs.limit = Integer.parseInt(eCamera.getAttribute("limit"));
@@ -590,6 +595,9 @@ public class SimSettings implements Cloneable{
             			double x = Double.parseDouble(eEvent.getAttribute("x"));
             			double y = Double.parseDouble(eEvent.getAttribute("y"));
             			int comm = Integer.parseInt( eEvent.getAttribute("comm"));
+            			String cc = "";
+            			if(eEvent.hasAttribute("customcom"))
+            			    cc = eEvent.getAttribute("customcom");
             			int limit = FIX_LIMIT;
             			String bs = "";
             			if(eEvent.hasAttribute("bandit"))
@@ -598,7 +606,7 @@ public class SimSettings implements Cloneable{
             				limit = Integer.parseInt(eEvent.getAttribute("limit"));
             			}
             			
-            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, bs);
+            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, cc, bs);
             			events.add(e);
             		}
             		else if(event.equals("change")){
@@ -610,10 +618,13 @@ public class SimSettings implements Cloneable{
             			String bs = "";
             			if(eEvent.hasAttribute("bandit"))
             				bs = eEvent.getAttribute("bandit");
+            			String cc = "";
+                        if(eEvent.hasAttribute("customcom"))
+                            cc = eEvent.getAttribute("customcom");
             			int comm = -1;
             			double heading = Double.parseDouble(eEvent.getAttribute("heading"));
             			int limit = FIX_LIMIT;
-            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, bs);
+            			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, cc, bs);
             			events.add(e);
             		}
             		else{
