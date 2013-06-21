@@ -108,17 +108,17 @@ public class WorldView extends JPanel implements Observer {
 	            if(SHOW_RES_LABELS) {
 	            	if(c.isOffline()){
 	            		g2.setColor(Color.ORANGE);
-	            		g2.drawString("OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            		drawString(g2, "OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	}
 	            	else{
-	            		g2.drawString(c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            		drawString(g2, c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	}
 	            } else{
 	            	if(c.isOffline()) {
 	            		g2.setColor(Color.ORANGE);
-	            		g2.drawString("OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            		drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
 	            	} else {
-	            		g2.drawString(c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
+	            		drawString(g2, c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
 	            	}
 	            }
             } else {
@@ -126,7 +126,7 @@ public class WorldView extends JPanel implements Observer {
             		g2.setColor(Color.ORANGE);
     	            Font f = new Font("Arial", Font.PLAIN, 10);
     	            g2.setFont(f);
-    	            g2.drawString("OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+    	            drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
             	}
             }
             
@@ -328,6 +328,11 @@ public class WorldView extends JPanel implements Observer {
             	g2.drawString(tc.toString(), (int) this.cst.simToWindowX(tc.getX()), (int) this.cst.simToWindowY(tc.getY()));
         }
          
+    }
+    
+    private void drawString(Graphics g, String text, int x, int y) {
+        for (String line : text.split("\n"))
+            g.drawString(line, x, y += g.getFontMetrics().getHeight());
     }
     
     public void update(Observable obs, Object obj) {
