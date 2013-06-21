@@ -6,7 +6,15 @@ import epics.common.IMessage.MessageType;
 import java.util.*;
 
 /**
- *
+ * This class represents a camera. It contains information about the position,
+ * heading, viewing angle and range of the camera.
+ * This class also handles logic regarding the detection of objects, as would
+ * be expected of a physical camera. This includes computing the 'confidence'
+ * (visibility) value of an object in relation to the camera, including 
+ * whether or not it is visible, and how visible it is. 
+ * A CameraController holds a set of neighbouring cameras, as well as a set
+ * of visible objects, which changes as time goes on.
+ * 
  * @author Lukas Esterle & Marcin Bogdanski <mxb039@cs.bham.ac.uk>
  */
 public class CameraController implements ICameraController{
@@ -41,9 +49,12 @@ public class CameraController implements ICameraController{
 	private int step;
     
 	/**
-	 * instantiates a new camera in the simulator
-	 * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
-	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+	 * Instantiates a new camera in the simulator
+	 * @param predefConfidences defines a list of objects represented by an 
+	 * 	ArrayList of their confidences where each element is for one frame/timestep 
+	 * @param predefVisibility defines a list of objects represented by an 
+	 * 	ArrayList of their visibility (0 = visible, 1 = not visible or at 
+	 * 	touching border) where each element is for one frame/timestep
 	 */
     public CameraController( String name, double x, double y,
                 double heading, double viewing_angle, double range, AbstractAINode ai, int limit, Statistics stats, RandomNumberGenerator rg, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
@@ -64,6 +75,7 @@ public class CameraController implements ICameraController{
         this.step = -1;
     }
     
+    /** Gets the amount of resources available to this camera */
     public double getAvailableResources(){
     	if(isOffline()){
     		return 0;
@@ -73,18 +85,27 @@ public class CameraController implements ICameraController{
     	}
     }
     
+    /** 
+     * Reduces the amount of resources available to this camera 
+     * by the given amount
+     */
     public void reduceResources(double amount){
     	if(!isOffline()){
     		resources.reduceResources(amount);
     	}
     }
     
+    /** Adds the given amount of resources to this camera */
     public void addResources(double amount){
     	if(!isOffline()){
     		resources.addResources(amount);
     	}
     }
 
+    /** 
+     * Sends an 'update' message to the AI node within this CamController, 
+     * representing the passing of a time step 
+     */
     void updateAI() {
     	if(isOffline()){
     		isOfflineFor--;
@@ -95,7 +116,8 @@ public class CameraController implements ICameraController{
     	}
     }
     
-
+    /** Gets the name of this camera, or "offline" if the camera is offline */
+    @Override
 	public String getName() {
     	if(!isOffline()){
     		return this.name;
@@ -105,6 +127,7 @@ public class CameraController implements ICameraController{
     	}
     }
 
+    /** Adds a neighbouring camera */
     public void addCamera(CameraController cam) {
     	if(!isOffline()){
 	        if (cam != this) {
@@ -115,6 +138,7 @@ public class CameraController implements ICameraController{
     	}
     }
 
+    /** Removes a neighbouring camera */
     public void removeCamera( CameraController cam ){
     	if(!isOffline()){
 	        while( this.neighbours.contains(cam)){
@@ -201,6 +225,8 @@ public class CameraController implements ICameraController{
     	}
     }
 
+    /** Returns whether a detection is valid (e.g. it would not be valid if
+     * the camera were offline) */
     private boolean gotDetection() {
     	if(!isOffline()){
     		return true;
@@ -209,12 +235,14 @@ public class CameraController implements ICameraController{
     	}
 	}
     
+    /** Add a visible object to this camera's list */
     private void addVisibleObject(TraceableObject tc, double confidence){
     	if(!isOffline()){
     		this.visible_objects.put(tc, confidence);
     	}
     }
     
+    /** Removes a visible object from this camera's list */
     private void removeVisibleObject(TraceableObject tc){
     	if(!isOffline()){
 	        if (this.visible_objects.containsKey(tc)){
@@ -223,6 +251,10 @@ public class CameraController implements ICameraController{
     	}
     }
     
+    /** 
+     * Removes objects from this camera's list which contain 
+     * the given features 
+     */
     @Override
     public void removeObject(List<Double> features){
     	List<TraceableObject> remove = new ArrayList<TraceableObject>();
@@ -236,21 +268,9 @@ public class CameraController implements ICameraController{
 			removeVisibleObject(traceableObject);
 		}
     }
-
-    public TraceableObject getTracked(){
-    	if(!isOffline()){
-	        ITrObjectRepresentation itro = this.camAINode.getTrackedObject();
-	        if ( itro == null ){
-	            return null;
-	        }
-	        TraceableObjectRepresentation tro = (TraceableObjectRepresentation)itro;
-	        return tro.getTraceableObject();
-    	}
-    	else{
-    		return null;
-    	}
-    }
     
+    /** Returns the objects being tracked (i.e. owned) by this camera. 
+     * @return A map of the features of the object to the TraceableObjectRepresentation */
     public Map<List<Double>, TraceableObject> getTrackedObjects(){
     	Map<List<Double>, TraceableObject> retVal = new HashMap<List<Double>, TraceableObject>();
     	if(!isOffline()){
@@ -261,6 +281,7 @@ public class CameraController implements ICameraController{
     	return retVal;
     }
 
+    /** Returns the visible objects for this camera */
     public Map<TraceableObject, Double> getVisibleObjects(){
     	if(!isOffline()){
     		return this.visible_objects;
@@ -270,6 +291,7 @@ public class CameraController implements ICameraController{
     	}
     }
 
+    /** Returns the number of visible objects in this camera's FOV */
     public int getNumVisibleObjects(){
     	if(!isOffline()){
     		return this.visible_objects.size();
@@ -279,28 +301,38 @@ public class CameraController implements ICameraController{
     	}
     }
 
+    /** Returns the x position of this camera */
     public double getX() {
     	return this.x;
     }
 
+    /** Returns the y position of this camera */
     public double getY(){
     	return this.y;
     }
 
+    /** Returns the heading of this camera (direction it is facing) */
     public double getHeading(){
     	return this.heading;
     	
     }
 
+    /** Returns the range (distance) of this camera's FOV */
     public double getRange() {
     	return this.range;
     	
     }
 
+    /** Returns the angle width of this camera's view (not to be confused
+     * with heading) */
     public double getAngle() {
     	return this.viewing_angle;
     }
 
+    /** 
+     * Returns the visible objects for this camera, as a map of object
+     * to the confidence of each object 
+     */
     @Override
     public Map<ITrObjectRepresentation,Double> getVisibleObjects_bb() {
     	
@@ -319,6 +351,12 @@ public class CameraController implements ICameraController{
         return result_list;
     }
 
+    /** 
+     * Creates a message object with the given parameters
+     * @param to The recipient of the message
+     * @param msgType The type of the message
+     * @param content The object to be sent to the recipient 
+     */
     @Override
     public IMessage createMessage(String to, MessageType msgType, Object content) {
     	if(!isOffline()){
@@ -329,11 +367,13 @@ public class CameraController implements ICameraController{
     	}
     }
     
+    /** Clears the resources and list of neighbours for this camera */
     public void resetCamera(){
     	this.neighbours = new ArrayList<CameraController>();
     	this.resources = new Resources();
     }
 
+    /** Returns a list of neighbours for this camera */
     public List<ICameraController> getNeighbours() {
     	
         List<ICameraController> lst = new LinkedList<ICameraController>();
@@ -345,7 +385,8 @@ public class CameraController implements ICameraController{
         return lst;
     }
 
-    private CameraController getNeighbourByName( String name ){
+    /** Returns the CameraController object for the neighbour with the given name */
+    private CameraController getNeighbourByName(String name){
     	if(!isOffline()){
 	        for ( int i = 0; i < this.neighbours.size(); i++ ){
 	            if ( this.neighbours.get(i).getName().compareTo(name) == 0 ){
@@ -356,7 +397,13 @@ public class CameraController implements ICameraController{
         return null;
     }
 
-    public IMessage sendMessage( String to, MessageType msgType, Object content){
+    /** 
+     * Does the actual passing of the message to the given recipient 
+     * @param to The recipient of the message
+     * @param msgType The type of the message
+     * @param content The object to be sent to the recipient
+     */
+    public IMessage sendMessage(String to, MessageType msgType, Object content){
     	if(DELAY_COMM > 0){
     		IMessage msg = this.createMessage(to, msgType, content);
 
@@ -410,7 +457,7 @@ public class CameraController implements ICameraController{
     	}
     }
     
-
+    /** Sends out all messages waiting in the 'sendOut' list */
     protected IMessage forwardMessages() {
     	IMessage retVal = null;
     	List<IMessage> delete = new ArrayList<IMessage>();
@@ -433,7 +480,7 @@ public class CameraController implements ICameraController{
 		return retVal;
 	}
 
-
+    /** Returns the AI node associated with this CameraController */
     public AbstractAINode getAINode() {
     	if(!isOffline()){
     		return this.camAINode;
@@ -443,6 +490,7 @@ public class CameraController implements ICameraController{
     	}
     }
 
+    /** Gets the vision graph in a 'drawable' form  for this camera */
     public Map<String,Double> getDrawableVisionGraph(){
     	if(!isOffline()){
     		return this.camAINode.getDrawableVisionGraph();
@@ -453,6 +501,10 @@ public class CameraController implements ICameraController{
 
     
 //<camera ai_algorithm="lukas" heading="-180.0" name="Cam_01" range="20.0" viewing_angle="70.0" x="-15.0" y="10.0" comm="2"/>
+    /** 
+     * Gets an xml string representing this camera, for the purpose of saving
+     * to an XML scenario file 
+     */
     @Override
     public String toString(){
     	String retVal = "<camera ai_algorithm=\"";
@@ -461,6 +513,7 @@ public class CameraController implements ICameraController{
     	return retVal;
     }
 
+    /** Returns the limit of the number of objects this camera can track */
 	@Override
 	public int getLimit() {
 		if(!isOffline()){
@@ -471,6 +524,7 @@ public class CameraController implements ICameraController{
 		}
 	}
 
+	/** Gets all resources for this camera */
 	@Override
 	public double getAllResources() {
 		if(!isOffline()){
@@ -481,6 +535,10 @@ public class CameraController implements ICameraController{
 		}
 	}
 
+	/** 
+	 * Put this camera offline for the given number of time steps.
+	 * A -1 value means sleep forever
+	 */
 	public void setOffline(int sleepFor) {
 		if(sleepFor == -1){
 			sleepForever  = true;
@@ -490,6 +548,7 @@ public class CameraController implements ICameraController{
 		}
 	}
 
+	/** Returns whether this camera is offline */
 	public boolean isOffline() {
 		if(sleepForever){
 			return true;
@@ -504,6 +563,7 @@ public class CameraController implements ICameraController{
 		}
 	}
 
+	/** Change the camera's x/y/heading/angle/range values during a simulation */
 	@Override
 	public void change(double xCoord, double yCoord, double head, double angle,
 			double range) {
@@ -522,6 +582,7 @@ public class CameraController implements ICameraController{
 		
 	}
 	
+	/** Gives a hashcode for this camera, for putting in HashMaps, etc. */
 	@Override
 	public int hashCode() {
 		String s = toString()+" visibleObjects="+this.visible_objects.size() 
@@ -529,11 +590,13 @@ public class CameraController implements ICameraController{
 		return s.hashCode();
 	}
 
+	/** Sets the AI node associated with this camera */
 	@Override
 	public void setAINode(AbstractAINode ai) {
 		camAINode = ai;
 	}
 
+	/** Updates the confidence for 'real' objects, from a predefined confidence list */
 	public void update_confidence_real(int step, TraceableObject o) {
 		int get = (int) Double.parseDouble(o.getFeatures().get(0).toString());
 		ArrayList<Double> c = predefConf.get(get);
@@ -546,6 +609,7 @@ public class CameraController implements ICameraController{
         }	
 	}
 	
+	/** Whether we are using 'real' objects, from a predefined confidence list */
 	public boolean realObjectsUsed(){
 		if(predefConf != null){
 			return true;
@@ -555,6 +619,7 @@ public class CameraController implements ICameraController{
 		}
 	}
 
+	/** Advance the time step counter */
 	public void nextStep() {
 		step++;
 	}

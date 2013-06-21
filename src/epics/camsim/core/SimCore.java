@@ -14,12 +14,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
-
 import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
-import epics.common.*;
+import epics.common.AbstractAINode;
+import epics.common.AbstractCommunication;
+import epics.common.CmdLogger;
+import epics.common.IBanditSolver;
+import epics.common.ICameraController;
+import epics.common.IMessage;
 import epics.common.IMessage.MessageType;
-import epics.commpolicy.*;
+import epics.common.IRegistration;
+import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse;
+import epics.common.RunParams;
+import epics.commpolicy.Broadcast;
+import epics.commpolicy.Smooth;
+import epics.commpolicy.Step;
 
 /**
  * SimCore represents the main core of the simulation. each object and camera is controlled from here. 
@@ -236,8 +245,10 @@ public class SimCore {
 	}
 	
     /**
-     * Interprets the SimSettings object and creates cameras, vision graphs and trackable objects with their corresponding behaviour as well as the simulation environment itself
-     * @param ss stores the settings for this simulation
+     * Interprets the SimSettings object and creates cameras, vision graphs
+     * and trackable objects with their corresponding behaviour as well as
+     * the simulation environment itself
+     * @param ss The object containing the settings for this simulation
      */
     public void interpretFile(SimSettings ss){
     	settings = ss;
@@ -290,23 +301,16 @@ public class SimCore {
 	    					vg.put(all.getKey(), 1.0);
 	    			}
 	    		}
-	    		
     		}
     		
-    		AbstractCommunication c = null;
-    		
-    		switch(cs.comm){
-    		case 0: c = new Broadcast(null, null); break;
-    		case 1: c = new Smooth(null,null); break;
-    		case 2: c = new Step(null, null); break;
-    		}
-    		
-            this.add_camera(
+    		this.add_camera(
                     cs.name, cs.x, cs.y,
                     cs.heading, cs.viewing_angle,
-                    cs.range, cs.ai_algorithm, c, cs.limit, vg, cs.bandit, cs.predefConfidences, cs.predefVisibility);
+                    cs.range, cs.ai_algorithm, 
+                    cs.comm, cs.customComm, 
+                    cs.limit, vg, cs.bandit, 
+                    cs.predefConfidences, cs.predefVisibility);
         }
-    	
 
         for (SimSettings.TrObjectSettings tro : ss.objects){
             this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features);
@@ -319,21 +323,16 @@ public class SimCore {
         events = ss.events;
     }
 
-    /**
-     * writes statistics and closes all statistics files  
-     */
+    /** Writes statistics and closes all statistics files */
     public void close_files(){
         try {
 			stats.close();
-			//printAllBanditResults();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
     }
     
-    /**
-     * allows to print all information from all bandit solvers into files
-     */
+    /** Outputs all information from all bandit solvers into files */
     private void printAllBanditResults(){
     	for(CameraController cc : this.cameras){
 			IBanditSolver bs = cc.getAINode().getBanditSolver();
@@ -346,7 +345,8 @@ public class SimCore {
     }
     
     /**
-     * actually prints arrayLists of ArrayLists into specific files
+     * Convenience method to print arrayLists within ArrayLists into 
+     * specific files
      * @param res results to be stored in file
      * @param filename the filename to store results to
      */
@@ -372,20 +372,23 @@ public class SimCore {
 	}
 
     /**
-     * crates a new camera and adds it to the list of cameras WITH an AINODE as parameter
+     * Creates a new camera and adds it to the list of cameras WITH an AINODE as parameter
      * @param name defines the name of the camera
      * @param x_pos defines the x position in the internal coordinates
      * @param y_pos defines the y position in the internal coordinates
      * @param heading_degrees defines the direction of the viewing point
-     * @param angle_degrees defines the with of the viewing angle
-     * @param range defines the range of the camera
+     * @param angle_degrees defines the width of the viewing angle
+     * @param range defines the range (distance) of the camera's view
      * @param ai_algorithm defines the initial algorithm approach used
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
      * @param bandit defines the used bandit solver algorithm 
-     * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
-	 * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+     * @param predefConfidences defines a list of objects represented by an ArrayList of 
+     * 	their confidences where each element is for one frame/timestep 
+	 * @param predefVisibility defines a list of objects represented by an ArrayList of 
+	 * 	their visibility (0 = visible, 1 = not visible or at touching border) where each 
+	 * 	element is for one frame/timestep
 	 */
     public void add_camera(
             String name,
@@ -394,45 +397,58 @@ public class SimCore {
             double angle_degrees,
             double range,
             String ai_algorithm,
-            AbstractCommunication comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            int commValue,
+            String customComm,
+            int limit, 
+            Map<String, Double> vg, 
+            String bandit, 
+            ArrayList<ArrayList<Double>> predefConfidences, 
+            ArrayList<ArrayList<Integer>> predefVisibility){
 
         ai_alg = ai_algorithm;
         add_camera(
         	name, x_pos, y_pos, heading_degrees, angle_degrees,
-            range, comm, limit, vg, bandit, predefConfidences, predefVisibility);
+            range, commValue, customComm, limit, vg, bandit, 
+            predefConfidences, predefVisibility);
     }
 
     /**
-     * crates a new camera and adds it to the list of cameras all having the same predefined aiNode
+     * Creates a new camera and adds it to the list of cameras all having the same predefined aiNode
      * @param name defines the name of the camera
      * @param x_pos defines the x position in the internal coordinates
      * @param y_pos defines the y position in the internal coordinates
      * @param heading_degrees defines the direction of the viewing point
-     * @param angle_degrees defines the with of the viewing angle
-     * @param range defines the range of the camera
+     * @param angle_degrees defines the width of the viewing angle
+     * @param range defines the range (distance) of the camera's view
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
      * @param bandit defines the used bandit solver algorithm 
-     * @param predefConfidences defines a list of objects represented by an ArrayList of their confidences where each element is for one frame/timestep 
-     * @param predefVisibility defines a list of objects represented by an ArrayList of their visibility (0 = visible, 1 = not visible or at touching border) where each element is for one frame/timestep
+     * @param predefConfidences defines a list of objects represented by an ArrayList of 
+     * 	their confidences where each element is for one frame/timestep 
+     * @param predefVisibility defines a list of objects represented by an ArrayList of 
+     * 	their visibility (0 = visible, 1 = not visible or at touching border) where each 
+     * 	element is for one frame/timestep
      */
-    public void add_camera(String name,
+    public void add_camera(
+            String name,
             double x_pos, double y_pos,
             double heading_degrees, 
             double angle_degrees, 
-            double range, 
-            AbstractCommunication comm, int limit, Map<String, Double> vg, String bandit, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
+            double range,
+            int commValue,
+            String customComm,
+            int limit, 
+            Map<String, Double> vg, 
+            String bandit, 
+            ArrayList<ArrayList<Double>> predefConfidences, 
+            ArrayList<ArrayList<Integer>> predefVisibility){
 
-    	if(_comm == null){
-    		_comm = comm;
-    	}
-    	
-        checkCoordInRange(x_pos, y_pos);
+    	checkCoordInRange(x_pos, y_pos);
         
         AbstractAINode aiNode = null;
     	try {
-    		aiNode = newAINodeFromName(ai_alg, comm, staticVG, vg, reg, bandit);
+    		aiNode = newAINodeFromName(ai_alg, staticVG, vg, reg, bandit);
     	} catch (Exception e) {
     		System.out.println("Couldn't initialise AI Node from name given in scenario file: "+ai_alg);
     		System.out.println("Is it a fully qualified class name? e.g. 'epics.ai.ActiveAINodeMulti'");
@@ -450,23 +466,15 @@ public class SimCore {
 
         try {
             Class<?>[] commConstructorTypes = {AbstractAINode.class, ICameraController.class};
-            comm = comm.getClass().getConstructor(commConstructorTypes).newInstance(aiNode, cc);
-            aiNode.setComm(comm);
-        } catch (NoSuchMethodException e1) {
-            e1.printStackTrace();
-        } catch (SecurityException e1) {
-            e1.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        
-        
+            Class<?> commClass = getCommClass(commValue, customComm);
+            Constructor<?> cons = commClass.getConstructor(commConstructorTypes); 
+            _comm = (AbstractCommunication) cons.newInstance(aiNode, cc);
+            aiNode.setComm(_comm);
+        } catch (Exception e) {
+        	System.err.println("Failed to create a communication class");
+			e.printStackTrace();
+			System.exit(1);
+		}
         
     	try {
     		if (paramFile != null) {
@@ -489,9 +497,27 @@ public class SimCore {
         }
 	}
     
+    public Class<?> getCommClass(int commValue, String customComm) throws ClassNotFoundException {
+    	switch(commValue){
+    		case 0: return Broadcast.class;
+    		case 1: return Smooth.class;
+    		case 2: return Step.class;
+    		case 4: 
+    			if (customComm == null || customComm.equals("")) {
+    				throw new IllegalArgumentException("No CustomComm value provided");
+    			}
+    			Class<?> nodeType = Class.forName(customComm);
+    			return (Class<?>) nodeType;
+    		default:
+    			throw new IllegalArgumentException("Comm value provided is invalid: "+commValue);
+    			
+		}
+    }
+    
     /** Given a node's class name, dynamically loads the class and 
      * instantiates a new node of that type using reflection
-     * @param fullyQualifiedClassName the class name - has to include package name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
+     * @param fullyQualifiedClassName the class name - has to include package 
+     * 	name if not in the same package. eg.: epics.ai.ActiveAINodeMulti
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param staticVG defines if VG is static as predefined or can change dynamically
      * @param vg a predefined VG - may or may not change over time
@@ -499,15 +525,9 @@ public class SimCore {
      * @param banditS the class name of a bandit solver
      * @return AbstractAINode the created AINode
      * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws IllegalArgumentException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
      */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
-    		AbstractCommunication comm, boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
+    		boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
     				InvocationTargetException {
@@ -527,10 +547,9 @@ public class SimCore {
 		}
     	
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
-    	Class<?>[] constructorTypes = {AbstractCommunication.class, boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
+    	Class<?>[] constructorTypes = {boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
-    	AbstractAINode node = (AbstractAINode) cons.newInstance(comm, staticVG, vg, r, randomGen, bs);
-    	node.setComm(comm);
+    	AbstractAINode node = (AbstractAINode) cons.newInstance(staticVG, vg, r, randomGen, bs);
     	return node;
     }
     
@@ -540,13 +559,6 @@ public class SimCore {
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param ai the pre-existing AINode
      * @return a specific implementation of an abstract AINode
-     * @throws ClassNotFoundException
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws IllegalArgumentException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
      */
     public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
             AbstractCommunication comm, AbstractAINode ai)
@@ -559,7 +571,6 @@ public class SimCore {
     	
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
     	AbstractAINode node = (AbstractAINode) cons.newInstance(ai);
-    	node.setComm(comm);
     	return node;
     }
 
@@ -590,12 +601,7 @@ public class SimCore {
   	 * adds a camera with random position, oritentation, range and angle
   	 */
   	public void add_random_camera(){
-  	    AbstractCommunication absCom = null;
-  	    switch(randomGen.nextInt(3, RandomUse.USE.UNIV)){
-  	    case 0: absCom = new Broadcast(null, null); break;
-  	    case 1: absCom = new Smooth(null, null); break;
-  	    case 2: absCom = new Step(null,null); break;
-  	    }
+  	    int absCom = randomGen.nextInt(3, RandomUse.USE.UNIV); // Random comm
   	    
   	    String algo = "";
   	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
@@ -611,8 +617,9 @@ public class SimCore {
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 90 + 15,
                 randomGen.nextDouble(RandomUse.USE.UNIV) * 20 + 10,
                 algo,
-                absCom, 
-                0, null, "", null, null);//RandomNumberGenerator.nextInt(5));
+                absCom,
+                null, // No custom comm
+                0, null, "", null, null);
     }
 
     /**
@@ -714,17 +721,7 @@ public class SimCore {
             double heading_degrees, double speed,
             double features ){
     	TraceableObject to = new TraceableObject(features, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
-        this.getObjects().add(to);
-        if(USEGLOBAL){
-        	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
-        }
-        else{
-	        for(CameraController cc : this.getCameras()){
-	        	if(!cc.isOffline())
-	        		cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-	        }
-        }
-        
+        add_object(to);
     }
 
     /**
@@ -738,19 +735,9 @@ public class SimCore {
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
      */
-    public void add_object( double pos_x, double pos_y, double heading_degrees, double speed ){
-        double id = 0.111 * getNextID();
-        TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
-        this.getObjects().add(to); 
-        if(USEGLOBAL){
-        	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
-        }
-        else{
-	        for(CameraController cc : this.getCameras()){
-	        	if(!cc.isOffline())
-	        		cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
-	        }  
-        }
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed){
+        double features = 0.111 * getNextID();
+        add_object(pos_x, pos_y, heading_degrees, speed, features);
     }
 
     /**
@@ -761,17 +748,24 @@ public class SimCore {
      * @param waypoints given waypoints. after last waypoint returns to first waypoint
      * @param id unique id/features of object
      */
-    public void add_object( double speed, List<Point2D> waypoints, double id){
-//        double id = 0.111 * getNextID();
-        TraceableObject to = new TraceableObject(id, this, speed, waypoints, randomGen);
-        this.getObjects().add(to);
+    public void add_object(double speed, List<Point2D> waypoints, double features){
+        TraceableObject to = new TraceableObject(features, this, speed, waypoints, randomGen);
+        add_object(to);
+    }
+
+    /** 
+     * Adds the given TraceableObject to the simulation. 
+     * For convenience methods, see other add_object methods 
+     */
+    public void add_object(TraceableObject to) {
+    	this.getObjects().add(to);
         if(USEGLOBAL){
         	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
-        }
-        else{
-        	for(CameraController cc : this.getCameras()){
-        		if(!cc.isOffline())
-        			cc.getAINode().receiveMessage(new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+        } else {
+        	for (CameraController cc : this.getCameras()) {
+        		if (!cc.isOffline())
+        			cc.getAINode().receiveMessage(
+        					new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
         	}
         }
     }
@@ -795,22 +789,18 @@ public class SimCore {
     		return;
     	}
 
-        int rnd = randomGen.nextInt( objects.size() , RandomUse.USE.UNIV);
-        
+        int rnd = randomGen.nextInt(objects.size() , RandomUse.USE.UNIV);
         TraceableObject obj_to_remove = this.objects.get(rnd);
-
        
         for (CameraController c : this.cameras){
             c.removeObject(obj_to_remove.getFeatures());
         }
         this.objects.remove(rnd);
-
     }
 
    
     /**
      * Updates the simulation by one step - decides if it uses pure simulation or works with real data
-     * @throws Exception
      */
     public void update() throws Exception{
     	if(_runReal){
@@ -834,7 +824,6 @@ public class SimCore {
      *      a. AINode is updated 
      *      b. BanditSolver reward is updated if applicable
      * 3. statistics are updated
-     * @throws Exception
      */
     public void updateReal() throws Exception{
     	if(firstUpdate)
@@ -1144,13 +1133,8 @@ public class SimCore {
 				//process event
 				if(e.event.equals("add")){
 					if(e.participant == 1){ // camera
-					    AbstractCommunication c = null;
-					    switch(e.comm){
-			            case 0: c = new Broadcast(null, null); break;
-			            case 1: c = new Smooth(null,null); break;
-			            case 2: c = new Step(null, null); break;
-			            }
-						this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, c, e.limit, null, e.bandit, null, null);
+					    this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, e.comm, null, 
+					    		e.limit, null, e.bandit, null, null);
 					}
 					else{ //object 
 						if(e.waypoints == null){
@@ -1236,32 +1220,6 @@ public class SimCore {
 				}
 			}
 		}
-	}
-
-	/**
-	 * adds a non-existing object to the given cameraController
-	 * @param c given cameraController
-	 */
-	private void addFalseObject(CameraController c) {
-    	double id = 0.111 * getNextID();
-
-    	double tmp_x = 0;
-        double tmp_y = -1;
-        double tmp_heading = c.getHeading();
-        double tmp_range = c.getRange();
-        
-        double tmp_cos = Math.cos(tmp_heading);
-        double tmp_sin = Math.sin(tmp_heading);
-        
-    	double vcx = tmp_x * Math.cos(tmp_heading) - tmp_y * Math.sin(tmp_heading);
-        double vcy = tmp_x * Math.sin(tmp_heading) - tmp_y * Math.cos(tmp_heading);
- 
-        double pos_x = c.getX() + 10 * vcx; //tmp_heading;
-        double pos_y = c.getY() + 10 * vcy; //tmp_heading;
-
-    	double heading_degrees = randomGen.nextDouble(RandomUse.USE.UNIV) * 360;
-    	double speed = randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4;
-    	TraceableObject to = new TraceableObject(id, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
 	}
 
 	/**
@@ -1360,7 +1318,8 @@ public class SimCore {
     }
 
     /**
-     * computes the utility of the entire network
+     * computes the utility of the entire network and 
+     * adds this to the statistics
      * @return the sum of all cameras utilities.
      */
     public double computeUtility(){
@@ -1410,9 +1369,8 @@ public class SimCore {
 
     /** 
      * Save the scenario currently active in the simulation to an XML file.
-     * Note that this does not fully support scenario XML features such as 
-     * objects with waypoints. It also does not represent angles 100% correctly. 
-     * 
+     * This supports regular objects as well as objects with waypoints.
+     * Note that this does not represent angles 100% correctly.
      * This should only be used to store randomised scenarios.
      * 
 	 * @param absolutePath path of XML-File
