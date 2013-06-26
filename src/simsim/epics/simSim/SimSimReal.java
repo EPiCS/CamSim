@@ -65,7 +65,7 @@ public class SimSimReal {
 		
 		
 		//get folder
-		File dir = new File("E:\\Scenarios\\RealDataT1.4_AR");
+		File dir = new File(System.getProperty(""));
 		
 		RunAllRealDataScen(dir);
 	}

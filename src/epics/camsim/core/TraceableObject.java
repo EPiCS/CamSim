@@ -1,5 +1,6 @@
 package epics.camsim.core;
 
+import epics.common.Coordinate2D;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 
@@ -110,6 +111,14 @@ public class TraceableObject{
     	double angle = Math.PI; // Turn 180 degrees
     	angle += (randomGen.nextDouble(RandomUse.USE.TURN)*2-1.0) * Math.PI / 6.0;
     	return angle;
+    }
+    
+    public Coordinate2D esteemNext() {
+    	return new Coordinate2D(x + Math.sin(this.heading) * speed, y + Math.cos(this.heading) * speed);
+    }
+    
+    public Coordinate2D getCurrentPosition() {
+    	return new Coordinate2D(x, y);
     }
     
     public double getX(){

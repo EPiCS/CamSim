@@ -645,4 +645,9 @@ public class CameraController implements ICameraController{
 			return 1;
 		}
 	}
+
+	@Override
+	public Coordinate2D getPostion() {
+		return new Coordinate2D(x, y);
+	}
 }

@@ -36,6 +36,13 @@ public interface ICameraController{
 	void removeObject(List<Double> features);
 	
 	public void change(double xCoord, double yCoord, double head, double angle, double range); // e.x, e.y, e.heading, e.angle, e.range, e.comm, e.limit
+	
+	public Coordinate2D getPostion();
+	
+	/**
+	 * @return an angle, in radians, representing the heading of this camera
+	 */
+	public double getHeading();
 
 	public void setAINode(AbstractAINode ai);
 	public int objectIsVisible(ITrObjectRepresentation tor);

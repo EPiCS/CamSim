@@ -1,23 +1,28 @@
 package epics.ai;
 
+import java.util.List;
+
 import java.util.Map;
 
+import javax.sound.midi.ControllerEventListener;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Single;
+
+import epics.camsim.core.TraceableObject;
 import epics.common.AbstractAINode;
+import epics.common.Coordinate2D;
 import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
+import static java.lang.Math.PI;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
-/**
- * Implementation of AbstractAINode. defines the behaviour of the camera node
- * regarding communication policies and the auction invitation schedules. this
- * class uses the active auction invitation schedule to send invitations to
- * other cameras in every timestep.
- * 
- * @author Marcin Bogdanski & Lukas Esterle, refactored by Horatio Cane
- */
-public class ActiveAINodeMulti extends AbstractAINode {
+public class AWASSAINodeMulti extends AbstractAINode {
 
+//	private final List<TraceableObject> a;
+	
 	/**
 	 * Creates an AI Node with active auction schedule from another, existing ai
 	 * node
@@ -25,7 +30,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	 * @param ai
 	 *            the existing ai node
 	 */
-	public ActiveAINodeMulti(AbstractAINode ai) {
+	public AWASSAINodeMulti(AbstractAINode ai) {
 		super(ai);
 	}
 
@@ -46,7 +51,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	 * @param rg
 	 *            the random number generator for this instance
 	 */
-	public ActiveAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
 		super(staticVG, vg, r, auctionDuration, rg);
 	}
 
@@ -69,7 +74,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	 * @param bs
 	 *            the bandit solver
 	 */
-	public ActiveAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
+	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 		super(staticVG, vg, r, auctionDuration, rg, bs);
 	}
 
@@ -88,7 +93,7 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	 * @param rg
 	 *            the random number generator for this instance
 	 */
-	public ActiveAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 		super(staticVG, vg, r, rg);
 	}
 
@@ -109,13 +114,34 @@ public class ActiveAINodeMulti extends AbstractAINode {
 	 * @param bs
 	 *            the bandit solver
 	 */
-	public ActiveAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
+	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
 		super(staticVG, vg, r, rg, bs);
 	}
 
+	private Coordinate2D toCameraSpace(final Coordinate2D pointPos){
+		final Coordinate2D camPos = camController.getPostion();
+		final double camAngle = -camController.getHeading();
+		final double dx = pointPos.getX()-camPos.getX();
+		final double dy = pointPos.getY()-camPos.getY();
+		final double x = dx * cos(camAngle) + dy * sin(camAngle);
+		final double y = -dx * sin(camAngle) + dy * cos(camAngle);
+		return new Coordinate2D(x, y);
+	}
+	
+	private Coordinate2D toGlobalSpace(final Coordinate2D pointPos){
+		final Coordinate2D camPos = camController.getPostion();
+		final double camAngle = -camController.getHeading();
+		final double dx = pointPos.getX();
+		final double dy = pointPos.getY();
+		final double x = dx * cos(camAngle) - dy * sin(camAngle);
+		final double y = dx * sin(camAngle) + dy * cos(camAngle);
+		return new Coordinate2D(x+camPos.getX(), y+camPos.getY());
+	}
+	
 	public void advertiseTrackedObjects() {
 		// Active strategy means all objects are advertised every time
 		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
+			TraceableObject tio = io.getTraceableObject();
 			callForHelp(io);
 		}
 	}
