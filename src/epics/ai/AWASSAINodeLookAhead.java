@@ -15,13 +15,15 @@ import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
+import epics.common.RandomUse.USE;
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
-public class AWASSAINodeMulti extends AbstractAINode {
-
-//	private final List<TraceableObject> a;
+public class AWASSAINodeLookAhead extends AbstractAINode {
+	
+	private static final int LOOK_AHEAD = 3;
+	private static final double AUCT_PROB = 0.3;
 	
 	/**
 	 * Creates an AI Node with active auction schedule from another, existing ai
@@ -30,7 +32,7 @@ public class AWASSAINodeMulti extends AbstractAINode {
 	 * @param ai
 	 *            the existing ai node
 	 */
-	public AWASSAINodeMulti(AbstractAINode ai) {
+	public AWASSAINodeLookAhead(AbstractAINode ai) {
 		super(ai);
 	}
 
@@ -51,7 +53,7 @@ public class AWASSAINodeMulti extends AbstractAINode {
 	 * @param rg
 	 *            the random number generator for this instance
 	 */
-	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
+	public AWASSAINodeLookAhead(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
 		super(staticVG, vg, r, auctionDuration, rg);
 	}
 
@@ -74,7 +76,7 @@ public class AWASSAINodeMulti extends AbstractAINode {
 	 * @param bs
 	 *            the bandit solver
 	 */
-	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
+	public AWASSAINodeLookAhead(boolean staticVG, Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 		super(staticVG, vg, r, auctionDuration, rg, bs);
 	}
 
@@ -93,7 +95,7 @@ public class AWASSAINodeMulti extends AbstractAINode {
 	 * @param rg
 	 *            the random number generator for this instance
 	 */
-	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
+	public AWASSAINodeLookAhead(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 		super(staticVG, vg, r, rg);
 	}
 
@@ -114,7 +116,7 @@ public class AWASSAINodeMulti extends AbstractAINode {
 	 * @param bs
 	 *            the bandit solver
 	 */
-	public AWASSAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
+	public AWASSAINodeLookAhead(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
 		super(staticVG, vg, r, rg, bs);
 	}
 
@@ -138,11 +140,20 @@ public class AWASSAINodeMulti extends AbstractAINode {
 		return new Coordinate2D(x+camPos.getX(), y+camPos.getY());
 	}
 	
+//	int count = 0;
+	
 	public void advertiseTrackedObjects() {
 		// Active strategy means all objects are advertised every time
-		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
-			TraceableObject tio = io.getTraceableObject();
-			callForHelp(io);
+		for (final ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
+			final TraceableObject obj = io.getTraceableObject();
+			if(camController.isObjectInFOV(obj)){
+				final Coordinate2D expectedNext = toCameraSpace(obj.esteemNext(LOOK_AHEAD));
+				if(!camController.isCoordinateInFOV(expectedNext)){
+					callForHelp(io);
+				}
+			} else if(randomGen.nextDouble(USE.UNIV) < AUCT_PROB){
+				callForHelp(io);
+			}
 		}
 	}
 }

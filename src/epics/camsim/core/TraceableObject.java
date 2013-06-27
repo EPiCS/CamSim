@@ -113,8 +113,13 @@ public class TraceableObject{
     	return angle;
     }
     
-    public Coordinate2D esteemNext() {
-    	return new Coordinate2D(x + Math.sin(this.heading) * speed, y + Math.cos(this.heading) * speed);
+    public Coordinate2D esteemNext(int lookAhead) {
+    	double resX = x, resY = y;
+    	for(int i=0; i< lookAhead; i++){
+    		resX += Math.sin(this.heading) * speed;
+    		resY += Math.cos(this.heading) * speed;
+    	}
+    	return new Coordinate2D(resX, resY);
     }
     
     public Coordinate2D getCurrentPosition() {

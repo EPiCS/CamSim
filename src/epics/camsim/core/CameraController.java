@@ -647,7 +647,24 @@ public class CameraController implements ICameraController{
 	}
 
 	@Override
+	public boolean isObjectInFOV(TraceableObject tor){
+		return visible_objects.containsKey(tor);
+	}
+	
+	@Override
 	public Coordinate2D getPostion() {
 		return new Coordinate2D(x, y);
+	}
+
+	@Override
+	public boolean isCoordinateInFOV(Coordinate2D pos) {
+		final double dist = Math.hypot(pos.getX(), pos.getY());
+		if(dist < range) {
+			final double angle = Math.atan2(pos.getY(), pos.getX());
+			final double angleS = (Math.PI-viewing_angle)/2;
+			final double angleF = (Math.PI+viewing_angle) /2;
+			return  angleS < angle && angle < angleF; 
+		}
+		return false;
 	}
 }

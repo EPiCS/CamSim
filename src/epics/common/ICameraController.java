@@ -3,6 +3,7 @@ package epics.common;
 import java.util.List;
 import java.util.Map;
 
+import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 
 /**
@@ -48,4 +49,7 @@ public interface ICameraController{
 	public int objectIsVisible(ITrObjectRepresentation tor);
 	
 	public boolean realObjectsUsed();
+
+	boolean isObjectInFOV(TraceableObject tor);
+	boolean isCoordinateInFOV(Coordinate2D pos);
 }
