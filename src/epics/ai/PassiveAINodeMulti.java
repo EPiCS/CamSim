@@ -9,7 +9,7 @@ import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 
-public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
+public class PassiveAINodeMulti extends AbstractClusterFoVAINode { //ActiveAINodeMulti {
 	
 	/** The confidence for an object below which we advertise */
 	public static final double CONF_THRESHOLD = 0.1;

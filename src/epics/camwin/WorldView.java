@@ -136,39 +136,41 @@ public class WorldView extends JPanel implements Observer {
              */
 
             Map<String,Double> vg = c.getDrawableVisionGraph();
-            for (Map.Entry<String,Double> e : vg.entrySet()){
+            if (vg != null && vg.entrySet() != null) {
+		        for (Map.Entry<String,Double> e : vg.entrySet()){
 
-                CameraController cc = sim_model.getCameraByName(e.getKey());
-                if (cc == null){
-                    continue;
-                }
-                double ccX = this.cst.simToWindowX(cc.getX());
-                double ccY = this.cst.simToWindowY(cc.getY());
+		            CameraController cc = sim_model.getCameraByName(e.getKey());
+		            if (cc == null){
+		                continue;
+		            }
+		            double ccX = this.cst.simToWindowX(cc.getX());
+		            double ccY = this.cst.simToWindowY(cc.getY());
 
-                double val = e.getValue();
-                int col = (int)(val * 255);
-                if (col > 255) { col = 255; }
+		            double val = e.getValue();
+		            int col = (int)(val * 255);
+		            if (col > 255) { col = 255; }
 
-                int thickness = 0;
-                if(val > 0) {
-                    thickness = MIN_THICKNESS;
-                }
-                if(val > 1) {
-                    thickness = MIN_THICKNESS + 2;
-                }
-                if(thickness > 6 ) { thickness = 6; }
-                if( thickness < MIN_THICKNESS) {  thickness = MIN_THICKNESS;}
+		            int thickness = 0;
+		            if(val > 0) {
+		                thickness = MIN_THICKNESS;
+		            }
+		            if(val > 1) {
+		                thickness = MIN_THICKNESS + 2;
+		            }
+		            if(thickness > 6 ) { thickness = 6; }
+		            if( thickness < MIN_THICKNESS) {  thickness = MIN_THICKNESS;}
 
-                g2.setStroke(new BasicStroke(thickness));
+		            g2.setStroke(new BasicStroke(thickness));
 
-                // Fading red
-                g2.setColor(new Color(255, 255-col, 255-col ));
-                
-                Line2D.Double edge = new Line2D.Double(
-                    this.cst.simToWindowX(c.getX()), this.cst.simToWindowY(c.getY()),
-                    this.cst.simToWindowX(cc.getX()), this.cst.simToWindowY(cc.getY()) );
-                g2.draw(edge);
-            }
+		            // Fading red
+		            g2.setColor(new Color(255, 255-col, 255-col ));
+		            
+		            Line2D.Double edge = new Line2D.Double(
+		                this.cst.simToWindowX(c.getX()), this.cst.simToWindowY(c.getY()),
+		                this.cst.simToWindowX(cc.getX()), this.cst.simToWindowY(cc.getY()) );
+		            g2.draw(edge);
+		        }
+            } // if vg != null
 
             g2.setStroke(new BasicStroke(MIN_THICKNESS));
 

@@ -4,10 +4,6 @@ import java.util.List;
 
 import java.util.Map;
 
-import javax.sound.midi.ControllerEventListener;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Single;
-
 import epics.camsim.core.TraceableObject;
 import epics.common.AbstractAINode;
 import epics.common.Coordinate2D;

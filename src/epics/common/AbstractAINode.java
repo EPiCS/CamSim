@@ -46,7 +46,7 @@ public abstract class AbstractAINode {
     public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
     public static final boolean BIDIRECTIONAL_VISION = false;
     
-    boolean staticVG = false;
+    protected boolean staticVG = false;
 //    private int communication;
 	protected Map<String, Double> visionGraph = new HashMap<String, Double>();
     protected Map<List<Double>, ITrObjectRepresentation> trackedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
@@ -1065,14 +1065,14 @@ public abstract class AbstractAINode {
 	                                 //_paidUtility += secondHighest;
 	                                 sendMessage(MessageType.StopSearch, tor);
 	                                 stepsTillBroadcast.remove(tor);
-	                             } else {
+	                             } else { // other camera won
 	                            	 tor.setPrice(secondHighest);
 	                                 IMessage reply = this.camController.sendMessage(giveTo.getName(), MessageType.StartTracking, tor);
 	                                 _receivedUtility += secondHighest; //highest;
 	                                 if(DEBUG_CAM)
 	                             		CmdLogger.println(this.camController.getName() + " sent StartTracking msg to: " + giveTo.getName() + " for object " + tor.getFeatures());
 	                                 
-	                                 if(reply != null){
+	                                 if(reply != null){ // an error?
 	                                	 if(reg != null){
 	                                		 reg.objectTrackedBy(tor, this.camController);
 	                                	 }
@@ -1080,7 +1080,7 @@ public abstract class AbstractAINode {
 	                                	 delete.remove(tor); // do not delete if other camera does not respond (or responds irrationally)
 	                                	 this.getBiddingsFor(tor).remove(giveTo);
 	                                 }
-	                                 else{
+	                                 else{ // the cam responded
 	                                	 if(!VISION_ON_BID){
 		                                	 if(BIDIRECTIONAL_VISION || (!VISION_RCVER_BOUND))
 		                                		 strengthenVisionEdge(giveTo.getName(), tor);
@@ -1097,7 +1097,7 @@ public abstract class AbstractAINode {
 	                                	 sendMessage(MessageType.StopSearch, tor);
 	                                	 stepsTillBroadcast.remove(tor);
 	                                 }
-	                             }
+	                             }// other cam won auction
 	                         }
 	                         removeRunningAuction(tor); 
                    	 }
