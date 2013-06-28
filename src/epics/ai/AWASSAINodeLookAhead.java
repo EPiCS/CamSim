@@ -1,12 +1,9 @@
 package epics.ai;
 
-import java.util.List;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 import java.util.Map;
-
-import javax.sound.midi.ControllerEventListener;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Single;
 
 import epics.camsim.core.TraceableObject;
 import epics.common.AbstractAINode;
@@ -16,9 +13,6 @@ import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
-import static java.lang.Math.PI;
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
 
 public class AWASSAINodeLookAhead extends AbstractAINode {
 	
