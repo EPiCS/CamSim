@@ -125,15 +125,16 @@ public abstract class AbstractClusterFoVAINode extends AbstractAINode {
 		co[1] = coords.getY();
 		
 		Cluster c = this.kmeans.getClosestCluster( new ClusterPoint(co) );
-		System.out.println("For obj at "+coords+", got "+c);
+		//System.out.println("For obj at "+coords+", got "+c);
 		return c.visionGraph;
 	}
 
 
 	// this should be the moment of handover...
+    @Override
 	protected void removeTrackedObject(ITrObjectRepresentation rto) {
 		super.removeTrackedObject(rto);
-		System.out.println("THIS IS Hand-overrrrrr");
+		//System.out.println("THIS IS Hand-overrrrrr");
 		
 		Coordinate2D coords = toCameraSpace(rto.getTraceableObject().getCurrentPosition());
 		double[] co = new double[2];
@@ -148,6 +149,7 @@ public abstract class AbstractClusterFoVAINode extends AbstractAINode {
     /**
      * updates the vision graph. reduces every link by the evaporationrate
      */
+    @Override
     protected void updateVisionGraph() {
         if(!staticVG){
         	Iterator<Cluster> clusters = this.kmeans.getClusterIterator();
@@ -176,6 +178,7 @@ public abstract class AbstractClusterFoVAINode extends AbstractAINode {
 	 * the graph consists of cameras (key) and the corresponding strength (value) in a map
 	 * @return the vision graph
 	 */
+    @Override
 	public Map<String, Double> getVisionGraph() {
         return null;
     }
@@ -184,25 +187,30 @@ public abstract class AbstractClusterFoVAINode extends AbstractAINode {
     }
 
     /** Whether the key exists for this cam name (ignoring object here) */
+    @Override
     public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
     	return getVisionGraph(itro).containsKey(camName);
     }
     
 	/** Get all values in the vision graph (ignoring object here) */
+    @Override
     public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
     	return getVisionGraph(itro).values();
     }
 
 	/** Get all cameras with values in the vision graph */
+    @Override
     public Set<String> vgGetCamSet() {
     	return null;
     }
+
     public Set<String> vgGetCamSet(ITrObjectRepresentation itro) {
     	return getVisionGraph(itro).keySet();
     }
 
     
 	/** Get the pheromone value for this camera name (ignoring object here) */
+    @Override
     public Double vgGet(String camName, ITrObjectRepresentation itro) {
     	return getVisionGraph(itro).get(camName);
     }

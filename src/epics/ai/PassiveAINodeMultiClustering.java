@@ -9,7 +9,7 @@ import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 
-public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
+public class PassiveAINodeMultiClustering extends AbstractClusterFoVAINode { //ActiveAINodeMulti {
 	
 	/** The confidence for an object below which we advertise */
 	public static final double CONF_THRESHOLD = 0.1;
@@ -26,7 +26,7 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	 * @param r the global registration component - can be null
 	 * @param rg the random number generator for this instance
 	 */
-	public PassiveAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+	public PassiveAINodeMultiClustering(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
     	super(staticVG, vg, r, rg);
     }
 	
@@ -39,16 +39,16 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
      * @param rg the random number generator for this instance
 	 * @param bs the bandit solver to decide the best communication policy and auctioning schedule
 	 */
-	public PassiveAINodeMulti(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
+	public PassiveAINodeMultiClustering(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
     	super(staticVG, vg, r, rg, bs);
     }
 	
-	public PassiveAINodeMulti(boolean staticVG, 
+	public PassiveAINodeMultiClustering(boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
     	super(staticVG, vg, r, auctionDuration, rg);
     }
 	
-	public PassiveAINodeMulti(boolean staticVG, 
+	public PassiveAINodeMultiClustering(boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(staticVG, vg, r, auctionDuration, rg, bs);
     }
@@ -57,10 +57,10 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	 * creates a passive ai instance from another existing instance
 	 * @param ai the given existing AI instance
 	 */
-	public PassiveAINodeMulti(AbstractAINode ai){
+	public PassiveAINodeMultiClustering(AbstractAINode ai){
 		super(ai);
-		if (ai instanceof PassiveAINodeMulti) {
-			PassiveAINodeMulti pass = (PassiveAINodeMulti) ai;
+		if (ai instanceof PassiveAINodeMultiClustering) {
+			PassiveAINodeMultiClustering pass = (PassiveAINodeMultiClustering) ai;
 			lastConfidence = pass.lastConfidence;
 		}
 	}

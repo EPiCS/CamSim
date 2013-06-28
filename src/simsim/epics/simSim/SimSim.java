@@ -1149,7 +1149,10 @@ enum CommPolicy{
 enum AuctionsSchedule {
     ACTIVE("epics.ai.ActiveAINodeMulti", "A")
     , PASSIVE("epics.ai.PassiveAINodeMulti", "P")
-    , AWASS("epics.ai.AWASSPassiveAINode", "L")
+    , ACTIVECLUSTERING("epics.ai.ActiveAINodeMultiClustering", "AC")
+    , PASSIVECLUSTERING("epics.ai.PassiveAINodeMultiClustering", "PC")
+    , LOOKAHEAD("epics.ai.AWASSLookAheadNode", "L")
+    , LOOKAHEADCLUSTERING("epics.ai.AWASSLookAheadNodeClustering", "LC")
     ;  
     /**
      * @param text

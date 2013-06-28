@@ -15,7 +15,7 @@ import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
 
-public class AWASSPassiveAINode extends AbstractAINode { //ActiveAINodeMulti {
+public class AWASSLookAheadNode extends AbstractAINode { //ActiveAINodeMulti {
 	
 	/** The confidence for an object below which we advertise */
 	public static final double CONF_THRESHOLD = 0.1;
@@ -34,7 +34,7 @@ public class AWASSPassiveAINode extends AbstractAINode { //ActiveAINodeMulti {
 	 * @param r the global registration component - can be null
 	 * @param rg the random number generator for this instance
 	 */
-	public AWASSPassiveAINode(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+	public AWASSLookAheadNode(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
     	super(staticVG, vg, r, rg);
     }
 	
@@ -47,16 +47,16 @@ public class AWASSPassiveAINode extends AbstractAINode { //ActiveAINodeMulti {
      * @param rg the random number generator for this instance
 	 * @param bs the bandit solver to decide the best communication policy and auctioning schedule
 	 */
-	public AWASSPassiveAINode(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
+	public AWASSLookAheadNode(boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs){
     	super(staticVG, vg, r, rg, bs);
     }
 	
-	public AWASSPassiveAINode(boolean staticVG, 
+	public AWASSLookAheadNode(boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
     	super(staticVG, vg, r, auctionDuration, rg);
     }
 	
-	public AWASSPassiveAINode(boolean staticVG, 
+	public AWASSLookAheadNode(boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(staticVG, vg, r, auctionDuration, rg, bs);
     }
@@ -65,10 +65,10 @@ public class AWASSPassiveAINode extends AbstractAINode { //ActiveAINodeMulti {
 	 * creates a passive ai instance from another existing instance
 	 * @param ai the given existing AI instance
 	 */
-	public AWASSPassiveAINode(AbstractAINode ai){
+	public AWASSLookAheadNode(AbstractAINode ai){
 		super(ai);
-		if (ai instanceof AWASSPassiveAINode) {
-			AWASSPassiveAINode pass = (AWASSPassiveAINode) ai;
+		if (ai instanceof AWASSLookAheadNode) {
+			AWASSLookAheadNode pass = (AWASSLookAheadNode) ai;
 			lastConfidence = pass.lastConfidence;
 		}
 	}

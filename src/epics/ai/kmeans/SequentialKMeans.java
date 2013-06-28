@@ -102,7 +102,7 @@ public class SequentialKMeans {
 				Cluster c = new Cluster(x);
 				c.visionGraph = (HashMap) ((HashMap)clusters.get(idx).visionGraph).clone(); // clone the vision graph of the closest cluster
 				clusters.add(c);
-				System.out.println("CLUSTER ADD "+c);
+//				System.out.println("CLUSTER ADD "+c);
 			} else {
 				// we're already at the max number of clusters, so add it to the closest cluster
 				// this is basically where we become a voronoi diagram
@@ -118,7 +118,7 @@ public class SequentialKMeans {
 				if (c.decrementRelevance()) {
 					//System.out.println("Removing cluster "+c);
 					it.remove();
-					System.out.println("CLUSTER REMOVE "+c);
+//					System.out.println("CLUSTER REMOVE "+c);
 					// maybe merge it?
 				}
 			}

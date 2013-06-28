@@ -412,6 +412,8 @@ public class CameraController implements ICameraController{
     				stats.addCommunication(1.0, this.getName());
     			} else if (msgType == MessageType.StartTracking) {
         			stats.addHandover(1.0);
+        		} else if(msgType == MessageType.Found){
+        			stats.addBid();
         		}
 			} catch (Exception e) {
 				e.printStackTrace();

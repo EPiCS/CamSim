@@ -1034,6 +1034,7 @@ public abstract class AbstractAINode {
 	                         ICameraController giveTo = null;
 	
 	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor); // Bids from other cams
+	                         // TODO: here count bids
 	                         
 	                         if (bids != null) {
 	                             for (Map.Entry<ICameraController, Double> e : bids.entrySet()) { // iterate over bids

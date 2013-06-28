@@ -30,6 +30,7 @@ public class Statistics {
     private int visible_tmp = 0;
     private double util_cumulative = 0;
     private double comm_cumulative = 0;
+    private double bids_cumulative = 0;
     private double handover_cumulative = 0;
     private Map<String, Map<String,Double>> tmp_camUtil = new HashMap<String, Map<String,Double>>();
     private Map<String, Statistics> perCam = new HashMap<String, Statistics>();
@@ -40,7 +41,6 @@ public class Statistics {
     private ArrayList<Integer> visible = new ArrayList<Integer>();
     private ArrayList<Integer> strategy = new ArrayList<Integer>();
     
-    private long threadId;
 	private Integer strategy_tmp;
 	private double tmp_totutil;
 	private ArrayList<Double> totUtil = new ArrayList<Double>();
@@ -76,6 +76,7 @@ public class Statistics {
         handover_tmp = 0;
         util_cumulative = 0;
         comm_cumulative = 0;
+        bids_cumulative = 0;
         handover_cumulative = 0;
         comm_oh_cumulative = 0;
         comm_oh_tmp = 0;
@@ -199,6 +200,7 @@ public class Statistics {
     			+ handover_tmp + comma 
     			+ handover_cumulative + comma
     			+ comm_oh_cumulative + comma
+    			+ bids_cumulative + comma
     			+ visible_tmp;
     	return summary;
     }
@@ -218,6 +220,7 @@ public class Statistics {
     			+ "HANDOVER" + comma
     			+ "CUMULATIVE_HANDOVER" + comma
     			+ "CUMULATIVE_COMM_OH" + comma 
+    			+ "CUMULATIVE BIDS" + comma
     			+ "VISIBLE";
     	return desc;
     }
@@ -225,6 +228,11 @@ public class Statistics {
     public void addVisible() throws Exception{
     }
 
+	public void addBid(){
+		System.out.println("CALLED");
+		bids_cumulative++;
+	}
+    
     public void addUtility(double utility, String camName) throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){
 //    		throw new Exception("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
