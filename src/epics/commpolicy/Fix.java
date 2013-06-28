@@ -10,6 +10,8 @@ import epics.common.IMessage.MessageType;
 import epics.common.ITrObjectRepresentation;
 import epics.common.AbstractCommunication;
 
+import epics.ai.AbstractClusterFoVAINode;
+
 /** 
  * Sends the given message to the neighbouring cameras in the vision graph. 
  * This method does not make use of the strength of the links.
@@ -27,9 +29,16 @@ public class Fix extends AbstractCommunication {
 		Map<ITrObjectRepresentation, List<String>> advertised = ai.getAdvertisedObjects();
 
 		List<String> cams = new ArrayList<String>();
-		for (String name : ai.vgGetCamSet()) {
-            this.camController.sendMessage(name, mt, o);
-            cams.add(name);
+		if (ai.vgGetCamSet()!=null) {
+			for (String name : ai.vgGetCamSet()) {
+		        this.camController.sendMessage(name, mt, o);
+		        cams.add(name);
+		    }
+        } else { // for some AI we need the object, so that we can change the vision graph based on it
+			for (String name : ((AbstractClusterFoVAINode)ai).vgGetCamSet((ITrObjectRepresentation) o)) {
+		        this.camController.sendMessage(name, mt, o);
+		        cams.add(name);
+		    }
         }
         
         if(mt == MessageType.StartSearch){
