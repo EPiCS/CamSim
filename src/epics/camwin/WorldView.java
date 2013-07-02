@@ -58,6 +58,8 @@ public class WorldView extends JPanel implements Observer {
     	g2.setColor(Color.BLUE);
     	int bbx = (int) this.cst.getRealHeight();
     	int bby = (int) this.cst.getRealWidth();
+    	
+    	
         g2.drawRect(0, 0, bby, bbx);
         
         

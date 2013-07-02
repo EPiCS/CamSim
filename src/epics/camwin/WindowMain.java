@@ -291,13 +291,14 @@ public class WindowMain implements ActionListener{
 					        else{
 					        	sim_model.getCameras().clear();
 				              	sim_model.getObjects().clear();
-					        	sim_model.interpretFile(simsettings);
+					        	sim_model.interpretFile(simsettings);					        	
 					        }
 					        
 						}
 						frame.repaint();
 						break;
 			}
+			wv.setModel(sim_model);
 		}
 	}
 

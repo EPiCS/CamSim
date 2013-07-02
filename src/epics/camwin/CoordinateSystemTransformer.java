@@ -88,6 +88,7 @@ public class CoordinateSystemTransformer {
     }
 
     public int getRealWidth() {
+        
         return (int) (simToWindowX(sim_max_x) + simToWindowX(sim_min_x));
     }
 

@@ -104,6 +104,8 @@ public class SimCoreModel extends Observable {
 		
 		sim.reset();
 		
+//        this.createCoordinateSystemTransformer(100, 100);
+		
 		this.getCameras().clear();
 		this.getObjects().clear();
 		

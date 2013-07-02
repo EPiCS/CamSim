@@ -48,7 +48,8 @@ public class Main {
         System.out.println("Output file:     " + output_file);
         System.out.println("Seed:            " + seed);
         System.out.println("Simulation time: " + simulation_time);
-
+        System.out.println("Width/Height:    " + sim_model.getWidth() + "/" + sim_model.getHeight());
+        
         // Nice dashed line on the bottom as well
         for (int i = 0; i < 80; i++) {
             System.out.print('-');
@@ -250,7 +251,7 @@ public class Main {
             input_file = strb.toString();
         }
 
-        print_parameters();
+        
         SimSettings ss = new SimSettings(algo, comm, customComm, predefVG);
         if (input_file == null) {
             System.err.println("Error, no simulation file provided");
@@ -281,7 +282,7 @@ public class Main {
             WindowMain win = new WindowMain(sim_model, input_file);
             win.createAndShowGUI();
         }
-
+        print_parameters();
     }
 
     public static SimCoreModel sim_model;

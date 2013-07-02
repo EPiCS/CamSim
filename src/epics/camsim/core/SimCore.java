@@ -1407,7 +1407,7 @@ public class SimCore {
 		this.min_x = -70;
 		this.max_x = 70;
 		this.min_y = -70;
-		this.max_y = 70;	
+		this.max_y = 70;		
 	}
 
 	/**
