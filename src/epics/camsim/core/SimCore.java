@@ -1130,7 +1130,8 @@ public class SimCore {
 	 */
 	private void checkAndProcessEvent(int currentTimeStep) {
 		for(SimSettings.Event e : events){
-			if(e.timestep == currentTimeStep){
+		    if(e.timestep == currentTimeStep){
+		        System.out.println("event found " + e.event);
 				//process event
 				if(e.event.equals("add")){
 					if(e.participant == 1){ // camera
@@ -1147,6 +1148,7 @@ public class SimCore {
 					}
 				}
 				else if(e.event.equals("error")){
+				    
 					if(e.participant == 1){ // camera
 						if(e.duration == -1){
 							if(USEGLOBAL){
@@ -1208,7 +1210,7 @@ public class SimCore {
 							reg.setOffline(e.duration);
 						}
 					}
-				}
+				}			
 				else if(e.event.equals("change")){
 					if(e.participant == 1){ // camera
 						for ( int i = 0; i < this.cameras.size(); i++ ){
@@ -1391,7 +1393,7 @@ public class SimCore {
 			}
 			fw.write("	        </cameras>"+System.getProperty( "line.separator" )+"        <objects>"+System.getProperty( "line.separator" ));
 			for(TraceableObject to : objects){
-				fw.write("	        	     "+ to.toXMLString("	        	     ") + System.getProperty("line.separator"));
+				fw.write("	        	     "+ to.toXMLString() + System.getProperty("line.separator"));
 			}
 			fw.write("        </objects>"+System.getProperty("line.separator")+"    </simulation>"+System.getProperty("line.separator")+"</root>");
 			fw.close();
@@ -1404,10 +1406,15 @@ public class SimCore {
 	 * Resets the simulation environment to a minimum of -70 and maximum of 70 in x and y direction
 	 */
 	public void reset() {
-		this.min_x = -70;
-		this.max_x = 70;
-		this.min_y = -70;
-		this.max_y = 70;		
+		this.min_x = -30;
+		this.max_x = 30;
+		this.min_y = -30;
+		this.max_y = 30;		
+		
+//		this.min_x = -70;
+//        this.max_x = 70;
+//        this.min_y = -70;
+//        this.max_y = 70;
 	}
 
 	/**

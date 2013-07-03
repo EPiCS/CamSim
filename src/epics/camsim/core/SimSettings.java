@@ -660,11 +660,16 @@ public class SimSettings implements Cloneable{
             			events.add(e);
             		}
             		else{
-
-            		   int d = Integer.parseInt(dur);
-            		    
-            		    e = new Event(ts, part, name, event, d);
-            		    events.add(e);
+            		    if(eEvent.getAttribute("event").equals("error")){
+            		        e = new Event(ts, part, name, event, 1000);
+            		        events.add(e);
+            		    }
+            		    else{
+                		   int d = Integer.parseInt(dur);
+                		    
+                		    e = new Event(ts, part, name, event, d);
+                		    events.add(e);
+            		    }
             		}
             	}
             	else if(eEvent.getAttribute("participant").equals("grc")){

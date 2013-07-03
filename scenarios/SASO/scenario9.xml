@@ -14,9 +14,12 @@
 	<events>
 	    <!-- <event timestep="20" participant="camera" name="Cam_02" event="error" duration="-1"/> -->
 	    <event timestep="1" participant="object" name="1.0" event="add" heading="90.0" speed="1.5" x="-30.0" y="-2.0">
-		<waypoint x="-30.0" y="-2.0"/>
-		<waypoint x="30.0" y="-2.0"/>
+		<!--<waypoint x="-30.0" y="-2.0"/>
+		<waypoint x="30.0" y="-2.0"/>-->
 	    </event>
+		<!--<event timestep="41" participant="object" name="1.0" event="error" />
+		<event timestep="50" participant="object" name="2.0" event="error" />
+		<event timestep="50" participant="object" name="3.0" event="error" />-->
 	    <event timestep="20" participant="object" name="2.0" event="add" heading="90.0" speed="1.5" x="-30.0" y="-2.0">
 		<waypoint x="-30.0" y="-2.0"/>
 		<waypoint x="30.0" y="-2.0"/>

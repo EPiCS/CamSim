@@ -2,6 +2,8 @@ package epics.camwin;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -90,8 +93,12 @@ public class WindowMain implements ActionListener{
         //SimCore sim = new SimCore(0, -30, 30, -30, 30);
        
         wv = new WorldView(sim_model);
+//        ScrollPane sp = new ScrollPane();
+//        
+//        sp.add(wv, BorderLayout.CENTER);
         frame.add(wv, BorderLayout.CENTER);
-
+        //frame.add(sp, BorderLayout.CENTER);
+        
         frame.setVisible(true);
 
 	}
@@ -321,9 +328,7 @@ public class WindowMain implements ActionListener{
         
         sim_model.loadDemo(2);
         
-        
-        
-//        curL.setText("Currently running: Demo II");
+//      curL.setText("Currently running: Demo II");
         
         frame.repaint();
 	}
@@ -335,7 +340,7 @@ public class WindowMain implements ActionListener{
       	
       	sim_model.loadDemo(3);
       	
-//      	curL.setText("Currently running: Demo III");
+//      curL.setText("Currently running: Demo III");
         
       	frame.repaint();
 	}

@@ -25,7 +25,6 @@ public class WorldView extends JPanel implements Observer {
 	
     public WorldView(SimCoreModel model) {
 		super();
-	
 		setBackground(Color.white);
         this.setModel(model);
         setToolTipText("test");
