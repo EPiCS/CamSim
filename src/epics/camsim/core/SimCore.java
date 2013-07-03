@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
+//import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
 import epics.common.AbstractAINode;
 import epics.common.AbstractCommunication;
 import epics.common.CmdLogger;
@@ -33,7 +33,7 @@ import epics.commpolicy.Step;
 /**
  * SimCore represents the main core of the simulation. each object and camera is controlled from here. 
  * the SimCore drives the simulation in discrete time steps. 
- * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
+ * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>, refactored by Lukas Esterle <Lukas.Esterle@aau.at> and Horatio Caine <hxc931@cs.bham.ac.uk>
  */
 public class SimCore {
 
@@ -313,12 +313,12 @@ public class SimCore {
         }
 
         for (SimSettings.TrObjectSettings tro : ss.objects){
-            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features);
+            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.fqName);
         }
         
-        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {
-        	this.add_object(objWithWP.speed, objWithWP.waypoints, objWithWP.features);
-        }
+//        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {
+//        	this.add_object(objWithWP.speed, objWithWP.waypoints, objWithWP.features);
+//        }
         
         events = ss.events;
     }
@@ -708,7 +708,10 @@ public class SimCore {
     }
 
     /**
-     * Adds object to the simulation with specified parameters.
+     * Adds object to the simulation with specified parameters. fqName decides the movement strategy. 
+     * if fqName is empty String and waypoints is NOT empty, movement 'waypoints is being used as implemented in epics.movement.Waypoints.
+     * if fqName is empty String and waypoints is an empty list, movement 'straight' as implemented in epics.movement.Straight is being used.
+     * 
      * starting position has to be within the simulation environment.
      * 
      * @param pos_x starting position
@@ -716,11 +719,17 @@ public class SimCore {
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
      * @param features unique identification of the object
+     * @param waypoints a list of waypoints - if empty, and fqName is empty, epics.movement.Straight is being used
+     * @param fqName the full qualifying name. if empty and waypoints is too, epics.movement.Straight is being used. 
+     * if fqName is empty and waypoints is NOT empty epics.movement.Waypoints is being used.
      */
     public void add_object(
             double pos_x, double pos_y,
             double heading_degrees, double speed,
-            double features ){
+            double features, ArrayList<Point2D> waypoints, String fqName ){
+        
+        //do some magic here ;)
+        
     	TraceableObject to = new TraceableObject(features, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
         add_object(to);
     }
@@ -736,23 +745,23 @@ public class SimCore {
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
      */
-    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed){
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, ArrayList<Point2D> waypoints, String fqName ){
         double features = 0.111 * getNextID();
-        add_object(pos_x, pos_y, heading_degrees, speed, features);
+        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, fqName);
     }
 
-    /**
-     * Adds object to the simulation with specified parameters and a predefined path.
-     * starting position and waypoints have to be within the simulation environment.
-     * 
-     * @param speed speed of the object
-     * @param waypoints given waypoints. after last waypoint returns to first waypoint
-     * @param id unique id/features of object
-     */
-    public void add_object(double speed, List<Point2D> waypoints, double features){
-        TraceableObject to = new TraceableObject(features, this, speed, waypoints, randomGen);
-        add_object(to);
-    }
+//    /**
+//     * Adds object to the simulation with specified parameters and a predefined path.
+//     * starting position and waypoints have to be within the simulation environment.
+//     * 
+//     * @param speed speed of the object
+//     * @param waypoints given waypoints. after last waypoint returns to first waypoint
+//     * @param id unique id/features of object
+//     */
+//    public void add_object(double speed, List<Point2D> waypoints, double features){
+//        TraceableObject to = new TraceableObject(features, this, speed, waypoints, randomGen);
+//        add_object(to);
+//    }
 
     /** 
      * Adds the given TraceableObject to the simulation. 
@@ -779,7 +788,8 @@ public class SimCore {
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * 360,
-        		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4);
+        		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4,
+        		new ArrayList<Point2D>(), "");
     }
 
     /**
@@ -1134,17 +1144,17 @@ public class SimCore {
 		        System.out.println("event found " + e.event);
 				//process event
 				if(e.event.equals("add")){
-					if(e.participant == 1){ // camera
+				    if(e.participant == 1){ // camera
 					    this.add_camera(e.name, e.x, e.y, e.heading, e.angle, e.range, e.comm, null, 
 					    		e.limit, null, e.bandit, null, null);
 					}
 					else{ //object 
-						if(e.waypoints == null){
-							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name));
-						}
-						else{
-							this.add_object(e.speed, e.waypoints, Double.parseDouble(e.name));
-						}
+//						if(e.waypoints == null){
+							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name), e.waypoints, e.fqName);
+//						}
+//						else{
+//							this.add_object(e.speed, e.waypoints, Double.parseDouble(e.name));
+//						}
 					}
 				}
 				else if(e.event.equals("error")){

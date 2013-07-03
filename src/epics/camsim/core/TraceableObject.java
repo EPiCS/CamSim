@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  *
- * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
+ * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>, refactored by Lukas Esterle <Lukas.Esterle@aau.at>
  */
 public class TraceableObject{
 
@@ -61,10 +61,6 @@ public class TraceableObject{
     List<Double> getFeatures() {
     	return this.features;
     }
-
-//    public boolean hasWaypoints() {
-//    	return this.waypoints != null && this.waypoints.size() > 0;
-//    }
     
     @Override
     public String toString(){
@@ -80,23 +76,6 @@ public class TraceableObject{
     	
     	String retVal = move.toXMLString(feat);
     	
-//    	String name = hasWaypoints() ? "object_with_waypoints" : "object";
-//  	String retVal = "<" + name + " features=\"" + feat + "\" speed=\"" + this.speed;
-//    	
-//    	/*
-//    	 * <object_with_waypoints features="2.0" speed="1.0">
-//                <waypoint x="-28.0" y="2.0"/>
-//            </object_with_waypoints>
-//    	 */
-//    	if (hasWaypoints()) {
-//    		retVal += "\">";
-//    		for (Point2D waypoint : this.getWaypoints()) {
-//    			retVal += "\n"+indent+"<waypoint x=\"" + waypoint.getX() + "\" y=\"" + waypoint.getY() + "\"/>";
-//    		}
-//    		retVal += "\n"+indent+"</object_with_waypoints>";
-//    	} else {
-//    		retVal += "\" heading=\"" + this.heading * Math.toRadians(3600) + "\" x=\"" + this.x + "\" y=\"" + this.y + "\"/>";
-//    	}
     	return retVal;
 	}
 

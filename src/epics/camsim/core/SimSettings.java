@@ -136,7 +136,9 @@ public class SimSettings implements Cloneable{
         public Double y;
         public Double heading;
         public Double speed;
-
+        public String fqName;
+        public ArrayList<Point2D> waypoints;
+        
         /*
          * TODO: Implement features as collection
          */
@@ -146,46 +148,56 @@ public class SimSettings implements Cloneable{
                 double x, double y,
                 double heading,
                 double speed,
-                double features) {
+                double features,
+                ArrayList<Point2D> waypoints,
+                String fqN) {
 
             this.x = x;
             this.y = y;
             this.heading = heading;
             this.speed = speed;
             this.features = features;
+            this.fqName = fqN;
+            this.waypoints = waypoints;
         }
 
         public void printSelfToCMD(){
             System.out.println("{ x: " + x );
             System.out.println("  y: " + y );
             System.out.println("  heading: " + heading );
-            System.out.println("  speed: " + speed + " }");
+            System.out.println("  speed: " + speed );
+            System.out.println("  waypoints: [");
+            for (Point2D point : waypoints) {
+                System.out.println("    ("+point.getX()+", "+point.getY()+")");
+            }
+            System.out.println("  ]");
+            System.out.println("  name: " + fqName + " }");
         }
     }
     
-    public class TrObjectWithWaypoints {
-    	
-    	public Double speed;
-    	public Double features;
-    	public ArrayList<Point2D> waypoints;
-    	
-    	public TrObjectWithWaypoints(double speed, double features, 
-    			ArrayList<Point2D> waypoints) {
-    		this.speed = speed;
-    		this.features = features;
-    		this.waypoints = waypoints;
-		}
-    	
-    	public void printSelfToCMD(){
-            System.out.println("{ speed: " + speed );
-            System.out.println("  features: " + features );
-            System.out.println("  waypoints: [");
-            for (Point2D point : waypoints) {
-            	System.out.println("    ("+point.getX()+", "+point.getY()+")");
-            }
-            System.out.println("  ]\n}");
-        }
-    }
+//    public class TrObjectWithWaypoints {
+//    	
+//    	public Double speed;
+//    	public Double features;
+//    	public ArrayList<Point2D> waypoints;
+//    	
+//    	public TrObjectWithWaypoints(double speed, double features, 
+//    			ArrayList<Point2D> waypoints) {
+//    		this.speed = speed;
+//    		this.features = features;
+//    		this.waypoints = waypoints;
+//		}
+//    	
+//    	public void printSelfToCMD(){
+//            System.out.println("{ speed: " + speed );
+//            System.out.println("  features: " + features );
+//            System.out.println("  waypoints: [");
+//            for (Point2D point : waypoints) {
+//            	System.out.println("    ("+point.getX()+", "+point.getY()+")");
+//            }
+//            System.out.println("  ]\n}");
+//        }
+//    }
     
     public class StaticVisionGraph implements Cloneable{
     	Map<String, ArrayList<String>> vg;
@@ -237,6 +249,7 @@ public class SimSettings implements Cloneable{
     	int comm;
     	String customCom;
     	ArrayList<Point2D> waypoints;
+    	String fqName = "";
     	String bandit;
     	
     	public Event(){
@@ -267,13 +280,13 @@ public class SimSettings implements Cloneable{
     		this.bandit = bandit;
     	}
     	
-    	public Event(int ts, int part, String n, String ev, double head, double sp, double xPos, double yPos, ArrayList<Point2D> waypoints){
+    	public Event(int ts, int part, String n, String ev, double head, double sp, double xPos, double yPos, ArrayList<Point2D> waypoints, String fqName){
     		this.waypoints = waypoints;
     		timestep = ts;
     		participant = part;
     		name = n;
     		event = ev;
-    		
+    		this.fqName = fqName;
     		heading = head;
     		speed = sp;
     		x = xPos;
@@ -309,7 +322,7 @@ public class SimSettings implements Cloneable{
     public Double max_y;
     public ArrayList<CameraSettings> cameras = new ArrayList<CameraSettings>();
     public ArrayList<TrObjectSettings> objects = new ArrayList<TrObjectSettings>();
-    public ArrayList<TrObjectWithWaypoints> objectsWithWaypoints = new ArrayList<TrObjectWithWaypoints>();
+//    public ArrayList<TrObjectWithWaypoints> objectsWithWaypoints = new ArrayList<TrObjectWithWaypoints>();
     public ArrayList<Event> events = new ArrayList<Event>();
     public StaticVisionGraph visionGraph;
     
@@ -355,10 +368,10 @@ public class SimSettings implements Cloneable{
             tros.printSelfToCMD();
         }
         
-        System.out.println("ObjectsWithWaypoints:");
-        for (TrObjectWithWaypoints trObjWithWP : this.objectsWithWaypoints){
-            trObjWithWP.printSelfToCMD();
-        }
+//        System.out.println("ObjectsWithWaypoints:");
+//        for (TrObjectWithWaypoints trObjWithWP : this.objectsWithWaypoints){
+//            trObjWithWP.printSelfToCMD();
+//        }
         
         System.out.println("\nVisionGraph:");
         if(visionGraph != null){
@@ -395,7 +408,7 @@ public class SimSettings implements Cloneable{
     		cameras.add(cs);
     	}
     	for(int i = 0; i < maxObj; i++){
-    		TrObjectSettings tos = new TrObjectSettings(0, 0, 0, 0, i);
+    		TrObjectSettings tos = new TrObjectSettings(0, 0, 0, 0, i, new ArrayList<Point2D>(), "epics.movement.Straight");
     		objects.add(tos);
     	}
     	return true;
@@ -491,7 +504,7 @@ public class SimSettings implements Cloneable{
                 Double speed = Double.parseDouble(eObject.getAttribute("speed"));
                 Double features = Double.parseDouble(eObject.getAttribute("features"));
 
-                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features);
+                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features, new ArrayList<Point2D>(), "epics.movement.Straight");
                 for (TrObjectSettings current : objects) {
                 	if (current.features.equals(tros.features)) {
                 		throw new IllegalStateException("Two objects with same features added");
@@ -519,13 +532,14 @@ public class SimSettings implements Cloneable{
                 	waypoints.add(new Point2D.Double(x, y));
                 }
                 
-                TrObjectWithWaypoints trObjWithWP = new TrObjectWithWaypoints(speed, features, waypoints);
-                for (TrObjectWithWaypoints current : objectsWithWaypoints) {
-                	if (current.features.equals(trObjWithWP.features)) {
-                		throw new IllegalStateException("Two objects with same features added");
-                	}
+//                TrObjectWithWaypoints trObjWithWP = new TrObjectWithWaypoints(speed, features, waypoints);
+                TrObjectSettings tros = new TrObjectSettings(waypoints.get(0).getX(), waypoints.get(0).getY(), -1, speed, features, waypoints, "epics.movement.Waypoints");
+                for (TrObjectSettings current : objects) {
+                    if (current.features.equals(tros.features)) {
+                        throw new IllegalStateException("Two objects with same features added");
+                    }
                 }
-                this.objectsWithWaypoints.add(trObjWithWP);
+                this.objects.add(tros);
             }
             
             //read vision graph from xml
@@ -655,8 +669,11 @@ public class SimSettings implements Cloneable{
             				Point2D wp = new Point2D.Double(xP, yP);
             				waypoints.add(wp);
             			}
+            			String fqName = "";
+            			if(eEvent.hasAttribute("fqName"))
+            			    fqName = eEvent.getAttribute("fqName");
             			
-            			e = new Event(ts, part, name, event, head, speed, x, y, waypoints);
+            			e = new Event(ts, part, name, event, head, speed, x, y, waypoints, fqName);
             			events.add(e);
             		}
             		else{
