@@ -14,6 +14,7 @@ public class RandomNumberGenerator {
     private Random ranComm = null;
     private Random ranError = null;
     private Random ranBandit = null;
+    private Random ranNormal = null;
     private long _seed;
     
     public RandomNumberGenerator(long seed) {
@@ -28,6 +29,7 @@ public class RandomNumberGenerator {
     	ranComm = new Random(seed);
     	ranError = new Random(seed);
     	ranBandit = new Random(seed);
+    	ranNormal = new Random(seed);
         _seed = seed;
     }
 
@@ -45,6 +47,8 @@ public class RandomNumberGenerator {
 				return ranError.nextDouble();
 			case BANDIT:
 				return ranBandit.nextDouble();
+			case NORMALDIST:
+			    return ranNormal.nextDouble();
 			default:
 				return ranUniversal.nextDouble();
 		}
@@ -65,6 +69,8 @@ public class RandomNumberGenerator {
 				return ranError.nextInt();
 			case BANDIT:
 				return ranBandit.nextInt();
+			case NORMALDIST:
+                return ranNormal.nextInt();
 			default:
 				return ranUniversal.nextInt();
 		}
@@ -85,9 +91,49 @@ public class RandomNumberGenerator {
 				return ranError.nextInt(n);
 			case BANDIT:
 				return ranBandit.nextInt(n);
+			case NORMALDIST:
+                return ranNormal.nextInt(n);
 			default:
 				return ranUniversal.nextInt(n);
 		}
+    }
+    
+    /**
+     * returns a normaldistributed random number with standarddeviation of std and mean value of mean
+     * 
+     * @param std the standardeviation of this normaldistribution
+     * @param mean the mean value of the normaldistribution
+     * @param u the used random number generator
+     * @return the random, normaldistributed number
+     */
+    public double nextGaussian(double std, double mean, RandomUse.USE u){
+        return std*nextDouble(u)+mean;
+    }
+    
+    /**
+     * returns a standardnormaldistributed random number
+     * @param u the used random number generator
+     * @return the random, standardnormaldistributed number
+     */
+    public double nextGaussian(RandomUse.USE u){
+        switch (u) {
+            case UNIV:
+                return ranUniversal.nextGaussian();
+            case FALSEOBJ:
+                return ranFalseObj.nextGaussian();
+            case TURN: 
+                return ranTurn.nextGaussian();
+            case COMM:
+                return ranComm.nextGaussian();
+            case ERROR:
+                return ranError.nextGaussian();
+            case BANDIT:
+                return ranBandit.nextGaussian();
+            case NORMALDIST:
+                return ranNormal.nextGaussian();
+            default:
+                return ranUniversal.nextGaussian();
+        }
     }
 
     public long getSeed() {

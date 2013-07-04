@@ -503,8 +503,20 @@ public class SimSettings implements Cloneable{
                 Double heading = Double.parseDouble(eObject.getAttribute("heading"));
                 Double speed = Double.parseDouble(eObject.getAttribute("speed"));
                 Double features = Double.parseDouble(eObject.getAttribute("features"));
-
-                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features, new ArrayList<Point2D>(), "epics.movement.Straight");
+                String move = "epics.movement.Straight";
+                if(eObject.hasAttribute("move")){
+                    move = eObject.getAttribute("move");
+                }
+                ArrayList<Point2D> waypoints = new ArrayList<Point2D>();
+                if(eObject.hasAttribute("waypoint")){
+                    NodeList waypointNodes = eObject.getElementsByTagName("waypoint");
+                    
+                    for (int w = 0; w < waypointNodes.getLength(); w++) {
+                        Element wElement = (Element)waypointNodes.item(w);
+                        waypoints.add(new Point2D.Double(x, y));
+                    }
+                }
+                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features, waypoints, move);
                 for (TrObjectSettings current : objects) {
                 	if (current.features.equals(tros.features)) {
                 		throw new IllegalStateException("Two objects with same features added");
@@ -522,7 +534,7 @@ public class SimSettings implements Cloneable{
 
                 Double speed = Double.parseDouble(eObject.getAttribute("speed"));
                 Double features = Double.parseDouble(eObject.getAttribute("features"));
-
+                
                 NodeList waypointNodes = eObject.getElementsByTagName("waypoint");
                 ArrayList<Point2D> waypoints = new ArrayList<Point2D>();
                 for (int w = 0; w < waypointNodes.getLength(); w++) {

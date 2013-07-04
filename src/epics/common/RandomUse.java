@@ -7,6 +7,7 @@ public class RandomUse {
 		TURN,
 		COMM,
 		ERROR,
-		BANDIT
+		BANDIT,
+		NORMALDIST
 	}
 }
