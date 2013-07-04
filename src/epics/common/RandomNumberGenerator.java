@@ -47,7 +47,7 @@ public class RandomNumberGenerator {
 				return ranError.nextDouble();
 			case BANDIT:
 				return ranBandit.nextDouble();
-			case NORMALDIST:
+			case MOVE:
 			    return ranNormal.nextDouble();
 			default:
 				return ranUniversal.nextDouble();
@@ -69,7 +69,7 @@ public class RandomNumberGenerator {
 				return ranError.nextInt();
 			case BANDIT:
 				return ranBandit.nextInt();
-			case NORMALDIST:
+			case MOVE:
                 return ranNormal.nextInt();
 			default:
 				return ranUniversal.nextInt();
@@ -91,7 +91,7 @@ public class RandomNumberGenerator {
 				return ranError.nextInt(n);
 			case BANDIT:
 				return ranBandit.nextInt(n);
-			case NORMALDIST:
+			case MOVE:
                 return ranNormal.nextInt(n);
 			default:
 				return ranUniversal.nextInt(n);
@@ -129,7 +129,7 @@ public class RandomNumberGenerator {
                 return ranError.nextGaussian();
             case BANDIT:
                 return ranBandit.nextGaussian();
-            case NORMALDIST:
+            case MOVE:
                 return ranNormal.nextGaussian();
             default:
                 return ranUniversal.nextGaussian();

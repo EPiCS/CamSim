@@ -12,9 +12,16 @@ public class Brownian extends AbstractMovement{
 
     double mean = 0.0;
     double std = 1.0;
+    int step = 0;
+    
+    double initX;
+    double initY;
     
     public Brownian(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim,  double mean, double std){
         super(x, y, heading, speed, rg, sim);
+        this.initX = x;
+        this.initY = y;
+        this.step = 0;
         this.mean = mean;
         this.std = std;
     }
@@ -30,13 +37,16 @@ public class Brownian extends AbstractMovement{
 
     @Override
     public void update() {
-        double xran = randomGen.nextGaussian(std, mean, USE.NORMALDIST) - 0.5;
-        double yran = randomGen.nextGaussian(std, mean, USE.NORMALDIST) - 0.5;
+        double xran = randomGen.nextGaussian(std, mean, USE.MOVE) - (std/2);
+        double yran = randomGen.nextGaussian(std, mean, USE.MOVE) - (std/2);
                
+        System.out.println(xran + " - " + yran);
+        
         x = x + xran;
-        y = y + yran;
+        y = y + yran ;
         
         checkBoundaryCollision(xran, yran);
+        step ++;
     }
 
     @Override
