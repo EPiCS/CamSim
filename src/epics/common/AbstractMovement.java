@@ -11,7 +11,7 @@ public abstract class AbstractMovement {
     protected double heading; // radians ( 0 is north, PI/2 is east )
     protected double speed; // meters per second
     protected RandomNumberGenerator randomGen;
-    private SimCore sim;
+    protected SimCore sim;
     
     public AbstractMovement(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim){
         this.x = x;
