@@ -10,10 +10,14 @@
 
         </cameras>
         <objects>
+        <object features="4.0" heading="90.0" speed="1.0" x="-30.0" y="-2.0" move="epics.movement.Brownian">
+        <!--<waypoint x="-30.0" y="-2.0"/>
+		<waypoint x="30.0" y="-2.0"/>-->
+		</object>
         </objects>
 	<events>
 	    <!-- <event timestep="20" participant="camera" name="Cam_02" event="error" duration="-1"/> -->
-	    <event timestep="1" participant="object" name="1.0" event="add" heading="90.0" speed="1.5" x="-30.0" y="-2.0">
+	    <event timestep="1" participant="object" name="1.0" event="add" heading="90.0" speed="1.5" x="-30.0" y="-2.0" move="epics.movement.Brownian">
 		<!--<waypoint x="-30.0" y="-2.0"/>
 		<waypoint x="30.0" y="-2.0"/>-->
 	    </event>

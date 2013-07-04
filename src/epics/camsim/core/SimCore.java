@@ -30,6 +30,8 @@ import epics.common.RunParams;
 import epics.commpolicy.Broadcast;
 import epics.commpolicy.Smooth;
 import epics.commpolicy.Step;
+import epics.movement.Brownian;
+import epics.movement.Waypoints;
 
 /**
  * SimCore represents the main core of the simulation. each object and camera is controlled from here. 
@@ -314,7 +316,7 @@ public class SimCore {
         }
 
         for (SimSettings.TrObjectSettings tro : ss.objects){
-            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.fqName);
+            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.mean, tro.std, tro.fqName);
         }
         
 //        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {
@@ -727,7 +729,7 @@ public class SimCore {
     public void add_object(
             double pos_x, double pos_y,
             double heading_degrees, double speed,
-            double features, List<Point2D> waypoints, String fqName ){
+            double features, List<Point2D> waypoints, double mean, double std, String fqName ){
         
         //TODO do some magic here ;)
         TraceableObject to = null;
@@ -741,13 +743,11 @@ public class SimCore {
         }
         else{
             try {
-                Class<?>[] moveConstructor = {double.class, double.class, double.class, double.class, RandomNumberGenerator.class, SimCore.class};
-                Class<?> moveClass = Class.forName(fqName);
-                Constructor<?> cons = moveClass.getConstructor(moveConstructor); 
-                AbstractMovement move = (AbstractMovement) cons.newInstance(pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen, this);
+                
+                AbstractMovement move = createMovement(pos_x, pos_y, heading_degrees, speed, features, waypoints, mean, std, fqName);
                 to = new TraceableObject(features, move);
             } catch (Exception e) {
-                System.err.println("Failed to create a communication class");
+                System.err.println("Failed to create a movement class");
                 e.printStackTrace();
                 System.exit(1);
             }
@@ -757,6 +757,32 @@ public class SimCore {
         
         add_object(to);
     }
+
+    private AbstractMovement createMovement(double pos_x, double pos_y,
+            double heading_degrees, double speed, double features,
+            List<Point2D> waypoints, double mean, double std, String fqName) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, ClassNotFoundException {
+        
+        Class<?> moveClass = Class.forName(fqName);
+        Class<?>[] moveConstructor = {double.class, double.class, double.class, double.class, RandomNumberGenerator.class, SimCore.class};
+        
+        if(moveClass.equals(Waypoints.class)){                           
+            moveConstructor = new Class<?>[]{double.class, double.class, double.class, double.class, RandomNumberGenerator.class, (Class<List<Point2D>>) ((Class)List.class), SimCore.class};
+            Constructor<?> cons = moveClass.getConstructor(moveConstructor); 
+            return (AbstractMovement) cons.newInstance(pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen, waypoints, this);
+        }
+        else{
+            if(moveClass.equals(Brownian.class)){
+                moveConstructor = new Class<?>[]{double.class, double.class, double.class, double.class, RandomNumberGenerator.class, SimCore.class, double.class, double.class};
+                Constructor<?> cons = moveClass.getConstructor(moveConstructor); 
+                return (AbstractMovement) cons.newInstance(pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen, this, mean, std);
+            }
+
+        }
+        //standard straight implementation
+        Constructor<?> cons = moveClass.getConstructor(moveConstructor); 
+        return (AbstractMovement) cons.newInstance(pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen, this);        
+    }
+
 
     /**
      * Adds object to the simulation with specified parameters.
@@ -769,9 +795,9 @@ public class SimCore {
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
      */
-    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, String fqName ){
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, double mean, double std, String fqName ){
         double features = 0.111 * getNextID();
-        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, fqName);
+        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, mean, std, fqName);
     }
 
 //    /**
@@ -813,7 +839,7 @@ public class SimCore {
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * 360,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4,
-        		new ArrayList<Point2D>(), "");
+        		new ArrayList<Point2D>(), 0, 1, "");
     }
 
     /**
@@ -1174,7 +1200,7 @@ public class SimCore {
 					}
 					else{ //object 
 //						if(e.waypoints == null)
-							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name), e.waypoints, e.fqName);
+							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name), e.waypoints, e.mean, e.std, e.fqName);
 //						}
 //						else{
 //							this.add_object(e.speed, e.waypoints, Double.parseDouble(e.name));

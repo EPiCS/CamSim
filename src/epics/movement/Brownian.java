@@ -13,11 +13,15 @@ public class Brownian extends AbstractMovement{
     double mean = 0.0;
     double std = 1.0;
     
-    public Brownian(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim, double mean, double std){
+    public Brownian(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim,  double mean, double std){
         super(x, y, heading, speed, rg, sim);
         this.mean = mean;
         this.std = std;
     }
+    
+//    public Brownian(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim){
+//        super(x, y, heading, speed, rg, sim);
+//    }
     
     @Override
     public List<Point2D> getWaypoints() {
@@ -26,8 +30,13 @@ public class Brownian extends AbstractMovement{
 
     @Override
     public void update() {
-        x = x + randomGen.nextGaussian(std, mean, USE.NORMALDIST);
-        y = y + randomGen.nextGaussian(std, mean, USE.NORMALDIST);
+        double xran = randomGen.nextGaussian(std, mean, USE.NORMALDIST) - 0.5;
+        double yran = randomGen.nextGaussian(std, mean, USE.NORMALDIST) - 0.5;
+        
+        System.out.println(xran + " - " + yran);
+        
+        x = x + xran;
+        y = y + yran;
     }
 
     @Override

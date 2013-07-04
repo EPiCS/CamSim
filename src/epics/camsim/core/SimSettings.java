@@ -138,6 +138,8 @@ public class SimSettings implements Cloneable{
         public Double speed;
         public String fqName;
         public ArrayList<Point2D> waypoints;
+        public Double std;
+        public Double mean;
         
         /*
          * TODO: Implement features as collection
@@ -150,6 +152,8 @@ public class SimSettings implements Cloneable{
                 double speed,
                 double features,
                 ArrayList<Point2D> waypoints,
+                double mean,
+                double std,
                 String fqN) {
 
             this.x = x;
@@ -158,6 +162,8 @@ public class SimSettings implements Cloneable{
             this.speed = speed;
             this.features = features;
             this.fqName = fqN;
+            this.mean = mean;
+            this.std = std;
             this.waypoints = waypoints;
         }
 
@@ -245,6 +251,8 @@ public class SimSettings implements Cloneable{
     	double speed;
     	double x;
     	double y;
+    	double std;
+    	double mean;
     	int limit;
     	int comm;
     	String customCom;
@@ -280,7 +288,7 @@ public class SimSettings implements Cloneable{
     		this.bandit = bandit;
     	}
     	
-    	public Event(int ts, int part, String n, String ev, double head, double sp, double xPos, double yPos, ArrayList<Point2D> waypoints, String fqName){
+    	public Event(int ts, int part, String n, String ev, double head, double sp, double xPos, double yPos, ArrayList<Point2D> waypoints, double mean, double std, String fqName){
     		this.waypoints = waypoints;
     		timestep = ts;
     		participant = part;
@@ -289,6 +297,8 @@ public class SimSettings implements Cloneable{
     		this.fqName = fqName;
     		heading = head;
     		speed = sp;
+    		this.mean = mean;
+    		this.std = std;
     		x = xPos;
     		y = yPos;
     	}
@@ -408,7 +418,7 @@ public class SimSettings implements Cloneable{
     		cameras.add(cs);
     	}
     	for(int i = 0; i < maxObj; i++){
-    		TrObjectSettings tos = new TrObjectSettings(0, 0, 0, 0, i, new ArrayList<Point2D>(), "epics.movement.Straight");
+    		TrObjectSettings tos = new TrObjectSettings(0, 0, 0, 0, i, new ArrayList<Point2D>(), 0, 1, "epics.movement.Straight");
     		objects.add(tos);
     	}
     	return true;
@@ -507,16 +517,26 @@ public class SimSettings implements Cloneable{
                 if(eObject.hasAttribute("move")){
                     move = eObject.getAttribute("move");
                 }
+                Double mean = 0.0;
+                Double std = 1.0;
+                if(eObject.hasAttribute("mean")){
+                    mean = Double.parseDouble(eObject.getAttribute("mean"));
+                }
+                if(eObject.hasAttribute("std")){
+                    std = Double.parseDouble(eObject.getAttribute("std"));
+                }
                 ArrayList<Point2D> waypoints = new ArrayList<Point2D>();
-                if(eObject.hasAttribute("waypoint")){
+//                if(eObject.hasAttribute("waypoint")){
                     NodeList waypointNodes = eObject.getElementsByTagName("waypoint");
                     
                     for (int w = 0; w < waypointNodes.getLength(); w++) {
                         Element wElement = (Element)waypointNodes.item(w);
-                        waypoints.add(new Point2D.Double(x, y));
+                        Double x_ = Double.parseDouble(wElement.getAttribute("x"));
+                        Double y_ = Double.parseDouble(wElement.getAttribute("y"));
+                        waypoints.add(new Point2D.Double(x_, y_));
                     }
-                }
-                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features, waypoints, move);
+//                }
+                TrObjectSettings tros = new TrObjectSettings(x, y, heading, speed, features, waypoints, mean, std, move);
                 for (TrObjectSettings current : objects) {
                 	if (current.features.equals(tros.features)) {
                 		throw new IllegalStateException("Two objects with same features added");
@@ -545,7 +565,7 @@ public class SimSettings implements Cloneable{
                 }
                 
 //                TrObjectWithWaypoints trObjWithWP = new TrObjectWithWaypoints(speed, features, waypoints);
-                TrObjectSettings tros = new TrObjectSettings(waypoints.get(0).getX(), waypoints.get(0).getY(), -1, speed, features, waypoints, "epics.movement.Waypoints");
+                TrObjectSettings tros = new TrObjectSettings(waypoints.get(0).getX(), waypoints.get(0).getY(), -1, speed, features, waypoints, 0.0, 1.0, "epics.movement.Waypoints");
                 for (TrObjectSettings current : objects) {
                     if (current.features.equals(tros.features)) {
                         throw new IllegalStateException("Two objects with same features added");
@@ -685,7 +705,14 @@ public class SimSettings implements Cloneable{
             			if(eEvent.hasAttribute("fqName"))
             			    fqName = eEvent.getAttribute("fqName");
             			
-            			e = new Event(ts, part, name, event, head, speed, x, y, waypoints, fqName);
+            			double mean = 0;
+            			double std = 1;
+            			if(eEvent.hasAttribute("mean"))
+                            mean = Double.parseDouble(eEvent.getAttribute("mean"));
+            			if(eEvent.hasAttribute("std"))
+            			    std = Double.parseDouble(eEvent.getAttribute("std"));
+            			
+            			e = new Event(ts, part, name, event, head, speed, x, y, waypoints, mean, std, fqName);
             			events.add(e);
             		}
             		else{

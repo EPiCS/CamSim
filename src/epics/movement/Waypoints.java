@@ -22,6 +22,11 @@ public class Waypoints extends AbstractMovement{
         this.waypoints = waypoints;
         currentWaypoint = 1;
     }
+    
+//    public Waypoints(double x, double y, double speed, double heading, RandomNumberGenerator rg, SimCore sim, object)
+//    {
+//        super(x, y, heading, speed, rg, sim);
+//    }
 
     @Override
     public void update() {

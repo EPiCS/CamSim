@@ -61,12 +61,12 @@ public class SimCoreModel extends Observable {
         sim.add_random_object();
     }
 
-    public void add_object( double pos_x, double pos_y, double heading_degrees, double speed){
-        sim.add_object(pos_x, pos_y, heading_degrees, speed, new ArrayList<Point2D>(), "");
+    public void add_object( double pos_x, double pos_y, double heading_degrees, double speed, double mean, double std){
+        sim.add_object(pos_x, pos_y, heading_degrees, speed, new ArrayList<Point2D>(), mean, std, "");
     }
 
     public void add_object( double speed, List<Point2D> waypoints, double id ){
-        sim.add_object(waypoints.get(0).getX(), waypoints.get(0).getY(), -1, speed, id, waypoints, "");
+        sim.add_object(waypoints.get(0).getX(), waypoints.get(0).getY(), -1, speed, id, waypoints, 0, 1, "");
     }
 
     public void remove_random_object(){
@@ -117,7 +117,7 @@ public class SimCoreModel extends Observable {
 			this.add_camera(15, 10, -180, 70, 20, 0, 0, null, "");
 			this.add_camera(26, 8, -135, 70, 20, 0, 0, null, "");
 
-			this.add_object(-30, -2, 90, 1);
+			this.add_object(-30, -2, 90, 1, 0, 1);
 		
 			break;
 		case 2:
@@ -127,8 +127,8 @@ public class SimCoreModel extends Observable {
 	        this.add_camera(15, 10, -180, 70, 20, 0, 0, null, "");
 	        this.add_camera(26, 8, -135, 70, 20, 0, 0, null, "");
 
-	        this.add_object(-30, -2, 90, 1);
-	        this.add_object(30, -2, -90, 1);
+	        this.add_object(-30, -2, 90, 1, 0, 1);
+	        this.add_object(30, -2, -90, 1, 0, 1);
 			break;
 		case 3:
 	      	double d = 11;
@@ -180,7 +180,7 @@ public class SimCoreModel extends Observable {
 			this.add_camera(15, 10, -180, 70, 20, 0, 0, null, "");
 			this.add_camera(26, 8, -135, 70, 20, 0, 0, null, "");
 
-			this.add_object(-30, -2, 90, 1);
+			this.add_object(-30, -2, 90, 1, 0, 1);
 			break;
 		}
 	}
