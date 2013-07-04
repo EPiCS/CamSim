@@ -17,6 +17,7 @@ import java.util.Set;
 //import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
 import epics.common.AbstractAINode;
 import epics.common.AbstractCommunication;
+import epics.common.AbstractMovement;
 import epics.common.CmdLogger;
 import epics.common.IBanditSolver;
 import epics.common.ICameraController;
@@ -720,17 +721,40 @@ public class SimCore {
      * @param speed speed of the object
      * @param features unique identification of the object
      * @param waypoints a list of waypoints - if empty, and fqName is empty, epics.movement.Straight is being used
-     * @param fqName the full qualifying name. if empty and waypoints is too, epics.movement.Straight is being used. 
+     * @param fqName the full qualifying name for MOVEMENT CLASS. if empty and waypoints is too, epics.movement.Straight is being used. 
      * if fqName is empty and waypoints is NOT empty epics.movement.Waypoints is being used.
      */
     public void add_object(
             double pos_x, double pos_y,
             double heading_degrees, double speed,
-            double features, ArrayList<Point2D> waypoints, String fqName ){
+            double features, List<Point2D> waypoints, String fqName ){
         
-        //do some magic here ;)
+        //TODO do some magic here ;)
+        TraceableObject to = null;
+        if(fqName.isEmpty()){
+            if(waypoints.isEmpty()){
+                to = new TraceableObject(features, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
+            }
+            else{
+                to = new TraceableObject(features, this, speed, waypoints, randomGen);
+            }
+        }
+        else{
+            try {
+                Class<?>[] moveConstructor = {double.class, double.class, double.class, double.class, RandomNumberGenerator.class, SimCore.class};
+                Class<?> moveClass = Class.forName(fqName);
+                Constructor<?> cons = moveClass.getConstructor(moveConstructor); 
+                AbstractMovement move = (AbstractMovement) cons.newInstance(pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen, this);
+                to = new TraceableObject(features, move);
+            } catch (Exception e) {
+                System.err.println("Failed to create a communication class");
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+            
+            
         
-    	TraceableObject to = new TraceableObject(features, this, pos_x, pos_y, Math.toRadians(heading_degrees), speed, randomGen);
         add_object(to);
     }
 
@@ -745,7 +769,7 @@ public class SimCore {
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
      */
-    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, ArrayList<Point2D> waypoints, String fqName ){
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, String fqName ){
         double features = 0.111 * getNextID();
         add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, fqName);
     }
@@ -1149,7 +1173,7 @@ public class SimCore {
 					    		e.limit, null, e.bandit, null, null);
 					}
 					else{ //object 
-//						if(e.waypoints == null){
+//						if(e.waypoints == null)
 							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name), e.waypoints, e.fqName);
 //						}
 //						else{

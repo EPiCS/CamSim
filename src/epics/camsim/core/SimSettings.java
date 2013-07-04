@@ -657,10 +657,10 @@ public class SimSettings implements Cloneable{
             			double y = Double.parseDouble(eEvent.getAttribute("y"));
             			
             			NodeList nPoints = eEvent.getElementsByTagName("waypoint");
-            			ArrayList<Point2D> waypoints = null;
-            			if(nPoints.getLength() > 0){
-            				waypoints = new ArrayList<Point2D>();
-            			}
+            			ArrayList<Point2D> waypoints = new ArrayList<Point2D>();;
+//            			if(nPoints.getLength() > 0){
+//            				waypoints = new ArrayList<Point2D>();
+//            			}
             			for(int k = 0; k < nPoints.getLength(); k++){
             				Node waypoint = nPoints.item(k);
             				Element eWP = (Element) waypoint;

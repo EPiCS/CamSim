@@ -62,11 +62,11 @@ public class SimCoreModel extends Observable {
     }
 
     public void add_object( double pos_x, double pos_y, double heading_degrees, double speed){
-        sim.add_object(pos_x, pos_y, heading_degrees, speed);
+        sim.add_object(pos_x, pos_y, heading_degrees, speed, new ArrayList<Point2D>(), "");
     }
 
     public void add_object( double speed, List<Point2D> waypoints, double id ){
-        sim.add_object(speed, waypoints, id);
+        sim.add_object(waypoints.get(0).getX(), waypoints.get(0).getY(), -1, speed, id, waypoints, "");
     }
 
     public void remove_random_object(){
