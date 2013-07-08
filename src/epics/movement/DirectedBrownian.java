@@ -24,10 +24,10 @@ public class DirectedBrownian extends AbstractMovement{
         double x_move = 0;
         double y_move = 0;
         
-        double sran = randomGen.nextDouble(USE.MOVE);
-        double hran = (randomGen.nextDouble(USE.MOVE));
-        speed += (sran - 0.5) / 10;
-        heading += (hran - 0.5) / 2; 
+        double sran = randomGen.nextGaussian(USE.MOVE);//.nextDouble(USE.MOVE);
+        double hran = randomGen.nextGaussian(USE.MOVE);//(randomGen.nextDouble(USE.MOVE));
+        speed += (sran / 10); //- 0.5) / 10;
+        heading += (hran / 2);// - 0.5) / 2; 
         
         System.out.println(sran + " - " + hran);
         

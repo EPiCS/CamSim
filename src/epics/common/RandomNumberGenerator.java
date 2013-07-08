@@ -107,7 +107,7 @@ public class RandomNumberGenerator {
      * @return the random, normaldistributed number
      */
     public double nextGaussian(double std, double mean, RandomUse.USE u){
-        return std*nextDouble(u)+mean;
+        return mean+nextGaussian(u)*std;
     }
     
     /**

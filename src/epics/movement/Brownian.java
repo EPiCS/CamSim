@@ -37,10 +37,10 @@ public class Brownian extends AbstractMovement{
 
     @Override
     public void update() {
-        double xran = randomGen.nextGaussian(std, mean, USE.MOVE) - (std/2);
-        double yran = randomGen.nextGaussian(std, mean, USE.MOVE) - (std/2);
+        double xran = randomGen.nextGaussian(std, mean, USE.MOVE);//  - (std/2);
+        double yran = randomGen.nextGaussian(std, mean, USE.MOVE);//  - (std/2);
                
-        System.out.println(xran + " - " + yran);
+        System.out.println(xran + ";" + yran);
         
         x = x + xran;
         y = y + yran ;
