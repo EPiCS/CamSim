@@ -3,71 +3,85 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Camsim by LukasEsterle</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	
 
+	<title>Camsim by LukasEsterle</title>
+	<link href="style/style.css" rel="stylesheet" type="text/css" media="all" />
+    
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+	
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Camsim</h1>
-        <p>Smart Camera Simulation Environment</p>
+  
+  <div id="container">
+  	<div id="left">
 
-        <p class="view"><a href="https://github.com/EPiCS/CamSim">View the Project on GitHub <small>EPiCS/CamSim</small></a></p>
+		<div id="navigation">
+			<!--<ul id="menue">
+				 <li class="active"><a class="nav_home" href="./">HOME</a></li>
+				<li ><a class="nav_project" href="project/">PROJECT</a></li>
+				<li ><a class="nav_consortium" href="consortium/">CONSORTIUM</a></li>
+				<li ><a class="nav_publication" href="publications/">PUBLICATIONS</a></li>
+				<li ><a class="nav_software" href="software/">SOFTWARE</a></li>
+				<li ><a class="nav_news" href="news/">NEWS</a></li>
+			</ul>-->
+		</div> <!-- navigation -->
+		
+		<header>
+			<h1>CamSim</h1>
+			<p>Smart Camera Simulation Environment</p>
 
+			<p class="view"><a href="https://github.com/EPiCS/CamSim">View the Project on GitHub <br><small>EPiCS/CamSim</small></br></a></p>
 
-        <ul>
-          <li><a href="https://github.com/EPiCS/CamSim/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/EPiCS/CamSim/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/EPiCS/CamSim">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to CamSim.</h3>
+			<ul>
+			  <li><a href="https://github.com/EPiCS/CamSim/zipball/master">Download <strong>ZIP File</strong></a></li>
+			  <li><a href="https://github.com/EPiCS/CamSim/tarball/master">Download <strong>TAR Ball</strong></a></li>
+			  <li><a href="https://github.com/EPiCS/CamSim">View On <strong>GitHub</strong></a></li>
+			</ul>
+			<footer>
+				<p>This project is maintained by <a href="https://github.com/LukasEsterle">Lukas Esterle</a>
+				<small>Theme derived from <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+			  </footer>
+		</header>
 
-<p>Smart Camera Simulation Environment
+  		<div id="contact_container">
+  			<div id="contact_button"><a href="contact"><img src="style/button_contact_off.gif" width="56" height="117" alt="" onmouseover="this.src='/style/button_contact_on.gif'" onmouseout="this.src='/style/button_contact_off.gif'" /></a></div>
+  			<div id="logo7fp"><a href="http://cordis.europa.eu/fp7/home_en.html"><img src="style/logo7fp.gif" width="101" height="85" alt="Logo European Comission Seventh Framework Programme" /></a></div>
+  		</div>
 
-CamSim is a simple 2D simulation environment for smart-camera networks. 
-Smart-cameras are implemented as self-interested agents able to work collectively towards specific goals. 
-Our simulation environment allows you to concentrate on your algorithms for self-adaptation and self-organisation of the cameras within the network instead of spending time and money on setting up a real camera network. 
-Furthermore, relaxing various problems of computer vision and network communication allows to focus on algorithms that really matter to you.</p>
+  	</div>
+	<div id="right">
+		<div class="wrapper">
+		  
+		  <section>
+			<h2>
+			<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to CamSim.</h2>
 
-<p>
-<iframe src="http://player.vimeo.com/video/70176909" width="500" height="292" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
-</p>
+			<h3><p>Smart Camera Simulation Environment</p></h3>
+			<p>
+			CamSim is a simple 2D simulation environment for smart-camera networks. 
+			Smart-cameras are implemented as self-interested agents able to work collectively towards specific goals. 
+			Our simulation environment allows you to concentrate on your algorithms for self-adaptation and self-organisation of the cameras within the network instead of spending time and money on setting up a real camera network. 
+			Furthermore, relaxing various problems of computer vision and network communication allows to focus on algorithms that really matter to you.</p>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Running Experiments</h3>
+			<p>
+			<iframe src="http://player.vimeo.com/video/70176909" width="500" height="292" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
+			</p>
 
-<p>Running Experiments
+			<h3>
+			<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Introductory Tutorials</h3>
 
-The <code>runSim.sh</code> script is used to run experiments in the simulator. This takes a directory containing scenarios and writes the results in a special csv format to a results directory.
-
-Usage is as follows:
-
-<code>./runSim.sh ./myscenarios ./myresults</code>
-
-This will take all scenario files in the myscenarios directory and run each scenario 30 times with the following parameters:
-
-Each communication policy (broadcast, smooth, step)
-Each auction schedule (active, passive)
-On each camera
-So for three cameras, the number of experiments run are 30 * 3 * 2 * 3.
-
-The './myresults' parameter has the date added to it in ddMMyyyy format, and the results will be found in this directory.</p>
-
-
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/LukasEsterle">LukasEsterle</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
+			Introductory tutorials can be found on the official <a href=https://github.com/EPiCS/CamSim/wiki>Wiki</a>
+			
+		</div>
+		
+	</div>
     <script src="javascripts/scale.fix.js"></script>
     
   </body>

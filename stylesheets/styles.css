@@ -1,12 +1,12 @@
 @import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);
 
-body {
-  padding:50px;
+ body {
+  /*padding:50px;*/
   font:14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
   color:#777;
   font-weight:300;
 }
-
+ 
 h1, h2, h3, h4, h5, h6 {
   color:#222;
   margin:0 0 20px;
@@ -95,11 +95,13 @@ img {
   max-width:100%;
 }
 
-header {
+ header {
+  top: 5px;
+  left: 20px;
   width:270px;
   float:left;
-  position:fixed;
-}
+  position:absolute;
+}  
 
 header ul {
   list-style:none;
@@ -160,6 +162,7 @@ header ul a strong {
 }
 
 section {
+  margin:180px;
   width:500px;
   float:right;
   padding-bottom:50px;
