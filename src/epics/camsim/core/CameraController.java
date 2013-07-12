@@ -593,7 +593,8 @@ public class CameraController implements ICameraController{
 	/** Sets the AI node associated with this camera */
 	@Override
 	public void setAINode(AbstractAINode ai) {
-		camAINode = ai;
+	    ai.getComm().setAI(ai);
+	    camAINode = ai;
 	}
 
 	/** Updates the confidence for 'real' objects, from a predefined confidence list */

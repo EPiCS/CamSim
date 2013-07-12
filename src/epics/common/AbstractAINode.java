@@ -173,6 +173,8 @@ public abstract class AbstractAINode {
 		this.tmpTotalPaid = ai.tmpTotalPaid;
 		this.tmpTotalBids = ai.tmpTotalBids;
 		
+		this.communicationPolicy = ai.communicationPolicy;
+		
 		this.banditSolver = ai.banditSolver;
     }
 
