@@ -31,4 +31,8 @@ public abstract class AbstractCommunication {
 	 * a special multicast policy 
 	 */
 	public abstract void broadcast(MessageType mt, Object o);
+
+    public void setAI(AbstractAINode ai) {
+        this.ai = ai;        
+    }
 }
