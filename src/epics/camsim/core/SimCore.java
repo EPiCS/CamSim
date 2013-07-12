@@ -1124,9 +1124,12 @@ public class SimCore {
         
         //do trading for all cameras
         for( CameraController c : this.cameras ){
+
+            double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
+            int nrMessages = c.getAINode().getSentMessages();
+            
 		    c.updateAI();
 
-		    int nrMessages = c.getAINode().getSentMessages();
 			double commOverhead = 0.0;
 //			if(nrMessages > 0){
 //				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
@@ -1139,7 +1142,6 @@ public class SimCore {
 		    //check if bandit solvers are used
 			IBanditSolver bs = c.getAINode().getBanditSolver();
 			if(bs != null){
-				double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
 				stats.setReward(utility, commOverhead, c.getName());
 				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
 			}

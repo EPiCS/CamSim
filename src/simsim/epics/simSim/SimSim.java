@@ -34,7 +34,7 @@ public class SimSim {
 	public static boolean runHomogeneous = false;
 	public static boolean runByParameter = false;
 	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = false;
+	public static boolean runBandits = true;
 	
 	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
