@@ -33,8 +33,9 @@ public class SimSim {
     public static boolean allStatistics = false;
 	public static boolean runHomogeneous = false;
 	public static boolean runByParameter = false;
-	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = true;
+	public static boolean runAllPossibleVersions = false;
+	public static boolean runBandits = false;
+	public static boolean runOnlyScenario = true;
 	
 	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
@@ -129,6 +130,9 @@ public class SimSim {
 				        runRandomStatic(runs, duration, f, scenName);
 				    }
 				}
+				if(runOnlyScenario){
+				    runOnlyScenario(runs, duration, f, scenName);
+				}
 			}
 
 			exService.shutdown();
@@ -138,6 +142,62 @@ public class SimSim {
 
 	}
 
+	private static void runOnlyScenario(int runs, int duration, File f, String scenName){
+        SimSettings ss = new SimSettings("", "", null, 1);
+        ss.loadFromXML(f.getAbsolutePath());
+        long seed = initialSeed;
+        
+        String scenDirName = totalDirName + "//"+ scenName + "//";
+        String algo = "epics.ai.ActiveAINodeMulti";
+        String dirname ="";
+        for(CameraSettings cs : ss.cameras){
+            if(cs.ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
+                dirname = "A" +cs.comm;
+            }
+            else if (cs.ai_algorithm.equals("epics.ai.PassiveAINodeMulti")){
+                dirname = "P" + cs.comm;
+            }
+            else{
+                dirname = "ANTI" + cs.comm;
+            }
+        }
+        
+        System.out.print(dirname + " runs: ");
+        for(int r = 0; r < runs; r++){
+            System.out.print(r + "; ");
+            if (showgui == false) {
+                if(randomSeed){
+                    seed = System.currentTimeMillis() % 1000;
+                }
+                else{
+                    if(diffSeed){
+                        seed =r;
+                    }
+                }
+                
+                if(!runSequential){
+                    exService.execute(new SimRunner(seed, scenDirName + dirname, "run" + r + ".csv", ss, false, -1, 50, duration, 0.5, false, false));
+                }
+                else{
+                    directory = new File(scenDirName + dirname);
+                    directory.mkdirs();
+                    
+                    SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
+                    sim.setQuiet(true);
+                    for (int k = 0; k < duration; k++) {
+                        try {
+                            sim.update();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    sim.close_files();
+                }
+            } 
+        }
+        
+    }
+	
 
 	private static void runBanditSimulations(int runs2, int duration2, File f,
 			String scenName) {

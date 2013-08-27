@@ -1193,7 +1193,7 @@ public class SimCore {
 	private void checkAndProcessEvent(int currentTimeStep) {
 		for(SimSettings.Event e : events){
 		    if(e.timestep == currentTimeStep){
-		        System.out.println("event found " + e.event);
+		       // System.out.println("event found " + e.event);
 				//process event
 				if(e.event.equals("add")){
 				    if(e.participant == 1){ // camera
