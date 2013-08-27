@@ -152,13 +152,13 @@ public class SimSim {
         String dirname ="";
         for(CameraSettings cs : ss.cameras){
             if(cs.ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
-                dirname = "A" +cs.comm;
+                dirname += "A" +cs.comm;
             }
             else if (cs.ai_algorithm.equals("epics.ai.PassiveAINodeMulti")){
-                dirname = "P" + cs.comm;
+                dirname += "P" + cs.comm;
             }
             else{
-                dirname = "ANTI" + cs.comm;
+                dirname += "ANTI" + cs.comm;
             }
         }
         
