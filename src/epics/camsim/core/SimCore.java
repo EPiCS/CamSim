@@ -871,6 +871,7 @@ public class SimCore {
     		updateSim();
     	}
     	firstUpdate = false;
+    	System.out.println(step);
     	step ++;
     }
     
@@ -1062,90 +1063,95 @@ public class SimCore {
 	            if(!c.getVisibleObjects_bb().isEmpty()){
 	            	stats.addVisible();
 	            }
-        	}
-
-        	//run BanditSolver, select next method, set AI! hope it works ;)
-        	AbstractAINode ai = c.getAINode();
-        	AbstractCommunication prevComm = ai.getComm();
-        	IBanditSolver bs = ai.getBanditSolver();
-        	int strategy = -1;
-        	if(bs != null){
-//        		if(doSelection)
-        			int prevStrat = getStratForAI(ai);
-        			strategy = bs.selectAction();
-        			///System.out.println(step + "-" + c.getName() + ": " + strategy);
-        			if(prevStrat != strategy)
-        				stats.setStrat(strategy, c.getName());
-        	}
         	
-//        	System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
-        	switch (strategy) {
-			case 0:	//ABC
-				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI1);
-				break;
-			case 1:	//ASM
-				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI2);
-				break;
-			case 2:	//AST
-				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI3);
-				break;
-			case 3: //PBC
-				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI4);
-				break;
-			case 4: //PSM
-				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI5);
-				break;
-			case 5: //PST
-				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI6);
-				break;
-			default:
-				//STICK TO OLD
-			}
+
+            	//run BanditSolver, select next method, set AI! hope it works ;)
+            	AbstractAINode ai = c.getAINode();
+            	AbstractCommunication prevComm = ai.getComm();
+            	IBanditSolver bs = ai.getBanditSolver();
+            	int strategy = -1;
+            	if(bs != null){
+    //        		if(doSelection)
+            			int prevStrat = getStratForAI(ai);
+            			strategy = bs.selectAction();
+            			///System.out.println(step + "-" + c.getName() + ": " + strategy);
+            			if(prevStrat != strategy)
+            				stats.setStrat(strategy, c.getName());
+            	}
+            	
+    //        	System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
+            	switch (strategy) {
+    			case 0:	//ABC
+    				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+    				c.setAINode(newAI1);
+    				break;
+    			case 1:	//ASM
+    				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
+    				c.setAINode(newAI2);
+    				break;
+    			case 2:	//AST
+    				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
+    				c.setAINode(newAI3);
+    				break;
+    			case 3: //PBC
+    				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+    				c.setAINode(newAI4);
+    				break;
+    			case 4: //PSM
+    				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+    				c.setAINode(newAI5);
+    				break;
+    			case 5: //PST
+    				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+    				c.setAINode(newAI6);
+    				break;
+    			default:
+    				//STICK TO OLD
+    			}
+        	}
         }
 
         // Advertise each camera's owned objects
         for(CameraController c : this.cameras){
-        	c.getAINode().advertiseTrackedObjects();
+            if(!c.isOffline()){
+                c.getAINode().advertiseTrackedObjects();
+            }
         }
         
         // Place all bids before updateAI() is called in the next loop
         for(CameraController c : this.cameras){
-        	c.getAINode().updateReceivedDelay();
-        	c.getAINode().updateAuctionDuration();
-        	c.getAINode().checkIfSearchedIsVisible();
-        	c.forwardMessages(); // Push messages to relevant nodes
+            if(!c.isOffline()){
+            	c.getAINode().updateReceivedDelay();
+            	c.getAINode().updateAuctionDuration();
+            	c.getAINode().checkIfSearchedIsVisible();
+            	c.forwardMessages(); // Push messages to relevant nodes
+            }
         }
         
         //do trading for all cameras
         for( CameraController c : this.cameras ){
-
-            double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
-            int nrMessages = c.getAINode().getSentMessages();
-            
-		    c.updateAI();
-
-			double commOverhead = 0.0;
-//			if(nrMessages > 0){
-//				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
-//			}
-			
-			commOverhead = nrMessages;
-			
-			stats.setCommunicationOverhead(commOverhead, c.getName());
-		    
-		    //check if bandit solvers are used
-			IBanditSolver bs = c.getAINode().getBanditSolver();
-			if(bs != null){
-				stats.setReward(utility, commOverhead, c.getName());
-				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
-			}
-
+            if(!c.isOffline()){
+                double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
+                int nrMessages = c.getAINode().getSentMessages();
+                
+    		    c.updateAI();
+    
+    			double commOverhead = 0.0;
+    //			if(nrMessages > 0){
+    //				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
+    //			}
+    			
+    			commOverhead = nrMessages;
+    			
+    			stats.setCommunicationOverhead(commOverhead, c.getName());
+    		    
+    		    //check if bandit solvers are used
+    			IBanditSolver bs = c.getAINode().getBanditSolver();
+    			if(bs != null){
+    				stats.setReward(utility, commOverhead, c.getName());
+    				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
+    			}
+            }
         }
         this.computeUtility();
         stats.nextTimeStep();

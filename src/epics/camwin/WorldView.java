@@ -88,40 +88,48 @@ public class WorldView extends JPanel implements Observer {
            // g.drawOval((int) this.cst.simToWindowX(0), (int)this.cst.simToWindowY(0), 2, 2);
             
             if(SHOW_LABELS) {
-	            g2.setColor(Color.BLACK);
-	            Font f = new Font("Arial", Font.PLAIN, 10);
-	            g2.setFont(f);
-	            String algo = c.getAINode().getClass().getSimpleName();
-	            if(algo.contains("Passive")) {
-	            	algo = "P";
-	            } else if(algo.contains("Active")) {
-	            	algo = "A";
-	            } // Else actual name
-	            
-	            String comm = "";
-	            if(c.getAINode().getComm() instanceof Broadcast)
-	                comm = "BC";
-	            if(c.getAINode().getComm() instanceof Smooth)
-                    comm = "SM";
-	            if(c.getAINode().getComm() instanceof Step)
-                    comm = "ST";
-	                
-	            if(SHOW_RES_LABELS) {
-	            	if(c.isOffline()){
-	            		g2.setColor(Color.ORANGE);
-	            		drawString(g2, "OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-	            	}
-	            	else{
-	            		drawString(g2, c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-	            	}
-	            } else{
-	            	if(c.isOffline()) {
-	            		g2.setColor(Color.ORANGE);
-	            		drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-	            	} else {
-	            		drawString(g2, c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
-	            	}
-	            }
+                if(!c.isOffline()){
+    	            g2.setColor(Color.BLACK);
+    	            Font f = new Font("Arial", Font.PLAIN, 10);
+    	            g2.setFont(f);
+    	            String algo = c.getAINode().getClass().getSimpleName();
+    	            if(algo.contains("Passive")) {
+    	            	algo = "P";
+    	            } else if(algo.contains("Active")) {
+    	            	algo = "A";
+    	            } // Else actual name
+    	            
+    	            String comm = "";
+    	            if(c.getAINode().getComm() instanceof Broadcast)
+    	                comm = "BC";
+    	            if(c.getAINode().getComm() instanceof Smooth)
+                        comm = "SM";
+    	            if(c.getAINode().getComm() instanceof Step)
+                        comm = "ST";
+    	                
+    	            if(SHOW_RES_LABELS) {
+    	            	if(c.isOffline()){
+    	            		g2.setColor(Color.ORANGE);
+    	            		drawString(g2, "OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+    	            	}
+    	            	else{
+    	            		drawString(g2, c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+    	            	}
+    	            } else{
+    	            	if(c.isOffline()) {
+    	            		g2.setColor(Color.ORANGE);
+    	            		drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+    	            	} else {
+    	            		drawString(g2, c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
+    	            	}
+    	            }
+                }
+	            else{
+                    g2.setColor(Color.ORANGE);
+                    Font f = new Font("Arial", Font.PLAIN, 10);
+                    g2.setFont(f);
+                    drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+                }
             } else {
             	if(c.isOffline()){
             		g2.setColor(Color.ORANGE);
