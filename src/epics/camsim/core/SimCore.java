@@ -871,7 +871,7 @@ public class SimCore {
     		updateSim();
     	}
     	firstUpdate = false;
-    	System.out.println(step);
+//    	System.out.println(step);
     	step ++;
     }
     
