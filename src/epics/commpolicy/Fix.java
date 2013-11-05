@@ -28,7 +28,7 @@ public class Fix extends AbstractCommunication {
 
 		List<String> cams = new ArrayList<String>();
 		for (String name : ai.vgGetCamSet()) {
-            this.camController.sendMessage(name, mt, o);
+            camController.sendMessage(name, mt, o);
             cams.add(name);
         }
         
@@ -43,6 +43,6 @@ public class Fix extends AbstractCommunication {
 	
 	@Override
 	public void broadcast(MessageType mt, Object o) {
-		broadcast.multicast(mt, o);
+		broadcast.broadcast(mt, o);
 	}
 }

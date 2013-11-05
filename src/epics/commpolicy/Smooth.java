@@ -107,6 +107,6 @@ public class Smooth extends AbstractCommunication {
 	
 	@Override
 	public void broadcast(MessageType mt, Object o) {
-		broadcast.multicast(mt, o);
+		broadcast.broadcast(mt, o);
 	}
 }

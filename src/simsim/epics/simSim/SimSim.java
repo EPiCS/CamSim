@@ -20,6 +20,7 @@ import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 import epics.camsim.core.SimSettings.CameraSettings;
 import epics.common.AbstractAINode;
+import epics.commpolicy.Fix;
 
 /**
  * 
@@ -884,6 +885,16 @@ public class SimSim {
 
 		List<Object[]> input = loadAllCombos();
         for(Object[] o : input){
+            
+            if(((CommPolicy) o[0]).toString().equals("epics.commpolicy.Fix")){
+                ss = new SimSettings("", "", null, 0);
+                ss.loadFromXML(f.getAbsolutePath());
+            }
+            else{
+                ss = new SimSettings("", "", null, 1);
+                ss.loadFromXML(f.getAbsolutePath());
+            }
+            
             String dirname = ((AuctionsSchedule) o[1]).toShortString() + ((CommPolicy) o[0]).toShortString();
 			for(CameraSettings cs : ss.cameras){
 			    cs.ai_algorithm = ((AuctionsSchedule) o[1]).toString();
