@@ -252,9 +252,12 @@ public abstract class AbstractAINode {
         if (DEBUG_CAM) {
             CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +")" );
         }
-        this.addSearched(io, this.camController);
-        sendMessage(MessageType.StartSearch, io);
-
+        
+//        if(!searchForTheseObjects.containsKey(io)){
+            this.addSearched(io, this.camController);
+            sendMessage(MessageType.StartSearch, io);
+//        }
+        
         if(reg != null){
             reg.objectIsAdvertised(io);
         }
@@ -753,7 +756,7 @@ public abstract class AbstractAINode {
 
         for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()) {
             String features = "" + kvp.getValue().getFeatures();
-            output = output + features + "; ";
+            output = output + features + " - " + getConfidence(kvp.getValue()) + " ; ";
         }
         System.out.println(output);
     }

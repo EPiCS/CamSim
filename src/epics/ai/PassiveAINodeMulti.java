@@ -76,7 +76,8 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 					callForHelp(io);	
 				}
 			} else if (this.camController.objectIsVisible(io) == -1){
-				if (conf < CONF_THRESHOLD && (conf == 0 || conf < lastConf)) {               	
+				if (conf < CONF_THRESHOLD && (conf == 0 || conf < lastConf)) {    
+//			    if (conf < CONF_THRESHOLD && conf < lastConf) {    
 					callForHelp(io);	
 				}
 			}
