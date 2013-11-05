@@ -28,6 +28,7 @@ import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 import epics.common.RunParams;
 import epics.commpolicy.Broadcast;
+import epics.commpolicy.Fix;
 import epics.commpolicy.Smooth;
 import epics.commpolicy.Step;
 import epics.movement.Brownian;
@@ -505,6 +506,7 @@ public class SimCore {
     		case 0: return Broadcast.class;
     		case 1: return Smooth.class;
     		case 2: return Step.class;
+    		case 3: return Fix.class;
     		case 4: 
     			if (customComm == null || customComm.equals("")) {
     				throw new IllegalArgumentException("No CustomComm value provided");
