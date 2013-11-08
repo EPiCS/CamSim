@@ -8,7 +8,7 @@ scenarios = dir(start);
 
 %OPTIONS FOR PLOTTING
 drawHistos = false;
-loadSummaryOnly = true; %if existing
+loadSummaryOnly = false; %if existing
 plotCameraResults = false;
 fileext = 'fig'; %svg or pdf or png for OCTAVE!!
 
@@ -28,6 +28,7 @@ for sc = 3:numel(scenarios)
     AllStepRes = zeros(0,0);
     runs = 1;
     totalComm = zeros(0,0);
+    FullScenRes = zeros(0,0);
     if(~nok)
         if scenarios(sc).isdir
             scenname = scenarios(sc).name;
@@ -96,12 +97,16 @@ for sc = 3:numel(scenarios)
                                         runs = numel(MCommStep(1,:));
                                     end
                                 end
-
+                                FullScenRes = [FullScenRes t1 t2 t3 t4];
                                 AllScenRes = [AllScenRes; mean(t1) mean(t2) mean(t3) mean(t4) mean(t5) mean(t6)];
                             end
                         end
                     end
                 end
+                
+                plotCumsums(FullScenRes, AllScenNames, scenname, fileext);
+                
+                
                 normFactors = CalcNormFactors(AllScenRes);
                % painterrorplot(allscenres, allscennames, true, scen, true);
                 % painthomos(allscenres, allscennames, true, strcat('errhomos', scen), true, true, fileext);
