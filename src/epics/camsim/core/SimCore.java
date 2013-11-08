@@ -449,6 +449,21 @@ public class SimCore {
             ArrayList<ArrayList<Integer>> predefVisibility){
 
     	checkCoordInRange(x_pos, y_pos);
+    	
+    	if(commValue == 3 || commValue == 0){
+    	    staticVG = true;
+    	}
+    	else{
+    	    staticVG = false;
+    	}
+    	if(commValue == 4){
+    	    if(customComm.equals("epics.commpolicy.Broadcast")  || customComm.equals("epics.commpolicy.Fix")){
+    	        staticVG = true;
+    	    }
+    	    else{
+    	        staticVG = false;
+    	    }
+    	}
         
         AbstractAINode aiNode = null;
     	try {

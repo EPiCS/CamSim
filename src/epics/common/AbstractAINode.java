@@ -40,8 +40,9 @@ public abstract class AbstractAINode {
     public int AUCTION_DURATION;
     
     public static final int STEPS_TILL_RESOURCES_FREED = 5;
-    public static final boolean DECLINE_VISION_GRAPH = true;
-    public static final double EVAPORATIONRATE = 0.995;
+
+    public static boolean DECLINE_VISION_GRAPH = true;
+    public static final double EVAPORATIONRATE = 0.995;// 0.995;
     public static final boolean VISION_ON_BID = false;
     public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
     public static final boolean BIDIRECTIONAL_VISION = false;
@@ -96,9 +97,10 @@ public abstract class AbstractAINode {
 	 * @param rg random number generator for this node
 	 */
 	public AbstractAINode(
-            boolean staticVG, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
+            boolean staticVG1, Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg){
         AUCTION_DURATION = 0;
         reg = r;
+        this.staticVG = staticVG1;
         if(vg != null){
             visionGraph = vg;
         }
