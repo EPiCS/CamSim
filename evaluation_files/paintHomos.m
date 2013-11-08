@@ -13,6 +13,7 @@
 %# NormFactor is the factor to normalize values - put 1 if no normalization is desired
 
 function paintHomos(RES, NAMES, NormFactor, scenname, paintNames, linkThem, fileext)
+    clf
     %find all homo-scenarios and related results
     homoRes = zeros(0,0);
     homoNames = zeros(0,0);

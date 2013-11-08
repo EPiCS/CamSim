@@ -1,4 +1,5 @@
 function paintBanditInfo(AllBanditInfo, AllBanditNames, scenname, NormFactor, paintNames, HeterosPainted, fileext)
+    clf
     xbar_norm = AllBanditInfo(:,1)/NormFactor(1);
     ybar_norm = AllBanditInfo(:,3)/NormFactor(2);
     erbarx_norm = AllBanditInfo(:,2)/NormFactor(1);

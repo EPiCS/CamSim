@@ -8,7 +8,7 @@
 %# NAMES holds the names for the results - each row is a new scenario/result name
 %# NormFactor is the factor to normalize values - put 1 if no normalization is desired
 function paintDistPlot(RES, NAMES, NormFactor, scenname, paintNames, paintHomos, fileext)
-    
+    clf
     xbar_norm = RES(:,1)/NormFactor(1);
     ybar_norm = RES(:,3)/NormFactor(2);
     erbarx_norm = RES(:,2)/NormFactor(1);
@@ -36,32 +36,34 @@ function paintDistPlot(RES, NAMES, NormFactor, scenname, paintNames, paintHomos,
         end
     end
     
-    hold on
-    plot(xbar_norm, ybar_norm, 'xk', 'MarkerSize', 14, 'LineWidth', 2);
-    
-    title(scenname)
-    xlabel('Auctions');
-    ylabel('Confidence');
-    saveas(gcf, strcat('figures/perf', scenname(1:numel(scenname)-1), '.', fileext), fileext);
-    
-%     for R = 1:numel(xbar_norm)
-%         line([xbar_norm(R) xbar_norm(R)], [(ybar_norm(R)-erbary_norm(R)) (ybar_norm(R)+erbary_norm(R))], 'Color', 'black')
-%         line([(xbar_norm(R)-erbarx_norm(R)) (xbar_norm(R)+erbarx_norm(R))], [ybar_norm(R) ybar_norm(R)], 'Color', 'black')
-%     end
-%     
-    if(paintNames)
-        text(xbar_norm, ybar_norm+0.003, NAMES);
-        saveas(gcf, strcat('figures/perf', scenname(1:numel(scenname)-1), '_names.', fileext), fileext);
-    end
-    
-    xLimits = get(gca,'XLim');
-    yLimits = get(gca,'YLim');
+    if(~isempty(xbar_norm))
+        hold on
+        plot(xbar_norm, ybar_norm, 'xk', 'MarkerSize', 14, 'LineWidth', 2);
 
-    axis([xLimits(1) 1.02 yLimits(1) 1.002]);
-%     text(xbar_norm(2), ybar_norm(2)+0.03, 'P BC');
-%     text(xbar_norm(3), ybar_norm(3)+0.03, 'A ST');
-%     text(xbar_norm(4), ybar_norm(4)+0.03, 'P ST');
-%     text(xbar_norm(5), ybar_norm(5)+0.03, 'A SM');
-%     text(xbar_norm(6), ybar_norm(6)+0.03, 'P SM');
-    hold off
+        title(scenname)
+        xlabel('Auctions');
+        ylabel('Confidence');
+        saveas(gcf, strcat('figures/perf', scenname(1:numel(scenname)-1), '.', fileext), fileext);
+
+    %     for R = 1:numel(xbar_norm)
+    %         line([xbar_norm(R) xbar_norm(R)], [(ybar_norm(R)-erbary_norm(R)) (ybar_norm(R)+erbary_norm(R))], 'Color', 'black')
+    %         line([(xbar_norm(R)-erbarx_norm(R)) (xbar_norm(R)+erbarx_norm(R))], [ybar_norm(R) ybar_norm(R)], 'Color', 'black')
+    %     end
+    %     
+        if(paintNames)
+            text(xbar_norm, ybar_norm+0.003, NAMES);
+            saveas(gcf, strcat('figures/perf', scenname(1:numel(scenname)-1), '_names.', fileext), fileext);
+        end
+
+        xLimits = get(gca,'XLim');
+        yLimits = get(gca,'YLim');
+
+        axis([xLimits(1) 1.02 yLimits(1) 1.002]);
+    %     text(xbar_norm(2), ybar_norm(2)+0.03, 'P BC');
+    %     text(xbar_norm(3), ybar_norm(3)+0.03, 'A ST');
+    %     text(xbar_norm(4), ybar_norm(4)+0.03, 'P ST');
+    %     text(xbar_norm(5), ybar_norm(5)+0.03, 'A SM');
+    %     text(xbar_norm(6), ybar_norm(6)+0.03, 'P SM');
+        hold off
+    end
 end

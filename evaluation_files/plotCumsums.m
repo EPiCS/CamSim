@@ -1,5 +1,6 @@
     
 function plotCumsums(FullScenRes, AllScenNames, scenname, fileext)
+    clf
     renamed = cell(0);
     
     %rename internal naming to readable nameing for legend
