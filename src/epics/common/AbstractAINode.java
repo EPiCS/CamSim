@@ -47,7 +47,7 @@ public abstract class AbstractAINode {
     public static final boolean VISION_RCVER_BOUND = false; //receiver builds up VG --> does not make much sense... 
     public static final boolean BIDIRECTIONAL_VISION = false;
     
-    boolean staticVG = false;
+    protected boolean staticVG = false;
 //    private int communication;
 	protected Map<String, Double> visionGraph = new HashMap<String, Double>();
     protected Map<List<Double>, ITrObjectRepresentation> trackedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();

@@ -1179,9 +1179,9 @@ enum States{
 
 enum CommPolicy{
     BROADCAST("epics.commpolicy.Broadcast", "0")
-    ,SMOOTH("epics.commpolicy.Smooth", "1")
-    ,STEP("epics.commpolicy.Step", "2")
-   // ,FIX("epics.commpolicy.Fix", "3")
+//    ,SMOOTH("epics.commpolicy.Smooth", "1")
+//    ,STEP("epics.commpolicy.Step", "2")
+    ,FIX("epics.commpolicy.Fix", "3")
     ;  
     /**
      * @param text
