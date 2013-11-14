@@ -450,14 +450,14 @@ public class SimCore {
 
     	checkCoordInRange(x_pos, y_pos);
     	
-    	if(commValue == 3 || commValue == 0){
+    	if(commValue == 3){
     	    staticVG = true;
     	}
     	else{
     	    staticVG = false;
     	}
     	if(commValue == 4){
-    	    if(customComm.equals("epics.commpolicy.Broadcast")  || customComm.equals("epics.commpolicy.Fix")){
+    	    if(customComm.equals("epics.commpolicy.Fix")){
     	        staticVG = true;
     	    }
     	    else{

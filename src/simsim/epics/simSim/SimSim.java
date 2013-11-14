@@ -1221,6 +1221,7 @@ enum AuctionsSchedule {
     ACTIVE("epics.ai.ActiveAINodeMulti", "A")
     , PASSIVE("epics.ai.PassiveAINodeMulti", "P")
     ;  
+    
     /**
      * @param text
      */
