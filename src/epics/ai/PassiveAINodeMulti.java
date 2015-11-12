@@ -3,8 +3,10 @@ package epics.ai;
 import java.util.HashMap;
 import java.util.Map;
 
+import epics.camsim.core.Location;
 import epics.common.AbstractAINode;
 import epics.common.IBanditSolver;
+import epics.common.ICameraController;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
@@ -95,5 +97,42 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
         } else {
             return 0.0;
         }
+    }
+
+    @Override
+    protected void noBids(ITrObjectRepresentation tor) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    protected void handedOver(ITrObjectRepresentation tor,
+            ICameraController giveTo) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    protected void overlappingLocation(ITrObjectRepresentation tor) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public Map<Location, Double> getHandoverLocations() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<Location, Double> getNoBidLocations() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<Location, Double> getOverlapLocation() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

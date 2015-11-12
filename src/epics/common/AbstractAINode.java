@@ -1044,6 +1044,7 @@ public abstract class AbstractAINode {
 	                         Map<ICameraController, Double> bids = this.getBiddingsFor(tor); // Bids from other cams
 	                         
 	                         if (bids != null) {
+	                             giveTo = this.camController;
 	                             for (Map.Entry<ICameraController, Double> e : bids.entrySet()) { // iterate over bids
 	                            	 if(!e.getKey().getName().equals("Offline")){
 	                            		 
@@ -1075,6 +1076,7 @@ public abstract class AbstractAINode {
 	                                 _receivedUtility += secondHighest;
 	                                 //_paidUtility += secondHighest;
 	                                 sendMessage(MessageType.StopSearch, tor);
+	                                 overlappingLocation(tor);
 	                                 stepsTillBroadcast.remove(tor);
 	                             } else {
 	                            	 tor.setPrice(secondHighest);
@@ -1124,14 +1126,12 @@ public abstract class AbstractAINode {
 	}
 
     
-    protected void noBids(ITrObjectRepresentation tor) {
-        //dummy if no bids came in - can be overwritten by subclasses
-    }
+    protected abstract void noBids(ITrObjectRepresentation tor);
 
-    protected void handedOver(ITrObjectRepresentation tor,
-            ICameraController giveTo){
-        //dummy only to be overwritten by the classes which need it.
-    }
+    protected abstract void handedOver(ITrObjectRepresentation tor,
+            ICameraController giveTo);
+    
+    protected abstract void overlappingLocation(ITrObjectRepresentation tor);
     
     
     /**
@@ -1336,11 +1336,11 @@ public abstract class AbstractAINode {
 		return this.camController.getName();
 	}
 	
-	public Map<Location, Double> getHandoverLocations(){
-	    return null;
-	}
+	public abstract Map<Location, Double> getHandoverLocations();
 	
-	public Map<Location, Double> getNoBidLocations(){
-	    return null;
-	}
+	public abstract Map<Location, Double> getNoBidLocations();
+
+    public abstract Map<Location, Double> getOverlapLocation();
+
+    
 }

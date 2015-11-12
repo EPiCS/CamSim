@@ -29,12 +29,9 @@ import epics.commpolicy.Fix;
  */
 public class SimSim {
 	
-<<<<<<< HEAD
-    public static String loadScenariosFrom = "..//..//..//..//scenarios//2Cams"; //can be overwriten using argument [0]
-=======
+
 
     public static String loadScenariosFrom = ".//scenarios//SASO-RAN"; //"..//..//..//..//scenarios//test-anticipation"; //can be overwriten using argument [0]
->>>>>>> 2dbbe1e... new coordinate system, added location class
     public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
     public static boolean allStatistics = false;
 	public static boolean runHomogeneous = false;
@@ -139,9 +136,6 @@ public class SimSim {
 				        runRandomStatic(runs, duration, f, scenName);
 				    }
 				}
-				if(runOnlyScenario){
-				    runOnlyScenario(runs, duration, f, scenName);
-				}
 			}
 
 			exService.shutdown();
@@ -150,62 +144,6 @@ public class SimSim {
 		}
 
 	}
-
-	private static void runOnlyScenario(int runs, int duration, File f, String scenName){
-        SimSettings ss = new SimSettings("", "", null, 1);
-        ss.loadFromXML(f.getAbsolutePath());
-        long seed = initialSeed;
-        
-        String scenDirName = totalDirName + "//"+ scenName + "//";
-        String algo = "epics.ai.ActiveAINodeMulti";
-        String dirname ="";
-        for(CameraSettings cs : ss.cameras){
-            if(cs.ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
-                dirname += "A" +cs.comm;
-            }
-            else if (cs.ai_algorithm.equals("epics.ai.PassiveAINodeMulti")){
-                dirname += "P" + cs.comm;
-            }
-            else{
-                dirname += "ANTI" + cs.comm;
-            }
-        }
-        
-        System.out.print(dirname + " runs: ");
-        for(int r = 0; r < runs; r++){
-            System.out.print(r + "; ");
-            if (showgui == false) {
-                if(randomSeed){
-                    seed = System.currentTimeMillis() % 1000;
-                }
-                else{
-                    if(diffSeed){
-                        seed =r;
-                    }
-                }
-                
-                if(!runSequential){
-                    exService.execute(new SimRunner(seed, scenDirName + dirname, "run" + r + ".csv", ss, false, -1, 50, duration, 0.5, false, false));
-                }
-                else{
-                    directory = new File(scenDirName + dirname);
-                    directory.mkdirs();
-                    
-                    SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
-                    sim.setQuiet(true);
-                    for (int k = 0; k < duration; k++) {
-                        try {
-                            sim.update();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    sim.close_files();
-                }
-            } 
-        }
-        
-    }
 	
 
 	private static void runBanditSimulations(int runs2, int duration2, File f,
@@ -1211,7 +1149,7 @@ enum CommPolicy{
     BROADCAST("epics.commpolicy.Broadcast", "0")
 //    ,SMOOTH("epics.commpolicy.Smooth", "1")
 //    ,STEP("epics.commpolicy.Step", "2")
-    ,FIX("epics.commpolicy.Fix", "3")
+   // ,FIX("epics.commpolicy.Fix", "3")
     ;  
     /**
      * @param text

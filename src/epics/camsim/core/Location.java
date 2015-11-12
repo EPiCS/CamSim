@@ -74,21 +74,34 @@ public class Location implements Comparable<Location>{
                 return 0.0;
             }
             else if(d[1] > 0){ //straight up
-                angle = 90;
+                return 90;
             }
             else{
              // straight down
-                angle = -90;
+                return -90;
             }
         }
-        else if(d[0] > 0){
-            //right
-            angle = Math.toDegrees(Math.atan(d[0]/d[1]))*2;
+        
+        if(d[1] == 0){
+            if(d[0] == 0){ //same location
+                return 0.0;
+            }
+            else if(d[0] > 0.0){ //left of current point
+                return 180;
+            }
+            else{ //right of current point
+                return 0.0;
+            }
         }
-        else if(d[0] < 0){
-            //left
-            angle = Math.toDegrees(Math.atan(d[1]/d[2]))*2;
+        
+        angle = Math.toDegrees(Math.atan(d[1]/d[0]));
+        if(d[0] > 0){
+            //left of current
+            angle += 180;
         }
+//        else if(d[0] < 0){
+//            
+//        }
         
        
         
@@ -124,9 +137,9 @@ public class Location implements Comparable<Location>{
      */
     public double[] distanceTo(Location l){
         double[] res = new double[3];
-        res[0] = this.x - l.x;
-        res[1] = this.y - l.y;
-        res[2] = Math.sqrt(Math.pow(this.x-l.x, 2) + Math.pow(this.y-l.y, 2));
+        res[0] = this.x - l.x; //adjecent (ankathete)
+        res[1] = this.y - l.y; //opposite (gegenkathete) 
+        res[2] = Math.sqrt(Math.pow(this.x-l.x, 2) + Math.pow(this.y-l.y, 2)); // hypotenuse
         return res;
     }
 }

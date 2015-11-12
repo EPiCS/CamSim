@@ -880,7 +880,8 @@ public class SimCore {
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * 360,
-        		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4,
+        		0.3,
+//        		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4,
         		new ArrayList<Point2D>(), 0, 1, this.movement);
     }
 
