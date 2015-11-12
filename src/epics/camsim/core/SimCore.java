@@ -52,6 +52,7 @@ import epics.common.CmdLogger;
 import epics.common.IBanditSolver;
 import epics.common.ICameraController;
 import epics.common.IMessage;
+import epics.common.ITrObjectRepresentation;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
@@ -880,7 +881,9 @@ public class SimCore {
      * For convenience methods, see other add_object methods 
      */
     public void add_object(TraceableObject to) {
-    	this.getObjects().add(to);
+    	if(!getObjects().contains(to)){
+    	    this.getObjects().add(to);
+    	}
         if(USEGLOBAL){
         	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         } else {
@@ -1183,8 +1186,8 @@ public class SimCore {
 	 *  
 	 * @throws Exception
 	 */
-	public void updateSim() throws Exception{
-    	    	
+
+    public void updateSim() throws Exception{
         // Print messages on the screen, one per step
         if( CmdLogger.hasSomething() ){
             CmdLogger.update();
@@ -1195,23 +1198,23 @@ public class SimCore {
         boolean doSelection = false;
         //update interval for selecting new strategy
         if(selectInterval > 1){
-	        if(currentSelectInt >= selectInterval){
-	        	doSelection = true;
-	        	currentSelectInt = 0;
-	        }
-	        else{
-	        	currentSelectInt ++;
-	        }
+            if(currentSelectInt >= selectInterval){
+                doSelection = true;
+                currentSelectInt = 0;
+            }
+            else{
+                currentSelectInt ++;
+            }
         }
         else{ 
-        	doSelection = true; 
+            doSelection = true; 
         }
 
         //check events - process event
         checkAndProcessEvent(stats.get_time_step());
         
         if(USEGLOBAL){
-        	reg.update();
+            reg.update();
         }
         
         // Update all traceable objects (move them around)
@@ -1220,77 +1223,84 @@ public class SimCore {
         }
 
         // random camera select - random timespan to go offline...
-		int random = randomGen.nextInt(100, RandomUse.USE.ERROR);
+        int random = randomGen.nextInt(100, RandomUse.USE.ERROR);
         
-		if(random <= CAMERRORRATE){
-        	//select random camera and set it offline for a random number of timesteps
-			int ranCam = randomGen.nextInt(this.cameras.size(), RandomUse.USE.ERROR);
-        	int sleepFor = randomGen.nextInt(10, RandomUse.USE.ERROR);
-        	
-        	CameraController cc = cameras.get(ranCam);
-        	cc.setOffline(sleepFor);
-        	int ranReset = randomGen.nextInt(100, RandomUse.USE.ERROR);
-        	if(ranReset > RESETRATE){
-        		cc.resetCamera();
-        	}
+        if(random <= CAMERRORRATE){
+            //select random camera and set it offline for a random number of timesteps
+            int ranCam = randomGen.nextInt(this.cameras.size(), RandomUse.USE.ERROR);
+            int sleepFor = randomGen.nextInt(10, RandomUse.USE.ERROR);
+            
+            CameraController cc = cameras.get(ranCam);
+            cc.setOffline(sleepFor);
+            int ranReset = randomGen.nextInt(100, RandomUse.USE.ERROR);
+            if(ranReset > RESETRATE){
+                cc.resetCamera();
+            }
         }
         
-		//update all objects position in the world view
-		//select a new ai if bandit solvers are used
+        //update all objects position in the world view
+        //select a new ai if bandit solvers are used
         for(CameraController c : this.cameras){
-        	if(!c.isOffline()){
-	            for (TraceableObject o : this.objects){
-	            	c.update_visiblity(o);
-	            }
-	            if(!c.getVisibleObjects_bb().isEmpty()){
-	            	stats.addVisible();
-	            }
-        	
+            if(!c.isOffline()){
+                for (TraceableObject o : this.objects){
+                    c.update_visiblity(o);
+                }
+                if(!c.getVisibleObjects_bb().isEmpty()){
+                    stats.addVisible();
+                }
+            
 
-            	//run BanditSolver, select next method, set AI! hope it works ;)
-            	AbstractAINode ai = c.getAINode();
-            	AbstractCommunication prevComm = ai.getComm();
-            	IBanditSolver bs = ai.getBanditSolver();
-            	int strategy = -1;
-            	if(bs != null){
-    //        		if(doSelection)
-            			int prevStrat = getStratForAI(ai);
-            			strategy = bs.selectAction();
-            			///System.out.println(step + "-" + c.getName() + ": " + strategy);
-            			if(prevStrat != strategy)
-            				stats.setStrat(strategy, c.getName());
-            	}
-            	
-    //        	System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
-            	switch (strategy) {
-    			case 0:	//ABC
-    				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-    				c.setAINode(newAI1);
-    				break;
-    			case 1:	//ASM
-    				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
-    				c.setAINode(newAI2);
-    				break;
-    			case 2:	//AST
-    				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
-    				c.setAINode(newAI3);
-    				break;
-    			case 3: //PBC
-    				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-    				c.setAINode(newAI4);
-    				break;
-    			case 4: //PSM
-    				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-    				c.setAINode(newAI5);
-    				break;
-    			case 5: //PST
-    				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-    				c.setAINode(newAI6);
-    				break;
-    			default:
-    				//STICK TO OLD
-    			}
-        	}
+                //run BanditSolver, select next method, set AI! hope it works ;)
+                AbstractAINode ai = c.getAINode();
+                AbstractCommunication prevComm = ai.getComm();
+                IBanditSolver bs = ai.getBanditSolver();
+                int strategy = -1;
+                if(bs != null){
+    //              if(doSelection)
+                        int prevStrat = getStratForAI(ai);
+                        strategy = bs.selectAction();
+                        ///System.out.println(step + "-" + c.getName() + ": " + strategy);
+                        if(prevStrat != strategy)
+                            stats.setStrat(strategy, c.getName());
+                }
+                
+    //          System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
+                switch (strategy) {
+                case 0: //ABC
+                    AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI1);
+                    break;
+                case 1: //ASM
+                    AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI2);
+                    break;
+                case 2: //AST
+                    AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI3);
+                    break;
+                case 3: //PBC
+                    AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI4);
+                    break;
+                case 4: //PSM
+                    AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI5);
+                    break;
+                case 5: //PST
+                    AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI6);
+                    break;
+                default:
+                    //STICK TO OLD
+                }
+            }
+            else{
+                //deal with offline cameras (eg. advertise their objects as free of charge)
+                
+                for(TraceableObject tro : c.getTrackedObjects().values()){
+                    add_object(tro);
+                }
+            }
         }
 
         // Advertise each camera's owned objects
@@ -1303,53 +1313,70 @@ public class SimCore {
         // Place all bids before updateAI() is called in the next loop
         for(CameraController c : this.cameras){
             if(!c.isOffline()){
-            	c.getAINode().updateReceivedDelay();
-            	c.getAINode().updateAuctionDuration();
-            	c.getAINode().checkIfSearchedIsVisible();
-            	c.forwardMessages(); // Push messages to relevant nodes
+                c.getAINode().updateReceivedDelay();
+                c.getAINode().updateAuctionDuration();
+                c.getAINode().checkIfSearchedIsVisible();
+                c.forwardMessages(); // Push messages to relevant nodes
             }
         }
         
         List<CameraController> visited = new ArrayList<CameraController>();
         double area = 0.0;
+        double totalTracked = 0.0;
+        
         //do trading for all cameras
         for( CameraController c : this.cameras ){
-
-
-            double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
-            int nrMessages = c.getAINode().getSentMessages();
-            
-		    c.updateAI();
-
-			double commOverhead = 0.0;
-//			if(nrMessages > 0){
-//				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
-//			}
-			
-			commOverhead = nrMessages;
-			
-			stats.setCommunicationOverhead(commOverhead, c.getName());
-		    
-		    //check if bandit solvers are used
-			IBanditSolver bs = c.getAINode().getBanditSolver();
-			if(bs != null){
-				stats.setReward(utility, commOverhead, c.getName());
-				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getOwnedObjects().size())); 
-			}
-			
-			// calculate overlapping FOV
-            for(CameraController c2 : this.cameras){
-               if(!c.getName().equals(c2.getName())){ //two different cameras
-                   if(!visited.contains(c2)){
-                       area += calculateOverlap(c,c2);
+            if(!c.isOffline()){
+                double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
+                int nrMessages = c.getAINode().getSentMessages();
+                
+                c.updateAI();
+    
+                double commOverhead = 0.0;
+    //          if(nrMessages > 0){
+    //              commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
+    //          }
+                
+                commOverhead = nrMessages;
+                
+                stats.setCommunicationOverhead(commOverhead, c.getName());
+                
+                //check if bandit solvers are used
+                IBanditSolver bs = c.getAINode().getBanditSolver();
+                if(bs != null){
+                    stats.setReward(utility, commOverhead, c.getName());
+                    bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getOwnedObjects().size())); 
+                }
+                
+                // calculate overlapping FOV
+                for(CameraController c2 : this.cameras){
+                   if(!c2.isOffline()){
+                       if(!c.getName().equals(c2.getName())){ //two different cameras
+                           if(!visited.contains(c2)){
+                               area += calculateOverlap(c,c2);
+                           }
+                       }    
                    }
-               }
-               
+                   
+                }
+                visited.add(c); //keep track of which elements have been already added to the area
+                stats.addConfidence(c.getAINode().getTotalConfidence(), c.getName());
+    //            stats.addProportion(c.getAINode().getTrackedProportion(), c.getName());
+                totalTracked += c.getAINode().getTotalTrackedObjects();
             }
-            visited.add(c); //keep track of which elements have been already added to the area
-            stats.addConfidence(c.getAINode().getTotalConfidence(), c.getName());
-            stats.addProportion(c.getAINode().getNotTrackedProportion(), c.getName());
         }
+        if(totalTracked > 0){
+            if(objects.size() > 0){
+                stats.addProportion((totalTracked / objects.size()), "");
+            }
+            else{
+                stats.addProportion(0.0d, "");
+            }
+        }
+        else{
+            stats.addProportion(0.0d, "");
+        }
+        
         
         try {
             stats.addOverlap(area, "");
@@ -1756,6 +1783,8 @@ public class SimCore {
         ArrayList<CameraController> cameras = this.getCameras();
         for(CameraController c : cameras) {
 
+//            c.getAINode().getBanditSolver().getTotalReward();
+            
             /*
              * Camera dot
              */
@@ -1863,41 +1892,43 @@ public class SimCore {
             
            
             Color test = new Color(r, g, b, 0.1f);
-            
-            Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
-            if(nbLoc != null){
-                for (Location loc : nbLoc.keySet()) {
-                    g2.setColor(test);//camCol.brighter()); // Color.LIGHT_GRAY);
-                    p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
-                    g2.fill(p);
-                    
-                }
-            }
+           
+            if(!c.isOffline()){
+                Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
+                if(nbLoc != null){
+                    for (Location loc : nbLoc.keySet()) {
+                        g2.setColor(test);//camCol.brighter()); // Color.LIGHT_GRAY);
+                        p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+                        g2.fill(p);
                         
-            Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
-            if(hoLoc != null){
-                for (Location loc : hoLoc.keySet()) {
-                    g2.setColor(camCol); //Color.BLUE);
-                    p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
-//                    g2.fill(p);
-                    g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()-2, (int)p.getCenterX()+2, (int) p.getCenterY()+2);
-                    g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()+2, (int)p.getCenterX()+2, (int) p.getCenterY()-2);
+                    }
+                }
+                            
+                Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
+                if(hoLoc != null){
+                    for (Location loc : hoLoc.keySet()) {
+                        g2.setColor(camCol); //Color.BLUE);
+                        p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+    //                    g2.fill(p);
+                        g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()-2, (int)p.getCenterX()+2, (int) p.getCenterY()+2);
+                        g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()+2, (int)p.getCenterX()+2, (int) p.getCenterY()-2);
+                    }
+                }
+                
+                
+                Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
+                if(olLoc != null){
+                    for (Location loc : olLoc.keySet()){
+                        g2.setColor(test); //camCol.brighter()); //Color.RED);
+                        p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+    
+                        g2.drawRect((int)p.getCenterX()-2, (int)p.getCenterY()-1, 2, 2);
+                    }
                 }
             }
-            
-            
-            Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
-            if(olLoc != null){
-                for (Location loc : olLoc.keySet()){
-                    g2.setColor(test); //camCol.brighter()); //Color.RED);
-                    p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
-
-                    g2.drawRect((int)p.getCenterX()-2, (int)p.getCenterY()-1, 2, 2);
-                }
-            }
-            
         }
-
+        
+        
         g2.flush();
         g2.close();
     }

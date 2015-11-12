@@ -86,8 +86,12 @@ public abstract class AbstractAINode {
 
     protected int _nrBidsWon;
 
-    protected double _notTrackedProporation;
+    protected double _trackedProporation;
     protected double _totalConfidence;
+
+    private double amountOfTracked;
+
+    protected Double[] _confidences;
 	
 	public AbstractAINode(AbstractAINode old){
 		AUCTION_DURATION = 0;
@@ -1058,41 +1062,61 @@ public abstract class AbstractAINode {
     }
     
     private void updateTotalConfidence() {
+        _confidences = new Double[(int) amountOfTracked]; 
         _totalConfidence = 0.0;
         Location thisloc = camController.getLocation();
+        int i = 0;
         for (ITrObjectRepresentation tor : getOwnedObjects().values()) {
             if(camController.getVisibleObjects_bb().containsKey(tor)){
-                _totalConfidence += (1-(tor.getLocation().distanceTo(thisloc)[2]/camController.getMaxRange())) * (0.95*(1-(camController.getRange()/camController.getMaxRange()))-0.15);
+                double tmpConf = (1-(tor.getLocation().distanceTo(thisloc)[2]/camController.getMaxRange())) * (0.95*(1-(camController.getRange()/camController.getMaxRange()))-0.15);
+                if(tmpConf < 0){
+                    tmpConf = 0;
+                }
+                _confidences[i] = tmpConf;
+                i++;
+                _totalConfidence += tmpConf;
                 if(_totalConfidence < 0){
                     System.out.println("PROBLEM!");
                 }
             }
         }
+        if((_totalConfidence != 0.0) && (this.getOwnedObjects().size() > 0)){
+            _totalConfidence = _totalConfidence / amountOfTracked;
+        }
         
     }
 
     private void updateProportionTrackeObjects() {
-        double notTracked = 0.0d;
+        amountOfTracked = 0.0d;
         for (ITrObjectRepresentation tro : this.getOwnedObjects().values()) {
-            if(!camController.getVisibleObjects_bb().containsKey(tro)){
-                notTracked ++;
+            if(camController.getVisibleObjects_bb().containsKey(tro)){
+                amountOfTracked ++;
             }
         }
         
+        
         if(this.getOwnedObjects().size() > 0){
-            _notTrackedProporation = notTracked / this.getOwnedObjects().size(); // / camController.getVisibleObjects_bb().size();
+                _trackedProporation = amountOfTracked / this.getOwnedObjects().size(); // / camController.getVisibleObjects_bb().size();
+                if(Double.isNaN(_trackedProporation)){
+                    System.out.println("AAAAHAHAAHAHH");
+                }
         }
         else{
-            _notTrackedProporation = 0.0;
+            _trackedProporation = -1.0;
         }
     }
     
-    public double getNotTrackedProportion(){
-        return _notTrackedProporation;
+    public double getTrackedProportion(){
+        return _trackedProporation;
     }
     
     public double getTotalConfidence(){
         return _totalConfidence;
+    }
+    
+    //returns the amount of currently tracked objects
+    public double getTotalTrackedObjects(){
+        return amountOfTracked;
     }
 
     /**
@@ -1153,8 +1177,10 @@ public abstract class AbstractAINode {
 	                                 this.startTracking(tor);
 	                                 _receivedUtility += secondHighest;
 	                                 //_paidUtility += secondHighest;
+	                                 if(bids.keySet().size() > 1)
+	                                     overlappingLocation(tor);
+	                                 
 	                                 sendMessage(MessageType.StopSearch, tor);
-	                                 overlappingLocation(tor);
 	                                 stepsTillBroadcast.remove(tor);
 	                             } else {
 	                            	 tor.setPrice(secondHighest);
@@ -1211,6 +1237,18 @@ public abstract class AbstractAINode {
     
     protected abstract void overlappingLocation(ITrObjectRepresentation tor);
     
+    protected String getBanditInfo(){
+        String info = "arm: pulls + reward";
+        if(banditSolver != null){
+            for(int i = 0; i < banditSolver.getResults().size(); i++){
+                info += i + " = " + banditSolver.getTotalArms()[i] + " + "+ banditSolver.getTotalReward()[i] + ";  ";
+            }
+        }
+        else{
+            info = "no bandit solver available!";
+        }
+        return info;
+    }
     
     /**
 	 * reduces the duration of all auctions

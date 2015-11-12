@@ -39,7 +39,7 @@ public class SoftMax extends AbstractBanditSolver {
 	}
 	
 	public SoftMax(int numberOfOptions, double temperature, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg){
-        super(numberOfOptions, temperature, alpha, interval, rg);
+        super(numberOfOptions, temperature, alpha, beta, gamma, interval, rg);
         this.temperature = temperature;
     }
 	
@@ -97,17 +97,26 @@ public class SoftMax extends AbstractBanditSolver {
 	 * @see epics.common.BanditSolver#bestAction()
 	 */
 	public String bestAction(){
-	    return ""+ currentStrategy;
+	    double[] p = new double[armsTotalReward.length];
+	    double res = Double.MIN_NORMAL;
+	    int highest = -1;
+	    for(int i = 0; i < armsTotalReward.length; i++){
+            if((armsTotalReward[i] / armsCount[i]) > res){
+                res = (armsTotalReward[i] / armsCount[i]);
+                highest = i;
+            }
+        }
+	    return ""+ highest;
 	}
 
     @Override
     public int selectActionWithoutReward() {
         int strategy;
 
-        //Calculate total number of trials of all arms
-        double totalArmsCount = 0.0;
-        for (int i = 0; i < armsCount.length; i++)
-            totalArmsCount += armsCount[i];
+//        //Calculate total number of trials of all arms
+//        double totalArmsCount = 0.0;
+//        for (int i = 0; i < armsCount.length; i++)
+//            totalArmsCount += armsCount[i];
 
         //sum exp(q(b)/temperature)
         double totalActionProbability = 0.0;
@@ -118,7 +127,9 @@ public class SoftMax extends AbstractBanditSolver {
             totalActionProbability += p[i];
         }
         
-        double random_number = randomG.nextDouble(USE.BANDIT) * totalActionProbability;
+        double x = randomG.nextDouble(USE.BANDIT);
+        
+        double random_number =  x * totalActionProbability;
   
         int bestIndex = 0;
         for(;bestIndex < p.length && random_number > 0; bestIndex++)

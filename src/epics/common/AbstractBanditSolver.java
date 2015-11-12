@@ -230,6 +230,8 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	
 	public double setRewardForStrategy(int strategy, double reward){
 	    armsTotalReward[strategy] += reward;
+	    usedArms[strategy]++;
+        armsCount[strategy]++;
 	    return armsTotalReward[strategy];
 	}
 

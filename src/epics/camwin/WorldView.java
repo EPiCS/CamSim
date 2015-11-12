@@ -24,7 +24,8 @@ import epics.commpolicy.*;
  * Draws a spatial network on a panel
  */
 public class WorldView extends JPanel implements Observer {
-    private static final boolean SHOW_LABELS = true;
+
+    private static final boolean SHOW_LABELS = false;
     private static final boolean SHOW_RES_LABELS = false;
 	private SimCoreModel sim_model;
     private CoordinateSystemTransformer cst;
@@ -327,44 +328,44 @@ public class WorldView extends JPanel implements Observer {
             g2.fill(p);
             
             
-            
-            Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
-            if(nbLoc != null){
-                for (Map.Entry<Location, Double> e : nbLoc.entrySet()){//Location loc : nbLoc.keySet()) {
-                    Location loc = e.getKey();
-//                    float f = (float)((255-(192f*e.getValue()%255))/192);
-//                    g2.setColor(new Color(f, f, f));
-                    g2.setColor(Color.MAGENTA);
-                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
-                    g2.fill(p);
+            if(!c.isOffline()){
+                Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
+                if(nbLoc != null){
+                    for (Map.Entry<Location, Double> e : nbLoc.entrySet()){//Location loc : nbLoc.keySet()) {
+                        Location loc = e.getKey();
+    //                    float f = (float)((255-(192f*e.getValue()%255))/192);
+    //                    g2.setColor(new Color(f, f, f));
+                        g2.setColor(Color.MAGENTA);
+                        p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
+                        g2.fill(p);
+                    }
+                }
+                
+                Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
+                if(hoLoc != null){
+                    for ( Map.Entry<Location, Double> e : hoLoc.entrySet()){
+                        Location loc = e.getKey();
+    //                    int colourcode = (int) (255-(255*e.getValue()%255));
+    //                    g2.setColor(new Color(colourcode, colourcode, 255));
+                        g2.setColor(Color.BLUE);
+                        p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+                        g2.fill(p);
+                    }
+                }
+                
+                Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
+                if(olLoc != null){
+                    for ( Map.Entry<Location, Double> e : olLoc.entrySet()){
+                        Location loc = e.getKey();
+    //                    float colourcode2 = (float)((255-(255*e.getValue()%255))/255);
+    //                    g2.setColor(new Color(1.0f,colourcode2,colourcode2));
+                        g2.setColor(Color.CYAN);
+                      p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
+                      g2.fill(p);
+    //                    g2.drawRect((int)p.getCenterX()-1, (int)p.getCenterY()-1, 2, 2);
+                    }
                 }
             }
-            
-            Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
-            if(hoLoc != null){
-                for ( Map.Entry<Location, Double> e : hoLoc.entrySet()){
-                    Location loc = e.getKey();
-//                    int colourcode = (int) (255-(255*e.getValue()%255));
-//                    g2.setColor(new Color(colourcode, colourcode, 255));
-                    g2.setColor(Color.BLUE);
-                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
-                    g2.fill(p);
-                }
-            }
-            
-            Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
-            if(olLoc != null){
-                for ( Map.Entry<Location, Double> e : olLoc.entrySet()){
-                    Location loc = e.getKey();
-//                    float colourcode2 = (float)((255-(255*e.getValue()%255))/255);
-//                    g2.setColor(new Color(1.0f,colourcode2,colourcode2));
-                    g2.setColor(Color.CYAN);
-                  p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
-                  g2.fill(p);
-//                    g2.drawRect((int)p.getCenterX()-1, (int)p.getCenterY()-1, 2, 2);
-                }
-            }
-            
         }
 
         

@@ -315,6 +315,10 @@ public class Statistics {
     public void addProportion(double prop, String camName) throws Exception{
         proportion_tmp += prop;
         
+        if(Double.isNaN(proportion_tmp)){
+            System.out.println("AAAHAHA");
+        }
+        
         if(addPerCam){
             if(!camName.isEmpty()){
                 if(!perCam.containsKey(camName)){

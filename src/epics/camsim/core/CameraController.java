@@ -82,8 +82,7 @@ public class CameraController implements ICameraController{
         this.initialRange = range;
         
         if(this.range >= MAX_VISIBILITY){
-            this.range = MAX_VISIBILITY - (MAX_VISIBILITY * 0.2);
-                    
+            this.range = MAX_VISIBILITY - (MAX_VISIBILITY * 0.2);  
         }
     }
     
@@ -720,12 +719,20 @@ public class CameraController implements ICameraController{
 	
 	public void increaseRange(double increaseBy){
 	    if(MAX_VISIBILITY != -1){
-	        if((this.range+increaseBy) < MAX_VISIBILITY){
-	            this.range += increaseBy;
+	        
+	        if(this.range+increaseBy >= MAX_VISIBILITY){
+	            this.range = MAX_VISIBILITY - (MAX_VISIBILITY * 0.2);  
 	        }
 	        else{
-	            this.range = MAX_VISIBILITY;
+	            this.range += increaseBy;
 	        }
+	        
+//	        if((this.range+increaseBy) < MAX_VISIBILITY){
+//	            this.range += increaseBy;
+//	        }
+//	        else{
+//	            this.range = MAX_VISIBILITY;
+//	        }
 	    }
 	    else{
 	        this.range += increaseBy;

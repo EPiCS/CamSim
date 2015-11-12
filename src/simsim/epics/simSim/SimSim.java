@@ -43,12 +43,12 @@ public class SimSim {
 
 	private static boolean runBanditRange = true;
 	private static boolean runAdaptiveAlphaBanditRange = false;
-	private static boolean runAllPossibleZooms = true;
+	private static boolean runAllPossibleZooms = false;
 	
 	// SET movement = "" if file specific movment should be used!
-	public static String movement = "epics.movement.DirectedBrownian"; // .Brownian"; // .Straight"; // .Waypoints"; //   
+	public static String movement = "";//"epics.movement.DirectedBrownian"; // .Brownian"; // .Straight"; // .Waypoints"; //   
 	
-	static int duration = 1000; //how many timesteps
+	static int duration = 3000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
 	static long initialSeed = 10;
 	static int banditParamRuns = 1; // how many epsilon / temperature values are being tried for the bandits
@@ -320,7 +320,7 @@ public class SimSim {
         DecimalFormat df = new DecimalFormat("0.00");
         for (CameraSettings cs : ss.cameras) {
             cs.bandit = "epics.bandits.SoftMax";
-            cs.ai_algorithm = "epics.ai.energy.ActiveBCBanditRange"; //BanditRange";
+            cs.ai_algorithm = "epics.ai.energy.NewActiveBCBanditRange"; //BanditRange";
         }
         if(paraCoef.doubleValue() > 0){
             for(int e = 0; e < banditParamRuns; e++){
@@ -358,14 +358,15 @@ public class SimSim {
                                     
                                     for (int p = 0; p < duration; p++) {
                                         try {
+                                            if((r==0)||(r==10)||(r==15)||(r==20)||(r==25)||(r==29)){
+                                                if((alpha == 1.0) || (beta == 1.0) || (gamma == 1.0)){
+                                                    if((p == 999)||(p == 1999)){
+                                                        sim.createSnapshot("2000SM" + e + "_" + alpha + "_" + beta + "_" + gamma + "-" + scenName + "_r"+r+"_"+p+ ".eps");
+                                                    }
+                                                }
+                                            }
                                             sim.update();
-        //                                    if(r==10){
-        //                                        if((alpha == 0.0) || (alpha == 0.5) || (alpha == 1.0)){
-        //                                            if(p == 999){
-        //                                                sim.createSnapshot("SM" + e + "_" + alpha + "-" + scenName + "_r"+r+"_"+p+ ".eps");
-        //                                            }
-        //                                        }
-        //                                    }
+                                           
                                         } catch (Exception x) {
                                             x.printStackTrace();
                                         }
@@ -380,6 +381,70 @@ public class SimSim {
                 
             }
         }
+        
+        
+        
+        
+        //################################### SENSIBLE RUN #################################
+        double alpha = 0.33; //prop
+        double beta = 0.33; //overlap
+        double gamma = 0.33; //conf
+        double epsilon = 0.1; //temperature for SOFTMAX
+        System.out.print(" a: " + alpha + " b: " + beta + " c: " + gamma + " - runs: ");
+        
+        //double alpha = 0.5;
+        directory = new File(scenDirName + dirName + "//RangeSoftMax-" +epsilon + "//" + df.format(alpha) + df.format(beta) + df.format(gamma) + "//");
+        directory.mkdirs();
+        //run all scenarios for a certain amount
+        for(int r = 0; r < runs; r++){
+            if (showgui == false) {
+                System.out.print(r + "; ");
+                if(randomSeed){
+                    seed = System.currentTimeMillis() % 1000;
+                }
+                else{
+                    if(diffSeed){
+                        seed = r;
+                    }
+                }
+                
+                SimCore sim = new SimCore(seed, scenDirName + dirName + "//RangeSoftMax-"+ epsilon+"//" + df.format(alpha) + df.format(beta) + df.format(gamma) + "//run" + r + ".csv", ss, false, epsilon, alpha, beta, gamma, movement, false, true);
+                sim.setQuiet(true);
+                                          
+                
+                for (int p = 0; p < duration; p++) {
+                    try {
+                        if((r==0)||(r==10)||(r==15)||(r==20)||(r==25)||(r==29)){
+//                            if((alpha == 1.0) || (beta == 1.0) || (gamma == 1.0)){
+                                if((p == 999)||(p == 1999)){
+                                    sim.createSnapshot("2000SM01" + "_" + alpha + "_" + beta + "_" + gamma + "-" + scenName + "_r"+r+"_"+p+ ".eps");
+                                }
+//                            }
+                        }
+                        sim.update();
+                       
+                    } catch (Exception x) {
+                        x.printStackTrace();
+                    }
+                }
+                sim.close_files();
+            } 
+        }
+        System.out.println("");
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
 //        for (CameraSettings cs : ss.cameras) {
 //            cs.bandit = "epics.bandits.EpsilonGreedy";
@@ -1531,7 +1596,7 @@ public class SimSim {
     static Random ran = new Random(initialSeed);
     
 	private static boolean diffSeed = true;
-    public static boolean runSequential = true;
+    public static boolean runSequential = false;
     public static int runRandomConfigs = 0;
     private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
     private static boolean runAllErrorVersions = false;
