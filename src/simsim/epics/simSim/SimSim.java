@@ -320,7 +320,7 @@ public class SimSim {
         DecimalFormat df = new DecimalFormat("0.00");
         for (CameraSettings cs : ss.cameras) {
             cs.bandit = "epics.bandits.SoftMax";
-            cs.ai_algorithm = "epics.ai.energy.NewActiveBCBanditRange"; //BanditRange";
+            cs.ai_algorithm = "epics.ai.dynamicZoom.NewActiveBCBanditRange"; //BanditRange";
         }
         if(paraCoef.doubleValue() > 0){
             for(int e = 0; e < banditParamRuns; e++){
@@ -448,7 +448,7 @@ public class SimSim {
         
 //        for (CameraSettings cs : ss.cameras) {
 //            cs.bandit = "epics.bandits.EpsilonGreedy";
-//            cs.ai_algorithm = "epics.ai.energy.BanditRange";
+//            cs.ai_algorithm = "epics.ai.dynamicZoom.BanditRange";
 //        }
 //        System.out.println("EPSILONGREEDY");
 //        for(int i = 0; i <= banditRuns; i++){
@@ -507,7 +507,7 @@ public class SimSim {
 //        //Set for all cameras epsilon greedy bandit solving mechanism
 //        for (CameraSettings cs : ss.cameras) {
 //            cs.bandit = "epics.bandits.UCB1";
-//            cs.ai_algorithm = "epics.ai.energy.BanditRange";
+//            cs.ai_algorithm = "epics.ai.dynamicZoom.BanditRange";
 //        }
 //        System.out.println("UCB1");
 //        for(int i = 0; i <= banditRuns; i++){
@@ -591,7 +591,7 @@ public class SimSim {
         
         for (CameraSettings cs : ss.cameras) {
             cs.bandit = "epics.bandits.SoftMax";
-            cs.ai_algorithm = "epics.ai.energy.AdaptiveAlphaBanditRange";
+            cs.ai_algorithm = "epics.ai.dynamicZoom.AdaptiveAlphaBanditRange";
         }
         if(paraCoef.doubleValue() > 0){
             for(int e = 0; e < banditParamRuns; e++){
@@ -643,7 +643,7 @@ public class SimSim {
         
         for (CameraSettings cs : ss.cameras) {
             cs.bandit = "epics.bandits.EpsilonGreedy";
-            cs.ai_algorithm = "epics.ai.energy.AdaptiveAlphaBanditRange";
+            cs.ai_algorithm = "epics.ai.dynamicZoom.AdaptiveAlphaBanditRange";
         }
         System.out.println("EPSILONGREEDY");
         double alpha = 0.5;
@@ -690,7 +690,7 @@ public class SimSim {
         //Set for all cameras epsilon greedy bandit solving mechanism
         for (CameraSettings cs : ss.cameras) {
             cs.bandit = "epics.bandits.UCB1";
-            cs.ai_algorithm = "epics.ai.energy.AdaptiveAlphaBanditRange";
+            cs.ai_algorithm = "epics.ai.dynamicZoom.AdaptiveAlphaBanditRange";
         }
         System.out.println("UCB1");
         
