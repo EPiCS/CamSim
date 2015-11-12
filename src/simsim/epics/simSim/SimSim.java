@@ -43,7 +43,10 @@ public class SimSim {
 	public static boolean runBandits = false;
 	public static boolean runOnlyScenario = true;
 	
-	static int duration = 10000; //how many timesteps
+	// SET movement = "" if file specific movment should be used!
+	public static String movement = "epics.movement.DirectedBrownian"; // .Brownian"; // .Straight"; // .Waypoints"; //   
+	
+	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
 	static long initialSeed = 10;
 	static int banditParamRuns = 2; // how many epsilon / temperature values are being tried for the bandits
@@ -253,7 +256,7 @@ public class SimSim {
 			        			}
 			        		}
 			        		
-			        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, false, true);
+			        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, movement, false, true);
 			        		sim.setQuiet(true);
 			        		
 			                for (int k = 0; k < duration; k++) {
@@ -415,7 +418,7 @@ public class SimSim {
 	        			}
 	        		}
 	        				        		
-	        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, false, true);//output_file, ss, false);
+	        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, movement, false, true);//output_file, ss, false);
 	        		sim.setQuiet(true);
 	                for (int k = 0; k < duration; k++) {
 	                    try {
@@ -536,7 +539,7 @@ public class SimSim {
 	        		}
 	        		else{
 	        			directory.mkdirs();
-		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, false, true);//output_file, ss, false);
+		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, movement, false, true);//output_file, ss, false);
 		        		sim.setQuiet(true);
 		                for (int k = 0; k < duration; k++) {
 		                    try {
@@ -637,7 +640,7 @@ public class SimSim {
     						}
     						else{
     							directory.mkdirs();
-    							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, false, false);//output_file, ss, false);
+    							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, movement, false, false);//output_file, ss, false);
     							sim.setQuiet(true);
     							for (int dur = 0; dur < duration; dur++) {
     								try {
@@ -745,7 +748,7 @@ public class SimSim {
 		        		else{
 		        			dir.mkdirs();
 		        			
-			                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, false, allStatistics);//output_file, ss, false);
+			                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, movement, false, allStatistics);//output_file, ss, false);
 			                sim.setQuiet(true);
 			                for (int i = 0; i < duration; i++) {
 			                    try {
@@ -860,7 +863,7 @@ public class SimSim {
 //                  testing.put(scenDirName + dirName + "//run" + r + ".csv", simS);
                     
                         
-                        SimCore sim = new SimCore(seed, totalDirName + "//" + scenDirName + "//" + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, false, allStatistics);//output_file, ss, false);
+                        SimCore sim = new SimCore(seed, totalDirName + "//" + scenDirName + "//" + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, movement, false, allStatistics);//output_file, ss, false);
                         sim.setQuiet(true);
                         //new SimCore(seed, run, ss, global, camError, camReset, alpha);
                         for (int i = 0; i < duration; i++) {
@@ -926,14 +929,33 @@ public class SimSim {
 	        			directory = new File(scenDirName + dirname);
 	        			directory.mkdirs();
 	        			
-		                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
+		                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, movement, false, true);//output_file, ss, false);
 		                sim.setQuiet(true);
 		                for (int k = 0; k < duration; k++) {
 		                    try {
 								sim.update();
+								if(r==10){
+								    if(dirname.startsWith("W")){
+        								if(k == 250){
+        								    sim.createSnapshot(dirname + "_" + scenName + "_r"+r+"_"+k+ ".eps");
+        								}
+//        								if(k == 500){
+//                                            sim.createSnapshot(dirname + "_" + scenName + "_r"+r+"_"+k+ ".eps");
+//                                        }
+//        								if(k == 750){
+//                                            sim.createSnapshot(dirname + "_" + scenName + "_r"+r+"_"+k+ ".eps");
+//                                        }
+        								if(k == 999){
+                                            sim.createSnapshot(dirname + "_" + scenName + "_r"+r+"_"+k+ ".eps");
+                                        }
+								    }
+								}
+								
+								
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
+		                    
 		                }
 		                sim.close_files();
 	        		}

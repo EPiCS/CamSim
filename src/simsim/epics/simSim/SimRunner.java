@@ -71,7 +71,7 @@ public class SimRunner implements Runnable {
 		
 		if(runs == 0){
 			ss = ss.copy();
-			SimCore sim = new SimCore(seed, run, ss, global, camError, camReset, alpha, realData, allStatistics);//output_file, ss, false);
+			SimCore sim = new SimCore(seed, run, ss, global, camError, camReset, alpha, "", realData, allStatistics);//output_file, ss, false);
 			
 			for (int i = 0; i < duration; i++) {
 	            try {
@@ -100,7 +100,7 @@ public class SimRunner implements Runnable {
     				seed =r;
     			}
     			
-                SimCore sim = new SimCore(seed, dir + "//run" + r + ".csv", ss, false, -1, 50, 0.5, realData, true);
+                SimCore sim = new SimCore(seed, dir + "//run" + r + ".csv", ss, false, -1, 50, 0.5, "", realData, true);
                 for (int i = 0; i < duration; i++) {
                     try {
 						sim.update();

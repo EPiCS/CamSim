@@ -3,5 +3,10 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="gnuprologjava-0.2.6.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="D:/GIT/camsim/epsgraphics-1.4/epsgraphics-1.4.jar" sourcepath="D:/GIT/camsim/epsgraphics-1.4/epsgraphics-1.4.jar">
+		<attributes>
+			<attribute name="source_encoding" value="ISO-8859-1"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

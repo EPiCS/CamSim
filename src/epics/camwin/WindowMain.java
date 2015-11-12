@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -166,6 +168,11 @@ public class WindowMain implements ActionListener{
 //        save.setEnabled(false);
         button_panel.add(save);
         
+        JButton snapshot = new JButton("Snapshot");
+        snapshot.setActionCommand("snap");
+        snapshot.addActionListener(this);
+        button_panel.add(snapshot);
+        
         return button_panel;
 	}
 
@@ -213,6 +220,18 @@ public class WindowMain implements ActionListener{
 			if(retVal == JFileChooser.APPROVE_OPTION){
 				sim_model.save_to_xml(jfc.getSelectedFile().getAbsolutePath());
 			}
+		}
+		
+		if(e.getActionCommand().equals("snap")){
+		    try {
+                wv.createSnapshot("example.eps");
+            } catch (FileNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
 		}
 
 		if(e.getActionCommand().equals("addobj")){

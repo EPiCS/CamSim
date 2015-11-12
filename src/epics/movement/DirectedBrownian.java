@@ -29,7 +29,7 @@ public class DirectedBrownian extends AbstractMovement{
         speed += (sran / 10); //- 0.5) / 10;
         heading += (hran / 2);// - 0.5) / 2; 
         
-        System.out.println(sran + " - " + hran);
+//        System.out.println(sran + " - " + hran);
         
         x_move = Math.sin(heading) * speed;
         y_move = Math.cos(heading) * speed;

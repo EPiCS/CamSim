@@ -241,7 +241,7 @@ public class SimSimReal {
             		}
             		else{
             			directory.mkdirs(); //directory for currently used setting 
-    	                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, -1, 50, 0.5, true, false);
+    	                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, -1, 50, 0.5, "", true, false);
     	                for (int i = 0; i < duration; i++) {
     	                    try {
     							sim.update();
@@ -291,7 +291,7 @@ public class SimSimReal {
                         }
                         
                         
-                        SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, true, true);
+                        SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, "", true, true);
                                 
                         for (int k = 0; k < duration; k++) {
                             try {
@@ -443,7 +443,7 @@ public class SimSimReal {
                 }
                 
                                         
-                SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, true, true);//output_file, ss, false);
+                SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, "", true, true);//output_file, ss, false);
                 for (int k = 0; k < duration; k++) {
                     try {
                         sim.update();
@@ -555,7 +555,7 @@ public class SimSimReal {
                 }
                 else{
                     directory.mkdirs();
-                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, true, true);//output_file, ss, false);
+                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, "", true, true);//output_file, ss, false);
                     for (int k = 0; k < duration; k++) {
                         try {
                             sim.update();
@@ -617,7 +617,7 @@ public class SimSimReal {
                         directory.mkdirs();
                         
                         //SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, -1, 0.5, false, true);//output_file, ss, false);
-                        SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, true, false);
+                        SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, "", true, false);
                         //new SimCore(seed, run, ss, global, camError, camReset, alpha);
                         for (int k = 0; k < duration; k++) {
                             try {
@@ -710,7 +710,7 @@ public class SimSimReal {
 						}
 						else{
 							directory.mkdirs();
-							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, true, true);//output_file, ss, false);
+							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, "", true, true);//output_file, ss, false);
 
 							for (int dur = 0; dur < duration; dur++) {
 								try {

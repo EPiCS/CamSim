@@ -29,6 +29,7 @@ public class Main {
     static String algo = "";
     static String comm = "";
     static String customComm = null;
+    static String movement = "";
     static int predefVG = -1;
     static int camErr = -1;
     static int camReset = 50;
@@ -101,7 +102,7 @@ public class Main {
 
         int c;
         String arg;
-        LongOpt[] longopts = new LongOpt[14];
+        LongOpt[] longopts = new LongOpt[15];
 
         StringBuffer sb = new StringBuffer();
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
@@ -118,9 +119,11 @@ public class Main {
         longopts[11] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
         longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
         longopts[13] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
+        longopts[14] = new LongOpt("movement", LongOpt.REQUIRED_ARGUMENT, null, 'm');
         
         
-        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:", longopts);
+        
+        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:m:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -154,7 +157,10 @@ public class Main {
                     System.out.println("Setting summary file: " + arg);
                     summaryFile = arg;
                     break;
-
+                case 'm':
+                    arg = g.getOptarg();
+                    movement = arg;
+                    break;
                 case 's':
                     arg = g.getOptarg();
                     try {
@@ -270,7 +276,7 @@ public class Main {
         }
         
         SimCore sim = new SimCore(seed, output_file, summaryFile, paramFile, ss, 
-        		useGlobal, camErr, camReset, false, true);
+        		useGlobal, camErr, camReset, movement, false, true);
         if (showgui == false) {
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();
