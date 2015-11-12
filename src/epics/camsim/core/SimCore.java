@@ -1053,21 +1053,27 @@ public class SimCore {
     
     
 
-    
-    //get location and radius of all cameras
-    //caluculate the euclidean distance to all other cameras and see if their ranges intersect [if(distance(c1,c2) > radius(c1)+radius(c2)) ==> no overlap]         DONE
-    //for those overlapping, find intersecting points on the radius of both cameras                                                                                 DONE
-    //for each camera, calculate the angle alpha from the two intersecting points to the center                                                                     DONE
-    //calculate the circle section for both cameras s1 = (radius(c1)/2)*(alpha1-sin(alpha1)) as well as for s2                                                      DONE
-    //add up s1 and s2 for full overlap                                                                                                                             DONE
-    //repeat this for all cameras and all overlaps                                                                                                                  DONE
-    //add up all s1 and s2 from all cameras for overlap of entire network                                                                                           
+    /**
+     * Calculates the overlap between two cameras.
+     * This is onle used for calculating the overlap when knowing the cameras position and their radius and complete omnidirectional (360-degree) cameras are assumed.
+     * get location and radius of all cameras
+     * caluculate the euclidean distance to all other cameras and see if their ranges intersect [if(distance(c1,c2) > radius(c1)+radius(c2)) ==> no overlap]         DONE
+     * for those overlapping, find intersecting points on the radius of both cameras                                                                                 DONE
+     * for each camera, calculate the angle alpha from the two intersecting points to the center                                                                     DONE
+     * calculate the circle section for both cameras s1 = (radius(c1)/2)*(alpha1-sin(alpha1)) as well as for s2                                                      DONE
+     * add up s1 and s2 for full overlap                                                                                                                             DONE
+     * repeat this for all cameras and all overlaps                                                                                                                  DONE
+     * add up all s1 and s2 from all cameras for overlap of entire network     
+     * @param c1 first camera
+     * @param c2 second camera
+     * @return returns the overlapping area
+     */
     private double calculateOverlap(CameraController c1, CameraController c2){
          
         double a = c1.getRange();
         double b = c2.getRange();
-        double AB0 = Math.abs(c1.getLocation().distanceTo(c2.getLocation())[0]); // c1.getLocation().distanceTo(c2.getLocation())[0]; //
-        double AB1 =Math.abs(c1.getLocation().distanceTo(c2.getLocation())[1]); //c1.getLocation().distanceTo(c2.getLocation())[1]; //
+        double AB0 = Math.abs(c1.getLocation().distanceTo(c2.getLocation())[0]);
+        double AB1 =Math.abs(c1.getLocation().distanceTo(c2.getLocation())[1]); 
         double c = c1.getLocation().distanceTo(c2.getLocation())[2];
         if (c == 0) {
           // same center: A = B
@@ -1114,17 +1120,13 @@ public class SimCore {
             a2 = tmpA;
         }
         
-        //double angle1 = ((a2+360)-(a1+360)) % 360;
-        
         double dir1 = c1.getLocation().angleTo(c2.getLocation());
-        
         
         double angle1 = Math.abs(a1-dir1) * 2;
         
         
         double a3 = c2.getLocation().angleTo(intersect1);
         double a4 = c2.getLocation().angleTo(intersect2);
-//        double angle2 = ((a4+360)-(a3+360)) % 360;
         
         if(a3 > a4){ //switch angles
             double tmpA = a3;
@@ -1138,15 +1140,8 @@ public class SimCore {
         double area1 = 0.0;
         double area2 = 0.0;
                 
-//        area1 = Math.abs((Math.pow(c1.getRange(), 2) * (Math.toRadians(angle1) - Math.sin(Math.toRadians(angle1))))/2);
-//        area2 = Math.abs((Math.pow(c2.getRange(), 2) * (Math.toRadians(angle2) - Math.sin(Math.toRadians(angle2))))/2);
         area1 = Math.abs(Math.pow(c1.getRange(), 2)/2 * (Math.toRadians(angle1) - Math.sin(Math.toRadians(angle1))));
         area2 = Math.abs(Math.pow(c2.getRange(), 2)/2 * (Math.toRadians(angle2) - Math.sin(Math.toRadians(angle2))) );
-        
-        
-            
-        
-        
         
         return (area1+area2);
     }

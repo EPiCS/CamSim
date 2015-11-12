@@ -48,7 +48,7 @@ public class SimSim {
 	// SET movement = "" if file specific movment should be used!
 	public static String movement = "";//"epics.movement.DirectedBrownian"; // .Brownian"; // .Straight"; // .Waypoints"; //   
 	
-	static int duration = 3000; //how many timesteps
+	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
 	static long initialSeed = 10;
 	static int banditParamRuns = 1; // how many epsilon / temperature values are being tried for the bandits

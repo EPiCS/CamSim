@@ -13,11 +13,11 @@ import epics.common.ICameraController;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
-import epics.common.StatsPerEnergy;
+import epics.common.StatsPerZoom;
 
 public class NewActiveBCBanditRange extends ActiveAINodeMulti{
 
-        List<StatsPerEnergy> stats = new ArrayList<StatsPerEnergy>();
+        List<StatsPerZoom> stats = new ArrayList<StatsPerZoom>();
         
         int BANDITINTERVALL = 10;
         int banditI = 0;

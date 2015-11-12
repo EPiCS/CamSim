@@ -5,7 +5,7 @@ import java.util.List;
 
 import epics.camsim.core.Location;
 
-public class StatsPerEnergy implements Comparable<StatsPerEnergy>{
+public class StatsPerZoom implements Comparable<StatsPerZoom>{
 
     double energy;
     List<Double> utility;
@@ -21,13 +21,13 @@ public class StatsPerEnergy implements Comparable<StatsPerEnergy>{
     
     double deviationLimit = 0.5;
     
-    public StatsPerEnergy(double e, double dev){
+    public StatsPerZoom(double e, double dev){
         energy = e;
         init();
         deviationLimit = dev;
     }
     
-    public StatsPerEnergy(double e) {
+    public StatsPerZoom(double e) {
         energy = e;
         init();
     }
@@ -91,7 +91,7 @@ public class StatsPerEnergy implements Comparable<StatsPerEnergy>{
     }
 
     @Override
-    public int compareTo(StatsPerEnergy o) {
+    public int compareTo(StatsPerZoom o) {
         if(((this.energy - deviationLimit) < (o.energy))){
             return -1;
         }
@@ -109,9 +109,9 @@ public class StatsPerEnergy implements Comparable<StatsPerEnergy>{
     public boolean equals(Object obj){
       if (obj == null) return false;
       if (this == obj) return true;
-      if (!(obj instanceof StatsPerEnergy)) return false;
+      if (!(obj instanceof StatsPerZoom)) return false;
 
-      StatsPerEnergy o = (StatsPerEnergy)obj;
+      StatsPerZoom o = (StatsPerZoom)obj;
       if(this.energy == o.energy){ //((this.energy + deviationLimit) > (o.energy)) && (((this.energy - deviationLimit) < (o.energy)))){
           return true;
       }
