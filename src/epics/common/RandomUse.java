@@ -8,6 +8,6 @@ public class RandomUse {
 		COMM,
 		ERROR,
 		BANDIT,
-		MOVE
+		MOVE, DYNSCHED
 	}
 }

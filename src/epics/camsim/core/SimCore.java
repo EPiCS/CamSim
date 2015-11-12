@@ -624,10 +624,10 @@ public class SimCore {
   	public void add_random_camera(){
   	    int absCom = randomGen.nextInt(3, RandomUse.USE.UNIV); // Random comm
   	    
-  	    String algo = "";
+  	    String algo = "epics.ai.dynamicSchedules.DynamicSchedule";
   	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
-  	    case 0: algo = "epics.ai.ActiveAINodeMulti"; break;
-  	    case 1: algo = "epics.ai.PassiveAINodeMulti"; break;
+  	    case 0: algo = "epics.ai.dynamicSchedules.ActiveAINodeMulti"; break;
+  	    case 1: algo = "epics.ai.dynamicSchedules.PassiveAINodeMulti"; break;
   	    }
   	    
         this.add_camera(
@@ -840,9 +840,11 @@ public class SimCore {
         	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         } else {
         	for (CameraController cc : this.getCameras()) {
-        		if (!cc.isOffline())
-        			cc.getAINode().receiveMessage(
-        					new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+        		if (!cc.isOffline()){
+        		    Message m = new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures()));
+//        		    System.out.println(m.toString());
+        			cc.getAINode().receiveMessage(m);
+        		}
         	}
         }
     }

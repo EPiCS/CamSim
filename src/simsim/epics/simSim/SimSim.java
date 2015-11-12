@@ -29,7 +29,12 @@ import epics.commpolicy.Fix;
  */
 public class SimSim {
 	
+<<<<<<< HEAD
     public static String loadScenariosFrom = "..//..//..//..//scenarios//2Cams"; //can be overwriten using argument [0]
+=======
+
+    public static String loadScenariosFrom = ".//scenarios//SASO-RAN"; //"..//..//..//..//scenarios//test-anticipation"; //can be overwriten using argument [0]
+>>>>>>> 2dbbe1e... new coordinate system, added location class
     public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
     public static boolean allStatistics = false;
 	public static boolean runHomogeneous = false;
@@ -38,7 +43,7 @@ public class SimSim {
 	public static boolean runBandits = false;
 	public static boolean runOnlyScenario = true;
 	
-	static int duration = 1000; //how many timesteps
+	static int duration = 10000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
 	static long initialSeed = 10;
 	static int banditParamRuns = 2; // how many epsilon / temperature values are being tried for the bandits
@@ -1172,6 +1177,9 @@ enum States{
     ABC,
     AST,
     ASM,
+    DBC,
+    DST,
+    DSM,
     PBC,
     PST,
     PSM

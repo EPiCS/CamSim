@@ -41,6 +41,15 @@ public abstract class AbstractMovement {
         return this.heading;
     }
     
+    public double[] getBoundaries(){
+        double[] b = new double[4];
+        b[0]=sim.get_max_x();
+        b[1]=sim.get_min_x();
+        b[2]=sim.get_max_y();
+        b[3]=sim.get_min_y();
+        return b;
+    }
+    
     public void checkBoundaryCollision(double x_move, double y_move){
      // If we breach any boundary, bounce off at a slightly randomised angle
         if (this.x > sim.get_max_x() || this.x < sim.get_min_x() ||

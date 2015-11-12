@@ -15,6 +15,7 @@ public class RandomNumberGenerator {
     private Random ranError = null;
     private Random ranBandit = null;
     private Random ranNormal = null;
+    private Random ranDynamicSchedule = null;
     private long _seed;
     
     public RandomNumberGenerator(long seed) {
@@ -30,6 +31,7 @@ public class RandomNumberGenerator {
     	ranError = new Random(seed);
     	ranBandit = new Random(seed);
     	ranNormal = new Random(seed);
+    	ranDynamicSchedule = new Random(seed);
         _seed = seed;
     }
 
@@ -49,6 +51,8 @@ public class RandomNumberGenerator {
 				return ranBandit.nextDouble();
 			case MOVE:
 			    return ranNormal.nextDouble();
+			case DYNSCHED:
+			    return ranDynamicSchedule.nextDouble();
 			default:
 				return ranUniversal.nextDouble();
 		}
@@ -71,6 +75,8 @@ public class RandomNumberGenerator {
 				return ranBandit.nextInt();
 			case MOVE:
                 return ranNormal.nextInt();
+			case DYNSCHED:
+                return ranDynamicSchedule.nextInt();
 			default:
 				return ranUniversal.nextInt();
 		}
@@ -93,6 +99,8 @@ public class RandomNumberGenerator {
 				return ranBandit.nextInt(n);
 			case MOVE:
                 return ranNormal.nextInt(n);
+			case DYNSCHED:
+                return ranDynamicSchedule.nextInt(n);
 			default:
 				return ranUniversal.nextInt(n);
 		}
@@ -131,6 +139,8 @@ public class RandomNumberGenerator {
                 return ranBandit.nextGaussian();
             case MOVE:
                 return ranNormal.nextGaussian();
+            case DYNSCHED:
+                return ranDynamicSchedule.nextGaussian();
             default:
                 return ranUniversal.nextGaussian();
         }

@@ -11,7 +11,7 @@ import epics.common.ITrObjectRepresentation;
  */
 public class TraceableObjectRepresentation implements ITrObjectRepresentation {
 
-    TraceableObject to; // Not accesible through interface!
+    TraceableObject to; // Not accessible through interface!
 
     // private double x/y relative to camera?
     private List<Double> features;
@@ -30,6 +30,14 @@ public class TraceableObjectRepresentation implements ITrObjectRepresentation {
 
     public List<Double> getFeatures() {
         return this.features;
+    }
+    
+    public Location getLocation(){
+        return new Location(to.getTotalX(), to.getTotalY()); // (to.getX(), to.getY()); // 
+    }
+
+    public Location getCenterBasedLocation() {
+        return new Location(to.getX(), to.getY()); 
     }
     
     @Override
@@ -51,7 +59,6 @@ public class TraceableObjectRepresentation implements ITrObjectRepresentation {
     @Override
     public int hashCode(){
 //    	return to.hashCode(); //super.hashCode();
-    	
     	int hash = 7;
     	  hash = 31 * hash + 
     	    (null == this.to ? 0 : this.to.hashCode());
@@ -70,6 +77,10 @@ public class TraceableObjectRepresentation implements ITrObjectRepresentation {
 	public double getPrice() {
 		return _price;
 	}
+
+    
     
     
 }
+
+

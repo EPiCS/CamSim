@@ -17,6 +17,10 @@ public class TraceableObject{
 
     private ArrayList<Double> features = new ArrayList<Double>();
     private AbstractMovement move;
+    private double minX = 0;
+    private double maxX = 0;
+    private double minY = 0;
+    private double maxY = 0;
 	
     /**
      * Constructor
@@ -29,17 +33,29 @@ public class TraceableObject{
      */
     public TraceableObject( double id, SimCore sim, double x, double y, double heading, double speed, RandomNumberGenerator rg ){
         this.move = new Straight(x, y, heading, speed, rg, sim);
+        maxX=sim.get_max_x();
+        minX=sim.get_min_x();
+        maxY=sim.get_max_y();
+        minY=sim.get_min_y();
         this.features.add(id);
     }
     
     public TraceableObject(double id, AbstractMovement move){
         this.features.add(id);
+        maxX=move.getBoundaries()[0];
+        minX=move.getBoundaries()[1];
+        maxY=move.getBoundaries()[2];
+        minY=move.getBoundaries()[3];
         this.move = move;
     }
     
     public TraceableObject( double id, SimCore sim, double speed, List<Point2D> waypoints, RandomNumberGenerator rg){
         assert( waypoints.size() >= 2 );
         this.features.add(id);
+        maxX=sim.get_max_x();
+        minX=sim.get_min_x();
+        maxY=sim.get_max_y();
+        minY=sim.get_min_y();
         move = new Waypoints(waypoints.get(0).getX(), waypoints.get(0).getY(), speed, -1.0, rg, waypoints, sim);
     }
 
@@ -52,6 +68,21 @@ public class TraceableObject{
     }
     public double getY(){
     	return move.getY();
+    }
+    
+    /**
+     * calculates x position based on upper left corner as (0,0)
+     * @return
+     */
+    public double getTotalX(){
+        return move.getX()-(minX);
+    }
+    /**
+     * calculates y position based on upper left corner as (0,0)
+     * @return
+     */
+    public double getTotalY(){
+        return (minY+move.getY())*(-1);
     }
 
     public double getHeading(){

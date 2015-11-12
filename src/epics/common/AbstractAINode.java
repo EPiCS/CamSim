@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import epics.camsim.core.Bid;
+import epics.camsim.core.Location;
 import epics.common.IMessage.MessageType;
 
 /**
@@ -770,7 +771,7 @@ public abstract class AbstractAINode {
 	 */
 	public IMessage processMessage(IMessage message){
         Object result = null;
-
+//        System.out.println("IN PROCESSMESSAGE: " + message.toString());
         switch (message.getType()) {
             case AskConfidence:
                 result = handle_askConfidence(message.getFrom(), (ITrObjectRepresentation) message.getContent());
@@ -844,7 +845,7 @@ public abstract class AbstractAINode {
 	 * @param rto the object to be removed from the tracked ones
 	 */
 	protected void removeTrackedObject(ITrObjectRepresentation rto) {
-        trackedObjects.remove(rto.getFeatures());
+	    trackedObjects.remove(rto.getFeatures());
         this.freeResources(rto);
     }
 
@@ -1060,6 +1061,9 @@ public abstract class AbstractAINode {
 	                            	 }
 	                             }
 	                         }
+	                         else{ //nod bids came in for this auction
+	                             noBids(tor);
+	                         }
 	
 	                         if (giveTo != null) {
 	                             delete.add(tor);
@@ -1093,7 +1097,7 @@ public abstract class AbstractAINode {
 		                                		 strengthenVisionEdge(giveTo.getName(), tor);
 	                                	 }
 	                                	 this.removeTrackedObject(tor);
-	                                	 
+	                                	 handedOver(tor, giveTo);
 	                                	 List<String> cams = advertised.get(tor);
 	                                	 if(cams != null){
 		                                	 if(cams.contains(giveTo.getName())){
@@ -1119,7 +1123,18 @@ public abstract class AbstractAINode {
         }
 	}
 
-	/**
+    
+    protected void noBids(ITrObjectRepresentation tor) {
+        //dummy if no bids came in - can be overwritten by subclasses
+    }
+
+    protected void handedOver(ITrObjectRepresentation tor,
+            ICameraController giveTo){
+        //dummy only to be overwritten by the classes which need it.
+    }
+    
+    
+    /**
 	 * reduces the duration of all auctions
 	 * needed to identify when auctions have ended.
 	 */
@@ -1319,5 +1334,13 @@ public abstract class AbstractAINode {
 	/** Returns the name of the underlying CameraController object */
 	public String getName() {
 		return this.camController.getName();
+	}
+	
+	public Map<Location, Double> getHandoverLocations(){
+	    return null;
+	}
+	
+	public Map<Location, Double> getNoBidLocations(){
+	    return null;
 	}
 }

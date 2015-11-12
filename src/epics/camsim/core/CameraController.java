@@ -328,7 +328,35 @@ public class CameraController implements ICameraController{
     public double getAngle() {
     	return this.viewing_angle;
     }
-
+    
+    public Location getVisualCenter(){
+        Location l = null;
+        
+        double xDiff = (range/2)*Math.sin(heading);
+        double yDiff = (range/2)*Math.cos(heading);
+        
+        double fx = x;
+        double fy = y;
+        
+        if(0 > heading && heading >= -90){ //upper left
+            fx += xDiff;
+            fy += yDiff;
+        }
+        else if( 0 <= heading && heading <= 90){ //upper right
+            fx += xDiff;
+            fy += yDiff;
+        } else if(heading > 90){ // lower right
+            fx += xDiff;
+            fy -= yDiff;
+        } else if(heading < -90) { //lower left
+            fx -= xDiff;
+            fy -= yDiff;
+        }
+        l = new Location(fx, fy);
+                
+        return l;
+    }
+    
     /** 
      * Returns the visible objects for this camera, as a map of object
      * to the confidence of each object 
@@ -626,24 +654,24 @@ public class CameraController implements ICameraController{
 	}
 
 	@Override
-	public int objectIsVisible(ITrObjectRepresentation tor) {
-		int get = (int) Double.parseDouble(tor.getFeatures().get(0).toString());
+	public double objectIsVisible(ITrObjectRepresentation tor) {
+		double get = Double.parseDouble(tor.getFeatures().get(0).toString());
 		try{
 			if(predefVis != null){
 				if(!predefVis.isEmpty()){
-					ArrayList<Integer> v = predefVis.get(get);
+					ArrayList<Integer> v = predefVis.get((int) get);
 					return v.get(step);
 				}
 				else{
-					return -1;
+					return -1.0;
 				}
 			}
 			else{
-				return -1;
+				return -1.0;
 			}
 		}
 		catch(IndexOutOfBoundsException e){
-			return 1;
+			return 1.0;
 		}
 	}
 }

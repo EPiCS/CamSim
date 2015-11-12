@@ -40,5 +40,10 @@ public class Message implements IMessage {
     public MessageType getType() {
         return this.msgType;
     }
+    
+    @Override
+    public String toString(){
+        return "From: " + ((from.equals("")) ? "null" : from) + " to: " + to + " type: " + msgType.toString(); 
+    }
 
 }

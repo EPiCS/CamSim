@@ -206,9 +206,6 @@ public class WorldView extends JPanel implements Observer {
             xpB = xpB * range;
             ypB = ypB * range;
 
-            //System.out.println( "coord xp: " + xpA + " coord yp: " + ypA );
-            //System.out.println( "coord cx: " + cx + " coord cy: " + cy );
-
             if(( c.getNumVisibleObjects() < 1 )||(c.isOffline())){
                 g2.setColor(Color.LIGHT_GRAY);
             }
@@ -220,21 +217,14 @@ public class WorldView extends JPanel implements Observer {
             	g2.setColor(new Color(255, 150, 0));
             }
             
-//            if(c.getAINode().getTracedObjects().size() > 0){
-//            	g2.setColor(Color.CYAN);
-//            }
-            
             boolean polygon = false;
 
             if(polygon) {
-
-	            //g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
 	            Polygon poly = new Polygon();
 	            poly.addPoint( (int)this.cst.simToWindowX(cx), (int)this.cst.simToWindowY(cy));
 	            poly.addPoint( (int)this.cst.simToWindowX(cx+xpA), (int)this.cst.simToWindowY(cy+ypA));
 	            poly.addPoint( (int)this.cst.simToWindowX(cx+xpB), (int)this.cst.simToWindowY(cy+ypB));
 	            g2.fillPolygon(poly);
-	            //g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
             } else {
                 
@@ -254,6 +244,7 @@ public class WorldView extends JPanel implements Observer {
 	            xpM = xpM * range;
 	            ypM = ypM * range;
 	            
+	             
 //	            QuadCurve2D curve = new QuadCurve2D.Float();
 //	            curve.setCurve(
 //	            		this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),  	//from
@@ -323,8 +314,36 @@ public class WorldView extends JPanel implements Observer {
                 	}
 //                }
             }
+            
+            g2.setColor(Color.PINK);
+            p = new Point(this.cst.simToWindowX(c.getVisualCenter().getX()), this.cst.simToWindowY(c.getVisualCenter().getY()), 2);
+            g2.fill(p);
+            
+           
+            
+            Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
+            if(nbLoc != null){
+                for (Location loc : nbLoc.keySet()) {
+                    g2.setColor(Color.DARK_GRAY);
+                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+                    g2.fill(p);
+                }
+            }
+            
+            Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
+            if(hoLoc != null){
+                for (Location loc : hoLoc.keySet()) {
+                    g2.setColor(Color.CYAN);
+                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+                    g2.fill(p);
+                }
+            }
+            
+            
         }
 
+        
+        
         
         // Draw objects which move through the scene
         g2.setColor(Color.BLACK);

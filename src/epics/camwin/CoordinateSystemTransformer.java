@@ -86,7 +86,15 @@ public class CoordinateSystemTransformer {
         double result = (yy * this.use_win_height) / sim_height;
         return this.use_win_height - result;
     }
-
+    
+    public double toCenterBasedX(double sim_x){
+        return sim_x - sim_max_x;
+    }
+    
+    public double toCenterBasedY(double sim_y){
+        return sim_max_y - sim_y;
+    }
+    
     public int getRealWidth() {
         
         return (int) (simToWindowX(sim_max_x) + simToWindowX(sim_min_x));
