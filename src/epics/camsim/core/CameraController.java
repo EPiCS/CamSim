@@ -196,7 +196,7 @@ public class CameraController implements ICameraController{
 		            double angle = Math.acos(dot);
 		
 		            if (angle < this.getAngle() / 2) {
-		                double dist_conf = Math.abs(this.initialRange - dist) / this.getRange(); //(this.getRange() - dist) / this.getRange();
+		                double dist_conf = 1/(dist + ((this.getRange()-dist)/this.getRange())); //  (this.getRange() - dist) / this.getRange(); // 
 		
 		                //dist_conf = dist_conf * 5; // so we use more of atan
 		                //dist_conf = Math.atan( 1 / dist_conf );
