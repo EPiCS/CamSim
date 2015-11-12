@@ -28,6 +28,7 @@ public class Main {
     static String paramFile = null;
     static String algo = "";
     static String comm = "";
+    static String bandit = "";
     static String customComm = null;
     static String movement = "";
     static int predefVG = -1;
@@ -102,7 +103,7 @@ public class Main {
 
         int c;
         String arg;
-        LongOpt[] longopts = new LongOpt[15];
+        LongOpt[] longopts = new LongOpt[16];
 
         StringBuffer sb = new StringBuffer();
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
@@ -120,10 +121,11 @@ public class Main {
         longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
         longopts[13] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
         longopts[14] = new LongOpt("movement", LongOpt.REQUIRED_ARGUMENT, null, 'm');
+        longopts[15] = new LongOpt("bandit", LongOpt.REQUIRED_ARGUMENT, null, 'b');
         
         
         
-        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:m:", longopts);
+        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:m:b:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -151,7 +153,10 @@ public class Main {
                     System.out.println("Setting output file to: " + arg);
                     output_file = arg;
                     break;
-
+                case 'b':
+                    arg = g.getOptarg();
+                    bandit = arg;
+                    break;
                 case 'f':
                     arg = g.getOptarg();
                     System.out.println("Setting summary file: " + arg);
@@ -258,7 +263,7 @@ public class Main {
         }
 
         
-        SimSettings ss = new SimSettings(algo, comm, customComm, predefVG);
+        SimSettings ss = new SimSettings(algo, comm, customComm, predefVG, bandit);
         if (input_file == null) {
             System.err.println("Error, no simulation file provided");
             usage();

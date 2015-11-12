@@ -31,8 +31,8 @@ public class Statistics {
     private double util_cumulative = 0;
     private double comm_cumulative = 0;
     private double handover_cumulative = 0;
-    private double energy_cumulative = 0;
-    private double energy_tmp = 0;
+    private double overlap_cumulative = 0;
+    private double overlap_tmp = 0;
     private Map<String, Map<String,Double>> tmp_camUtil = new HashMap<String, Map<String,Double>>();
     private Map<String, Statistics> perCam = new HashMap<String, Statistics>();
     private ArrayList<Integer> time = new ArrayList<Integer>();
@@ -41,7 +41,7 @@ public class Statistics {
     private ArrayList<Double> handover = new ArrayList<Double>();
     private ArrayList<Integer> visible = new ArrayList<Integer>();
     private ArrayList<Integer> strategy = new ArrayList<Integer>();
-    private ArrayList<Double> energy = new ArrayList<Double>();
+    private ArrayList<Double> overlap = new ArrayList<Double>();
     
     
     private long threadId;
@@ -57,6 +57,18 @@ public class Statistics {
 //    static {
 //        init(null, null);
 //    }
+
+    private ArrayList<Double> proportion = new ArrayList<Double>();
+
+    private double proportion_cumulative = 0;
+
+    private double proportion_tmp = 0;
+
+    private double confidence_cumulative = 0;
+
+    private double confidence_tmp = 0;
+
+    private ArrayList<Double> confidence = new ArrayList<Double>();
 
     
     
@@ -93,9 +105,15 @@ public class Statistics {
         strategy.clear();
         totComOH.clear();
         totUtil.clear();
-        energy.clear();
-        energy_cumulative = 0;
-        energy_tmp = 0;
+        overlap.clear();
+        overlap_cumulative = 0;
+        overlap_tmp = 0;
+        proportion.clear();
+        proportion_cumulative = 0;
+        proportion_tmp = 0;
+        confidence.clear();
+        confidence_cumulative = 0;
+        confidence_tmp = 0;
     }
 
     public void close() throws Exception{
@@ -111,11 +129,11 @@ public class Statistics {
 	                FileWriter outFile = new FileWriter(output);
 	                out = new PrintWriter(outFile);
 	
-	                out.println( "time;utility;communication;visible;strategy;totUtil;totComm;energy");
+	                out.println( "time;utility;communication;visible;strategy;totUtil;totComm;overlap;confidence;proportion");
 	                String outString = "";
 	                for ( int i = 0; i < time.size(); i++ ){
 	                    outString = (time.get(i) + ";" + utility.get(i) + ";" + communication.get(i) + ";" + visible.get(i));
-	                    outString = outString  + ";" + (strategy.get(i) == null ? 0 : strategy.get(i))+ ";" + totUtil.get(i) + ";" + totComOH.get(i) + ";" + energy.get(i);
+	                    outString = outString  + ";" + (strategy.get(i) == null ? 0 : strategy.get(i))+ ";" + totUtil.get(i) + ";" + totComOH.get(i) + ";" + overlap.get(i) + ";" + confidence.get(i) + ";" + proportion.get(i);
 	                    
 	                    out.println(outString);
 	                }
@@ -171,8 +189,12 @@ public class Statistics {
         strategy.add(strategy_tmp);
         totUtil.add(tmp_totutil);
         totComOH.add(comm_oh_tmp);
-        energy.add(energy_tmp);
-        energy_cumulative += energy_tmp;
+        overlap.add(overlap_tmp);
+        overlap_cumulative += overlap_tmp;
+        proportion.add(proportion_tmp);
+        proportion_cumulative += proportion_tmp;
+        confidence.add(confidence_tmp);
+        confidence_cumulative += confidence_tmp;
 
         if(!quiet){
             System.out.println(getSummaryDesc(true));
@@ -189,7 +211,9 @@ public class Statistics {
         tmp_totutil = 0.0;
         tmp_camUtil = new HashMap<String, Map<String,Double>>();
         strategy_tmp = 0;
-        energy_tmp = 0;
+        overlap_tmp = 0;
+        proportion_tmp = 0;
+        confidence_tmp = 0;
         
         for(Statistics s : perCam.values()){
         	s.nextTimeStep();
@@ -212,7 +236,9 @@ public class Statistics {
     			+ handover_cumulative + comma
     			+ comm_oh_cumulative + comma
     			+ visible_tmp + comma
-    			+ energy_cumulative;
+    			+ overlap_cumulative + comma
+    			+ confidence_cumulative + comma
+    			+ proportion_cumulative; 
     	return summary;
     }
     
@@ -232,7 +258,9 @@ public class Statistics {
     			+ "CUMULATIVE_HANDOVER" + comma
     			+ "CUMULATIVE_COMM_OH" + comma 
     			+ "VISIBLE" + comma
-    			+ "ENERGY";
+    			+ "OVERLAP" + comma
+    			+ "CONFIDENCE" + comma
+    			+ "PROPORTION";
     	return desc;
     }
     
@@ -270,6 +298,33 @@ public class Statistics {
 	        }
         }
     }
+    
+    public void addConfidence(double conf, String camName) throws Exception{
+        confidence_tmp += conf;
+        
+        if(addPerCam){
+            if(!camName.isEmpty()){
+                if(!perCam.containsKey(camName)){
+                    createCamStatistics(camName);   
+                }
+                perCam.get(camName).addConfidence(conf, "");
+            }
+        }
+    }
+    
+    public void addProportion(double prop, String camName) throws Exception{
+        proportion_tmp += prop;
+        
+        if(addPerCam){
+            if(!camName.isEmpty()){
+                if(!perCam.containsKey(camName)){
+                    createCamStatistics(camName);   
+                }
+                perCam.get(camName).addProportion(prop, "");
+            }
+        }
+    }
+    
     
     public void setCommunicationOverhead(double overhead, String camName) throws Exception{
     	comm_oh_tmp += overhead;
@@ -328,15 +383,15 @@ public class Statistics {
 		}
 	}
 	
-	public void addEnergy(double en, String camName){
-	    energy_tmp += en;
+	public void addOverlap(double en, String camName){
+	    overlap_tmp += en;
         
         if(addPerCam){
             if(!camName.isEmpty()){
                 if(!perCam.containsKey(camName)){
                     createCamStatistics(camName);   
                 }
-                perCam.get(camName).addEnergy(en, "");
+                perCam.get(camName).addOverlap(en, "");
             }
         }
 	}

@@ -54,4 +54,6 @@ public interface ICameraController{
     public Location getLocation();
 
     public double getRange();
+    
+    public double getMaxRange();
 }

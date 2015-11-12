@@ -89,4 +89,9 @@ public class FullRandom extends AbstractBanditSolver{ // implements IBanditSolve
 	public String bestAction(){
 	      return ""+ currentStrategy;
 	  }
+
+    @Override
+    public int selectActionWithoutReward() {
+        return selectRandomArm();
+    }
 }

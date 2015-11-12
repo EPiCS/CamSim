@@ -82,4 +82,48 @@ public class UCBTuned extends AbstractBanditSolver {
 		return Math.sqrt(total/arrayList.size());
 	}
 
+    @Override
+    public int selectActionWithoutReward() {
+        int strategy;
+
+        if(count >= _interval){
+            //Calculate total number of trials of all arms
+            double totalArmsCount = 0.0;
+            for (int i = 0; i < armsCount.length; i++)
+              totalArmsCount += armsCount[i];
+
+            // Find the strategy which maximises the UCBTuned equation
+        
+            double thisAverageReward = armsTotalReward[0] / armsCount[0];
+            double std = CalculateStdFor(allResults.get(0), thisAverageReward); //calculates standard deviation for this strategy
+            double thisConfidenceBound = thisAverageReward + Math.sqrt(
+                (Math.log(totalArmsCount)) / (armsCount[0]) * 
+                Math.min(1.0/4.0, std + Math.sqrt((2.0*Math.log(totalArmsCount)) / (armsCount[0]))));
+            double highestConfidenceBound = thisConfidenceBound;
+            
+            int bestIndex = 0;
+            
+            for (int i = 1; i < armsCount.length; i++) {
+              thisAverageReward = armsTotalReward[i] / armsCount[i];
+              std = CalculateStdFor(allResults.get(i), thisAverageReward); //calculates standard deviation for this strategy 
+              
+              // The UCBTuned confidence bound
+              thisConfidenceBound = thisAverageReward + Math.sqrt(
+                        (Math.log(totalArmsCount)) / (armsCount[i]) * 
+                        Math.min((1.0/4.0), std + Math.sqrt((2.0*Math.log(totalArmsCount)) / (armsCount[i]))));
+                  
+              if (thisConfidenceBound > highestConfidenceBound) {
+                  highestConfidenceBound = thisConfidenceBound;
+                  bestIndex = i;
+              }
+            }
+            
+            currentStrategy = bestIndex;            
+        }
+        
+        // Return the selected strategy, so that we can monitor what happened from the calling
+        // class.
+        return currentStrategy;   
+    }
+
 }

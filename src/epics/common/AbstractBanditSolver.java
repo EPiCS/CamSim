@@ -53,6 +53,10 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 
     private double _nrObjects;
 
+    private double beta = 0.0;
+
+    private double gamma = 0.0;
+
     
 	
     /**
@@ -108,6 +112,12 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	    this.epsilon = epsilon;
 	}
 	
+	public AbstractBanditSolver(int numberOfOptions, double epsilon, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg) {
+	    this(numberOfOptions, epsilon, alpha, interval, rg);
+	    this.beta = beta;
+	    this.gamma = gamma;
+	}
+	
 	/**
 	 * Constructor
 	 * builds bandit solver from existing solver
@@ -136,6 +146,21 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 				alg = -1;
 			}
 	  }
+	
+	public void init(int numberOfOptions){
+	 // Initialise arm counter
+        armsCount = new int[numberOfOptions];
+        usedArms = new int[numberOfOptions];
+        
+        armsTotalReward = new double[numberOfOptions];
+        allResults = new ArrayList<ArrayList<Double>>(numberOfOptions);
+        
+        for(int i = 0; i < numberOfOptions; i++){
+            allResults.add(new ArrayList<Double>());
+        }
+        
+        reinitialise();
+	}
 	
 	/**
 	 * selects the index for an algorithm-communication combination 
@@ -193,11 +218,19 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	@Override
     public abstract String bestAction();
 	
+	@Override 
+	public abstract int selectActionWithoutReward();
+	
 	/* (non-Javadoc)
 	 * @see epics.common.IBanditSolver#setRewardForStrategy(int, double, double)
 	 */
 	public double setRewardForStrategy(int strategy, double performance, double communication){ //reward){
 	    return setRewardForStrategy(strategy, performance, communication, _nrObjects); 
+	}
+	
+	public double setRewardForStrategy(int strategy, double reward){
+	    armsTotalReward[strategy] += reward;
+	    return armsTotalReward[strategy];
 	}
 
 	/**
@@ -295,6 +328,10 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	    return reward;
 	}
 	
+	public int getCurrentStrategy(){
+	    return currentStrategy;
+	}
+	
 	/**
 	 * Reinitialises the entire banditsolver resetting all variables
 	 */
@@ -361,4 +398,16 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 		return allResults;
 	}
 
+	
+	public double getAlpha(){
+	    return alpha;
+	}
+	
+	public double getBeta(){
+	    return beta;
+	}
+	
+	public double getGamma(){
+	    return gamma;
+	}
 }

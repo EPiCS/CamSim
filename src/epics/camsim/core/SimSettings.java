@@ -340,11 +340,13 @@ public class SimSettings implements Cloneable{
     private String algorithm = "";
     private int communication = 0;
     private String customComm = null;
-
+    private String bandit = "";
+    
     public SimSettings(){}
     
-    public SimSettings(String algo, String comm, String customComm, int staticVG){
+    public SimSettings(String algo, String comm, String customComm, int staticVG, String bandit){
     	usePredefVG = staticVG;
+    	this.bandit = bandit; 
     	if(!algo.equals("")){
     		fixAlgo = true;
     		algorithm = algo;
@@ -470,9 +472,12 @@ public class SimSettings implements Cloneable{
                 cs.heading = Double.parseDouble(eCamera.getAttribute("heading"));
                 cs.viewing_angle = Double.parseDouble(eCamera.getAttribute("viewing_angle"));
                 cs.range = Double.parseDouble(eCamera.getAttribute("range"));
-                cs.bandit = "";
-                if(eCamera.hasAttribute("bandit"))
-                	cs.bandit = eCamera.getAttribute("bandit");
+                cs.bandit = bandit;
+                if(bandit.equals("")){
+                    if(eCamera.hasAttribute("bandit")){
+                    	cs.bandit = eCamera.getAttribute("bandit");
+                    }
+                }
                 
                 if(fixAlgo){
                 	cs.ai_algorithm = algorithm;
@@ -827,7 +832,7 @@ public class SimSettings implements Cloneable{
 
 	public SimSettings copy() {
 		
-		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.customComm, this.usePredefVG);
+		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.customComm, this.usePredefVG, this.bandit);
 		
 		
 		ss.cameras = (ArrayList<CameraSettings>) this.cameras.clone();

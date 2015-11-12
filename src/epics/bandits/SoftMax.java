@@ -38,6 +38,11 @@ public class SoftMax extends AbstractBanditSolver {
 		this.temperature = temperature;
 	}
 	
+	public SoftMax(int numberOfOptions, double temperature, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg){
+        super(numberOfOptions, temperature, alpha, interval, rg);
+        this.temperature = temperature;
+    }
+	
 	/**-
 	 * @param eg
 	 * @param comm
@@ -94,4 +99,33 @@ public class SoftMax extends AbstractBanditSolver {
 	public String bestAction(){
 	    return ""+ currentStrategy;
 	}
+
+    @Override
+    public int selectActionWithoutReward() {
+        int strategy;
+
+        //Calculate total number of trials of all arms
+        double totalArmsCount = 0.0;
+        for (int i = 0; i < armsCount.length; i++)
+            totalArmsCount += armsCount[i];
+
+        //sum exp(q(b)/temperature)
+        double totalActionProbability = 0.0;
+        double[] p = new double[armsTotalReward.length];
+        
+        for(int i = 0; i < armsTotalReward.length; i++){
+            p[i] = Math.exp((armsTotalReward[i] / armsCount[i])/temperature);
+            totalActionProbability += p[i];
+        }
+        
+        double random_number = randomG.nextDouble(USE.BANDIT) * totalActionProbability;
+  
+        int bestIndex = 0;
+        for(;bestIndex < p.length && random_number > 0; bestIndex++)
+            random_number -= p[bestIndex];
+        
+        currentStrategy = bestIndex-1;
+        
+        return currentStrategy;
+    }
 }

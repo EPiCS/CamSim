@@ -86,4 +86,59 @@ public class UCB2 extends AbstractBanditSolver {
 	public String bestAction(){
 	    return ""+ currentStrategy;
 	}
+
+    @Override
+    public int selectActionWithoutReward() {
+        int strategy;
+
+        if(count >= _interval){
+                       
+            //Calculate total number of trials of all arms
+            double totalArmsCount = 0.0;
+            for (int i = 0; i < armsCount.length; i++)
+                totalArmsCount += armsCount[i];
+            
+            
+            // Find the strategy which maximises the UCB2 equation
+            double thisAverageReward = armsTotalReward[0] / armsCount[0];
+            double tau = Math.ceil(Math.pow(1+special_alpha, selected[0]));
+            double anr = Math.sqrt(((1+special_alpha)*Math.log(Math.E * armsCount[0]/tau))/(2*tau));
+              
+            // The UCB2 confidence bound
+            double thisConfidenceBound = thisAverageReward + anr;
+            
+            double highestConfidenceBound = thisConfidenceBound;
+            int bestIndex = 0;
+            
+            for (int i = 1; i < armsCount.length; i++) {
+                thisAverageReward = armsTotalReward[i] / armsCount[i];
+                tau = Math.ceil(Math.pow(1+special_alpha, selected[i]));
+                anr = Math.sqrt(((1 + special_alpha) * Math.log(((Math.E * armsCount[i]) / tau)))
+                        / (2 * tau));
+                
+                thisConfidenceBound = thisAverageReward + anr;
+                
+                if (thisConfidenceBound > highestConfidenceBound) {
+                    highestConfidenceBound = thisConfidenceBound;
+                    bestIndex = i;
+                }
+            }
+            
+            //for how many steps this strategy should be played
+            double pow1 = Math.pow(1.0d+special_alpha, selected[bestIndex]+1.0);
+            double c1 = Math.ceil(pow1);
+            double pow2 = Math.pow(1.0d+special_alpha, selected[bestIndex]);
+            double c2 =Math.ceil(pow2);
+            double duration = (c1 - c2);
+            
+            selected[bestIndex] ++;
+            
+            _interval = (int) duration;
+            currentStrategy = bestIndex;
+        }
+        
+        
+        
+        return currentStrategy;
+    }
 }

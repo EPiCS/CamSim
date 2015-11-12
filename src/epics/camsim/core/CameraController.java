@@ -36,7 +36,8 @@ public class CameraController implements ICameraController{
     
     private Map<IMessage, Integer> sendOut = new HashMap<IMessage, Integer>();
     private static int DELAY_COMM = 0; 
-
+    public static int MAX_VISIBILITY = 20;
+    
     private ArrayList<CameraController> neighbours = new ArrayList<CameraController>();
 
     private Map<TraceableObject, Double> visible_objects
@@ -79,6 +80,11 @@ public class CameraController implements ICameraController{
         this.predefVis = predefVisibility;
         this.step = -1;
         this.initialRange = range;
+        
+        if(this.range >= MAX_VISIBILITY){
+            this.range = MAX_VISIBILITY - (MAX_VISIBILITY * 0.2);
+                    
+        }
     }
     
     /** Gets the amount of resources available to this camera */
@@ -158,9 +164,9 @@ public class CameraController implements ICameraController{
      * visible to camera, if yes, then calculate confidence and further call
      * addVisibleObject or removeVisibleObject.
      */
-    public double update_confidence(TraceableObject o) {
+    public double update_visiblity(TraceableObject o) {
     	if (!isOffline()) {
-	        double result_confidence = 0;
+	        double result_visiblity = 0;
 	
 	        double cx = this.getX();
 	        double cy = this.getY();
@@ -172,7 +178,7 @@ public class CameraController implements ICameraController{
 	        if (gotDetection()) {
 		        if (dist > this.getRange()) {
 		            // Object out of range
-		            result_confidence = 0;
+		            result_visiblity = 0;
 		        } else {
 		
 		            double tmp_x = 0;
@@ -196,7 +202,7 @@ public class CameraController implements ICameraController{
 		            double angle = Math.acos(dot);
 		
 		            if (angle < this.getAngle() / 2) {
-		                double dist_conf = 1/(dist + ((this.getRange()-dist)/this.getRange())); //  (this.getRange() - dist) / this.getRange(); // 
+		                double dist_conf = 1/(dist + ((this.getRange()-dist)/this.getRange())); // (this.getRange() - dist) / this.getRange(); //
 		
 		                //dist_conf = dist_conf * 5; // so we use more of atan
 		                //dist_conf = Math.atan( 1 / dist_conf );
@@ -211,24 +217,24 @@ public class CameraController implements ICameraController{
 		                //System.out.println( "result " + total_conf + " = " + dist_conf + " * " + ang_conf + " // total = dist * ang");
 		
 		                // Object in range and in front of camera
-		                result_confidence = total_conf;
+		                result_visiblity = total_conf;
 		
 		            } else {
 		                // Object in range, but not in front of camera
-		                result_confidence = 0;
+		                result_visiblity = 0;
 		            }
 		        }
 	        } else {
-	        	result_confidence = 0;
+	        	result_visiblity = 0;
 	        }
 	
-	        if (result_confidence > 0 ) {
-	            this.addVisibleObject(o, result_confidence);
+	        if (result_visiblity > 0 ) {
+	            this.addVisibleObject(o, result_visiblity);
 	        } else {
 	            this.removeVisibleObject(o);
 	        }
 	        
-	        return result_confidence;
+	        return result_visiblity;
     	} else {
     		return 0;
     	}
@@ -245,9 +251,9 @@ public class CameraController implements ICameraController{
 	}
     
     /** Add a visible object to this camera's list */
-    private void addVisibleObject(TraceableObject tc, double confidence){
+    private void addVisibleObject(TraceableObject tc, double visiblity){
     	if(!isOffline()){
-    		this.visible_objects.put(tc, confidence);
+    		this.visible_objects.put(tc, visiblity);
     	}
     }
     
@@ -283,7 +289,7 @@ public class CameraController implements ICameraController{
     public Map<List<Double>, TraceableObject> getTrackedObjects(){
     	Map<List<Double>, TraceableObject> retVal = new HashMap<List<Double>, TraceableObject>();
     	if(!isOffline()){
-	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getTrackedObjects().entrySet()){
+	    	for(Map.Entry<List<Double>, ITrObjectRepresentation> e : this.camAINode.getOwnedObjects().entrySet()){
 	    		retVal.put(e.getKey(), ((TraceableObjectRepresentation)e.getValue()).getTraceableObject());
 	    	}	
     	}
@@ -704,10 +710,29 @@ public class CameraController implements ICameraController{
 	}
 	
 	public double getEnergy(){
-	    return this.range; //*this.viewing_angle;
+	    if(MAX_VISIBILITY == -1){
+	        return 1;
+	    }
+	    else{
+	        return (this.range / MAX_VISIBILITY); //*this.viewing_angle;
+	    }
 	}
 	
 	public void increaseRange(double increaseBy){
-	    this.range += increaseBy;
+	    if(MAX_VISIBILITY != -1){
+	        if((this.range+increaseBy) < MAX_VISIBILITY){
+	            this.range += increaseBy;
+	        }
+	        else{
+	            this.range = MAX_VISIBILITY;
+	        }
+	    }
+	    else{
+	        this.range += increaseBy;
+	    }
+	}
+	
+	public double getMaxRange(){
+	    return MAX_VISIBILITY;
 	}
 }

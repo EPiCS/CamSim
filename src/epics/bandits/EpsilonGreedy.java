@@ -37,6 +37,10 @@ public class EpsilonGreedy extends AbstractBanditSolver{ // implements IBanditSo
 	public EpsilonGreedy(int numberOfOptions, double epsilon, double alpha, int interval, RandomNumberGenerator rg) {
 		super(numberOfOptions, epsilon, alpha, interval, rg);
 	}
+	
+	public EpsilonGreedy(int numberOfOptions, double epsilon, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg) {
+        super(numberOfOptions, epsilon, alpha, interval, rg);
+    }
   
 	/**
 	 * constructs an epsilon-greedy bandit solver from an existing one
@@ -124,5 +128,23 @@ public class EpsilonGreedy extends AbstractBanditSolver{ // implements IBanditSo
 	public String bestAction(){
 	      return "" + selectBestArm();
 	  }
+
+    @Override
+    public int selectActionWithoutReward() {
+        int strategy = currentStrategy;
+    
+        // With probability epsilon, select a strategy at random.
+        if (randomG.nextDouble(USE.BANDIT) < epsilon){ 
+            strategy = selectRandomArm();
+        }
+        else
+            strategy = selectBestArm();
+        
+        currentStrategy = strategy;
+      
+        // Return the selected strategy, so that we can monitor what happened from the calling
+        // class.
+        return strategy;
+    }
 
 }

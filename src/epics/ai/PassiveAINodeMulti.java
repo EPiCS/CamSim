@@ -70,7 +70,7 @@ public class PassiveAINodeMulti extends AbstractAINode { //ActiveAINodeMulti {
 	@Override
 	public void advertiseTrackedObjects() {
 		for (ITrObjectRepresentation io : this.getAllTrackedObjects_bb().values()) {
-			double conf = this.getConfidence(io);
+			double conf = this.getVisibility(io);
 			double lastConf = this.getLastConfidenceFor(io);
 			
 			if (this.camController.realObjectsUsed()){

@@ -99,48 +99,41 @@ public class WorldView extends JPanel implements Observer {
            // g.drawOval((int) this.cst.simToWindowX(0), (int)this.cst.simToWindowY(0), 2, 2);
             
             if(SHOW_LABELS) {
-                if(!c.isOffline()){
-    	            g2.setColor(Color.BLACK);
-    	            Font f = new Font("Arial", Font.PLAIN, 10);
-    	            g2.setFont(f);
-    	            String algo = c.getAINode().getClass().getSimpleName();
-    	            if(algo.contains("Passive")) {
-    	            	algo = "P";
-    	            } else if(algo.contains("Active")) {
-    	            	algo = "A";
-    	            } // Else actual name
-    	            
-    	            String comm = "";
-    	            if(c.getAINode().getComm() instanceof Broadcast)
-    	                comm = "BC";
-    	            if(c.getAINode().getComm() instanceof Smooth)
-                        comm = "SM";
-    	            if(c.getAINode().getComm() instanceof Step)
-                        comm = "ST";
-    	                
-    	            if(SHOW_RES_LABELS) {
-    	            	if(c.isOffline()){
-    	            		g2.setColor(Color.ORANGE);
-    	            		drawString(g2, "OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-    	            	}
-    	            	else{
-    	            		drawString(g2, c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-    	            	}
-    	            } else{
-    	            	if(c.isOffline()) {
-    	            		g2.setColor(Color.ORANGE);
-    	            		drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-    	            	} else {
-    	            		drawString(g2, c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
-    	            	}
-    	            }
-                }
-	            else{
-                    g2.setColor(Color.ORANGE);
-                    Font f = new Font("Arial", Font.PLAIN, 10);
-                    g2.setFont(f);
-                    drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-                }
+
+	            g2.setColor(Color.BLACK);
+	            Font f = new Font("Arial", Font.PLAIN, 10);
+	            g2.setFont(f);
+	            String algo = c.getAINode().getClass().getSimpleName();
+	            if(algo.contains("Passive")) {
+	            	algo = "P";
+	            } else if(algo.contains("Active")) {
+	            	algo = "A";
+	            } // Else actual name
+	            
+	            String comm = "";
+	            if(c.getAINode().getComm() instanceof Broadcast)
+	                comm = "BC";
+	            if(c.getAINode().getComm() instanceof Smooth)
+                    comm = "SM";
+	            if(c.getAINode().getComm() instanceof Step)
+                    comm = "ST";
+	                
+	            if(SHOW_RES_LABELS) {
+	            	if(c.isOffline()){
+	            		g2.setColor(Color.ORANGE);
+	            		drawString(g2, "OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            	}
+	            	else{
+	            		drawString(g2, c.getName() + "\n Range: " + c.getRange(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())); //" \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            	}
+	            } else{
+	            	if(c.isOffline()) {
+	            		g2.setColor(Color.ORANGE);
+	            		drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
+	            	} else {
+	            		drawString(g2, c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
+	            	}
+	            }
             } else {
             	if(c.isOffline()){
             		g2.setColor(Color.ORANGE);
@@ -266,7 +259,6 @@ public class WorldView extends JPanel implements Observer {
 	            java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
 	            double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
 	            double head = chead - Math.toDegrees(c.getAngle())/2;
-	            double r = c.getRange();
 	            
 	            double simWinDist = Math.sqrt(Math.pow(this.cst.simToWindowX(cx)-this.cst.simToWindowX(cx+xpB),2) + Math.pow(this.cst.simToWindowY(cy)-this.cst.simToWindowY(cy+ypB),2));
 	            arc2.setArcByCenter((int)this.cst.simToWindowX(c.getX()), (int)this.cst.simToWindowY(c.getY()),simWinDist, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);

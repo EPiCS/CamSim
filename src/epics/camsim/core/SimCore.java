@@ -17,6 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +31,12 @@ import java.util.Set;
 
 
 
+
+
+
+import java.util.function.Consumer;
+
+import com.sun.javafx.geom.Arc2D;
 
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
@@ -70,7 +77,9 @@ public class SimCore {
 	boolean USEGLOBAL = false;
 	String EPSILONGREEDY = "epics.learning.EpsilonGreedy";
 	private double epsilon = 0.1;
-	double alpha = 0.5;
+	private double alpha = 0.5;
+	private double beta = 0.5;
+	private double gamma = 0.0;
 	private int selectInterval = 0; //if < 1, a new strategy is selected every timestep
 	private int currentSelectInt = 0;
 	String movement = "";
@@ -144,6 +153,7 @@ public class SimCore {
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
 	private AbstractCommunication _comm = null;
 	private String outputFile;
+   
     
 
 	/**
@@ -231,7 +241,16 @@ public class SimCore {
     	this.interpretFile(ss);
     }
 
-	/**
+	public SimCore(long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, double beta, double gamma, String movement, boolean realData, boolean allStatistics) {
+	    initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null, movement);
+	    this.beta = beta;
+	    this.gamma = gamma;
+        this.epsilon = epsilon;
+        this.interpretFile(ss); 
+    }
+
+
+    /**
 	 * Initiation method for the simcore. Sets all the parameters
      * @param seed for the random number generators
      * @param output outputfilename for statistics
@@ -582,9 +601,9 @@ public class SimCore {
     		if(banditS != null){
 	    		if(!banditS.equals("")){
 					Class<?> banditType = Class.forName(banditS);
-					Class<?>[] banditConstructorTypes = {int.class, double.class, double.class, int.class, RandomNumberGenerator.class};
+					Class<?>[] banditConstructorTypes = {int.class, double.class, double.class, double.class, double.class, int.class, RandomNumberGenerator.class};
 					Constructor<?> banditCons = banditType.getConstructor(banditConstructorTypes);
-					bs =  (IBanditSolver) banditCons.newInstance(6, epsilon, alpha, interval, randomGen);
+					bs =  (IBanditSolver) banditCons.newInstance(6, epsilon, alpha, beta, gamma, interval, randomGen);
 	    		}	    		
     		}
 		} catch (ClassNotFoundException e) {
@@ -993,7 +1012,10 @@ public class SimCore {
  			}
          }
 
-         //do trading for all cameras
+		List<CameraController> visited = new ArrayList<CameraController>();
+		double area = 0.0;
+		
+		 //do trading for all cameras
          for( CameraController c : this.cameras ){
  		    c.updateAI();
  		    
@@ -1009,13 +1031,126 @@ public class SimCore {
  					stats.setReward(utility, commOverhead, c.getName());
  					bs.setCurrentReward(utility, commOverhead); 
  			}
+ 			
+ 			// calculate overlapping FOV
+ 			for(CameraController c2 : this.cameras){
+ 			   if(!c.getName().equals(c2.getName())){ //two different cameras
+ 			       if(!visited.contains(c2)){
+ 			           area += calculateOverlap(c,c2);
+ 			       }
+ 			   }
+ 			}
+ 			visited.add(c); //keep track of which elements have been already added to the area
          }
-      
+         
          this.computeUtility();
-         this.computeEnergy();
+//         this.computeEnergy();
          stats.nextTimeStep();
     }
     
+    
+
+    
+    //get location and radius of all cameras
+    //caluculate the euclidean distance to all other cameras and see if their ranges intersect [if(distance(c1,c2) > radius(c1)+radius(c2)) ==> no overlap]         DONE
+    //for those overlapping, find intersecting points on the radius of both cameras                                                                                 DONE
+    //for each camera, calculate the angle alpha from the two intersecting points to the center                                                                     DONE
+    //calculate the circle section for both cameras s1 = (radius(c1)/2)*(alpha1-sin(alpha1)) as well as for s2                                                      DONE
+    //add up s1 and s2 for full overlap                                                                                                                             DONE
+    //repeat this for all cameras and all overlaps                                                                                                                  DONE
+    //add up all s1 and s2 from all cameras for overlap of entire network                                                                                           
+    private double calculateOverlap(CameraController c1, CameraController c2){
+         
+        double a = c1.getRange();
+        double b = c2.getRange();
+        double AB0 = Math.abs(c1.getLocation().distanceTo(c2.getLocation())[0]); // c1.getLocation().distanceTo(c2.getLocation())[0]; //
+        double AB1 =Math.abs(c1.getLocation().distanceTo(c2.getLocation())[1]); //c1.getLocation().distanceTo(c2.getLocation())[1]; //
+        double c = c1.getLocation().distanceTo(c2.getLocation())[2];
+        if (c == 0) {
+          // same center: A = B
+          return 0.0;
+        }
+        
+        double x = (a*a + c*c - b*b) / (2*c);
+        double y = a*a - x*x;
+        if (y < 0) {
+          // no intersection
+            return 0.0;
+        }
+        
+        if (y > 0){ 
+            y = Math.sqrt( y );
+        }
+        // compute unit vectors ex and ey
+        double ex0 = AB0 / c;
+        double ex1 = AB1 / c;
+        double ey0 = -ex1;
+        double ey1 =  ex0;
+        double Q1x = c1.getLocation().x + x * ex0;
+        double Q1y = c1.getLocation().y + x * ex1;
+        if (y == 0) {
+          // one touch point
+          return 0.0;
+        } 
+        // two intersections
+        double Q2x = Q1x - y * ey0;
+        double Q2y = Q1y - y * ey1;
+        Q1x += y * ey0;
+        Q1y += y * ey1;
+
+        //we have two intersecting points Q1x, Q1y and Q2x, Q2y
+        Location intersect1 = new Location(Q1x, Q1y);
+        Location intersect2 = new Location(Q2x, Q2y);
+        
+        double a1 = c1.getLocation().angleTo(intersect1);
+        double a2 = c1.getLocation().angleTo(intersect2);
+        
+        if(a1 > a2){ //switch angles
+            double tmpA = a1;
+            a1 = a2;
+            a2 = tmpA;
+        }
+        
+        //double angle1 = ((a2+360)-(a1+360)) % 360;
+        
+        double dir1 = c1.getLocation().angleTo(c2.getLocation());
+        
+        
+        double angle1 = Math.abs(a1-dir1) * 2;
+        
+        
+        double a3 = c2.getLocation().angleTo(intersect1);
+        double a4 = c2.getLocation().angleTo(intersect2);
+//        double angle2 = ((a4+360)-(a3+360)) % 360;
+        
+        if(a3 > a4){ //switch angles
+            double tmpA = a3;
+            a3 = a4;
+            a4 = tmpA;
+        }
+        
+        double dir2 = c2.getLocation().angleTo(c1.getLocation());
+        double angle2 = Math.abs(a3-dir2) * 2;
+        
+        double area1 = 0.0;
+        double area2 = 0.0;
+                
+//        area1 = Math.abs((Math.pow(c1.getRange(), 2) * (Math.toRadians(angle1) - Math.sin(Math.toRadians(angle1))))/2);
+//        area2 = Math.abs((Math.pow(c2.getRange(), 2) * (Math.toRadians(angle2) - Math.sin(Math.toRadians(angle2))))/2);
+        area1 = Math.abs(Math.pow(c1.getRange(), 2)/2 * (Math.toRadians(angle1) - Math.sin(Math.toRadians(angle1))));
+        area2 = Math.abs(Math.pow(c2.getRange(), 2)/2 * (Math.toRadians(angle2) - Math.sin(Math.toRadians(angle2))) );
+        
+        
+            
+        
+        
+        
+        return (area1+area2);
+    }
+    
+    
+    
+
     /**
      * USED ONLY WITH REAL DATA
      */
@@ -1105,7 +1240,7 @@ public class SimCore {
         for(CameraController c : this.cameras){
         	if(!c.isOffline()){
 	            for (TraceableObject o : this.objects){
-	            	c.update_confidence(o);
+	            	c.update_visiblity(o);
 	            }
 	            if(!c.getVisibleObjects_bb().isEmpty()){
 	            	stats.addVisible();
@@ -1175,33 +1310,55 @@ public class SimCore {
             }
         }
         
+        List<CameraController> visited = new ArrayList<CameraController>();
+        double area = 0.0;
         //do trading for all cameras
         for( CameraController c : this.cameras ){
-            if(!c.isOffline()){
-                double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
-                int nrMessages = c.getAINode().getSentMessages();
-                
-    		    c.updateAI();
-    
-    			double commOverhead = 0.0;
-    //			if(nrMessages > 0){
-    //				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
-    //			}
-    			
-    			commOverhead = nrMessages;
-    			
-    			stats.setCommunicationOverhead(commOverhead, c.getName());
-    		    
-    		    //check if bandit solvers are used
-    			IBanditSolver bs = c.getAINode().getBanditSolver();
-    			if(bs != null){
-    				stats.setReward(utility, commOverhead, c.getName());
-    				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
-    			}
+
+
+            double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
+            int nrMessages = c.getAINode().getSentMessages();
+            
+		    c.updateAI();
+
+			double commOverhead = 0.0;
+//			if(nrMessages > 0){
+//				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
+//			}
+			
+			commOverhead = nrMessages;
+			
+			stats.setCommunicationOverhead(commOverhead, c.getName());
+		    
+		    //check if bandit solvers are used
+			IBanditSolver bs = c.getAINode().getBanditSolver();
+			if(bs != null){
+				stats.setReward(utility, commOverhead, c.getName());
+				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getOwnedObjects().size())); 
+			}
+			
+			// calculate overlapping FOV
+            for(CameraController c2 : this.cameras){
+               if(!c.getName().equals(c2.getName())){ //two different cameras
+                   if(!visited.contains(c2)){
+                       area += calculateOverlap(c,c2);
+                   }
+               }
+               
             }
+            visited.add(c); //keep track of which elements have been already added to the area
+            stats.addConfidence(c.getAINode().getTotalConfidence(), c.getName());
+            stats.addProportion(c.getAINode().getNotTrackedProportion(), c.getName());
         }
+        
+        try {
+            stats.addOverlap(area, "");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         this.computeUtility();
-        this.computeEnergy();
+//        this.computeEnergy();
         stats.nextTimeStep();
     }
 
@@ -1349,7 +1506,7 @@ public class SimCore {
 		Map<TraceableObject, List<CameraController>> tracked = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
 		for(CameraController c : this.cameras){
-    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
+    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getOwnedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			if(tracked.containsKey(tor.getTraceableObject())){
     				tracked.get(tor.getTraceableObject()).add(c);
@@ -1410,7 +1567,7 @@ public class SimCore {
     	Map<TraceableObject, Boolean> searching = new HashMap<TraceableObject, Boolean>();
     	
     	for(CameraController c : this.cameras){
-    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
+    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getOwnedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			tracing.put(tor.getTraceableObject(), true);
     			if(c.getVisibleObjects().containsKey(tor)){
@@ -1461,20 +1618,16 @@ public class SimCore {
      * adds this to the statistics
      * @return the sum of all cameras utilities.
      */
-    public double computeEnergy(){
-        double energy_sum = 0;
-        for (CameraController c : this.cameras){
-            if(!c.isOffline()){
-                energy_sum += c.getEnergy();
-                try {
-                    stats.addEnergy(c.getEnergy(), c.getName());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return energy_sum;
-    }
+//    public double computeEnergy(){
+//        double energy_sum = 0;
+//        for (CameraController c : this.cameras){
+//            if(!c.isOffline()){
+//                energy_sum += c.getEnergy();
+//                
+//            }
+//        }
+//        return energy_sum;
+//    }
 
     /**
      * returns all cameras
@@ -1696,8 +1849,15 @@ public class SimCore {
                         cst.simToWindowX(cx+xpA), cst.simToWindowY(cy+ypA),
                         cst.simToWindowX(cx+xpB), cst.simToWindowY(cy+ypB) );
                 g2.draw(q);
-    
-
+                
+                
+                java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
+                double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
+                double head = chead - Math.toDegrees(c.getAngle())/2;
+                                
+                double simWinDist = Math.sqrt(Math.pow(cst.simToWindowX(cx)-cst.simToWindowX(cx+xpB),2) + Math.pow(cst.simToWindowY(cy)-cst.simToWindowY(cy+ypB),2));
+                arc2.setArcByCenter((int)cst.simToWindowX(c.getX()), (int)cst.simToWindowY(c.getY()),simWinDist, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);
+                g2.draw(arc2);
             }
 
             

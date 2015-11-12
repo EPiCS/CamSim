@@ -38,6 +38,8 @@ public abstract class AbstractAINode {
     public static final int DELAY_COMMUNICATION = 0;
     public static final int DELAY_FOUND = 0;
     
+    public static final boolean RANGE_IN_UTILITY = true;
+    
     public int AUCTION_DURATION;
     
     public static final int STEPS_TILL_RESOURCES_FREED = 5;
@@ -51,7 +53,7 @@ public abstract class AbstractAINode {
     protected boolean staticVG = false;
 //    private int communication;
 	protected Map<String, Double> visionGraph = new HashMap<String, Double>();
-    protected Map<List<Double>, ITrObjectRepresentation> trackedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
+    protected Map<List<Double>, ITrObjectRepresentation> ownedObjects = new HashMap<List<Double>, ITrObjectRepresentation>();
     protected Map<ITrObjectRepresentation, ICameraController> searchForTheseObjects = new HashMap<ITrObjectRepresentation, ICameraController>();
     protected Map<ITrObjectRepresentation, Map<ICameraController, Double>> biddings = new HashMap<ITrObjectRepresentation, Map<ICameraController, Double>>();
     protected Map<ITrObjectRepresentation, List<String>> advertised = new HashMap<ITrObjectRepresentation, List<String>>();
@@ -60,6 +62,7 @@ public abstract class AbstractAINode {
     protected Map<ITrObjectRepresentation, Integer> stepsTillFreeResources = new HashMap<ITrObjectRepresentation, Integer>();
 	protected Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = new HashMap<ITrObjectRepresentation, Integer>();
     protected Map<IMessage, Integer> delayedCommunication = new HashMap<IMessage, Integer>();
+    protected List<ITrObjectRepresentation> objectsIBidFor = new ArrayList<ITrObjectRepresentation>();
     protected ICameraController camController;
     protected ITrObjectRepresentation trObject;
     private AbstractCommunication communicationPolicy = null;
@@ -67,7 +70,9 @@ public abstract class AbstractAINode {
 	public IRegistration reg;
 	
 	protected double _receivedUtility;
-	protected int _nrBids;
+	protected int _nrBidsReceived;
+	protected int _nrBidsMade;
+	protected int _nrBidsLost;
 	protected double _paidUtility;
 	protected int tmpTotalComm;
 	protected double tmpTotalUtil;
@@ -78,6 +83,11 @@ public abstract class AbstractAINode {
 	protected IBanditSolver banditSolver;
     
     protected int addedObjectsInThisStep = 0;
+
+    protected int _nrBidsWon;
+
+    protected double _notTrackedProporation;
+    protected double _totalConfidence;
 	
 	public AbstractAINode(AbstractAINode old){
 		AUCTION_DURATION = 0;
@@ -153,7 +163,7 @@ public abstract class AbstractAINode {
      * @param ai the given AiNode
      */
     public void instantiateAINode(AbstractAINode ai){
-		this.trackedObjects = ai.trackedObjects;
+		this.ownedObjects = ai.ownedObjects;
 		this.searchForTheseObjects = ai.searchForTheseObjects;
 		this.biddings = ai.biddings;
 		this.advertised = ai.advertised;
@@ -168,13 +178,17 @@ public abstract class AbstractAINode {
 		this.sentMessages = ai.sentMessages;
 		this.randomGen = ai.randomGen;
 		this._receivedUtility = ai._receivedUtility;
-		this._nrBids = ai._nrBids;
+		this._nrBidsReceived = ai._nrBidsReceived;
 		this._paidUtility = ai._paidUtility;
 		this.tmpTotalComm = ai.tmpTotalComm;
 		this.tmpTotalUtil = ai.tmpTotalUtil;
 		this.tmpTotalRcvdPay = ai.tmpTotalRcvdPay;
 		this.tmpTotalPaid = ai.tmpTotalPaid;
 		this.tmpTotalBids = ai.tmpTotalBids;
+		this._nrBidsLost = ai._nrBidsLost;
+		this._nrBidsMade = ai._nrBidsMade;
+		this._nrBidsWon = ai._nrBidsWon;
+		this.objectsIBidFor = ai.objectsIBidFor;
 		
 		this.communicationPolicy = ai.communicationPolicy;
 		
@@ -196,7 +210,7 @@ public abstract class AbstractAINode {
             bids.put(this.camController, value);// conf);
             biddings.put(target, bids);
         } else {
-            if(!trackedObjects.containsKey(target)){
+            if(!ownedObjects.containsKey(target)){
                 startTracking(target);
                 stopSearch(target);
                 sendMessage(MessageType.StopSearch, target);
@@ -243,7 +257,7 @@ public abstract class AbstractAINode {
      * @return the value for the given object
      */
     public double calculateValue(ITrObjectRepresentation target){
-        double value = this.getConfidence(target); 
+        double value = this.getVisibility(target); 
         return value;
     }
     
@@ -253,7 +267,7 @@ public abstract class AbstractAINode {
      */
     public void callForHelp(ITrObjectRepresentation io) {
         if (DEBUG_CAM) {
-            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getConfidence(io)+ ", value: "+ calculateValue(io) +")" );
+            CmdLogger.println(this.camController.getName() + "->ALL: I'M LOSING OBJECT ID:" + io.getFeatures() + "!! Can anyone take over? (my confidence: " + getVisibility(io)+ ", value: "+ calculateValue(io) +")" );
         }
         
 //        if(!searchForTheseObjects.containsKey(io)){
@@ -310,7 +324,7 @@ public abstract class AbstractAINode {
         ArrayList<ITrObjectRepresentation> found = new ArrayList<ITrObjectRepresentation>(); 
 
         for (ITrObjectRepresentation visible : this.camController.getVisibleObjects_bb().keySet()) {
-            if (!this.trackedObjects.containsKey(visible.getFeatures())) {            
+            if (!this.ownedObjects.containsKey(visible.getFeatures())) {            
                 if(this.searchForTheseObjects.containsKey(visible)){
                 
                     ICameraController searcher = this.searchForTheseObjects.get(visible);
@@ -321,6 +335,8 @@ public abstract class AbstractAINode {
                             this.addOwnBidFor(visible, bidValue);
                         } else {
                             this.camController.sendMessage(searcher.getName(), MessageType.Found, new Bid(visible, bidValue));
+                            _nrBidsMade ++;
+                            objectsIBidFor.add(visible);
                         }
                     } else {
                         if(trackingPossible()){
@@ -359,9 +375,9 @@ public abstract class AbstractAINode {
      * @return the pair-object containing both objects
      */
     protected Pair findSimiliarObject(ITrObjectRepresentation pattern) {
-        Map<ITrObjectRepresentation, Double> tracked_list = this.camController.getVisibleObjects_bb();
+        Map<ITrObjectRepresentation, Double> visible_list = this.camController.getVisibleObjects_bb();
 
-        for (Map.Entry<ITrObjectRepresentation, Double> e : tracked_list.entrySet()) {
+        for (Map.Entry<ITrObjectRepresentation, Double> e : visible_list.entrySet()) {
         ITrObjectRepresentation key = e.getKey();
             boolean found = checkEquality(pattern, key);
 
@@ -420,7 +436,7 @@ public abstract class AbstractAINode {
      * @return all tracked objects
      */
     protected Map<List<Double>, ITrObjectRepresentation> getAllTrackedObjects_bb() {
-        return this.trackedObjects;
+        return this.ownedObjects;
     }
 
     /**
@@ -453,7 +469,7 @@ public abstract class AbstractAINode {
      * @param target the given object the confidence is searched for
      * @return the calculated confidence
      */
-    public double getConfidence(ITrObjectRepresentation target) {
+    public double getVisibility(ITrObjectRepresentation target) {
         Pair pair = findSimiliarObject(target);
         if (pair == null) {
             return 0;
@@ -466,7 +482,7 @@ public abstract class AbstractAINode {
      * returns the number of bids received overall by this camera
      */
     public int getNrOfBids() {
-        return _nrBids;
+        return _nrBidsReceived;
     }
     
     /**
@@ -561,9 +577,9 @@ public abstract class AbstractAINode {
      * returns a map of all currently tracked (owned) objects by this camera
      * @return returns all currently tracked objects by this camera
      */
-    public Map<List<Double>, ITrObjectRepresentation> getTrackedObjects() {
+    public Map<List<Double>, ITrObjectRepresentation> getOwnedObjects() {
         Map<List<Double>, ITrObjectRepresentation> retVal = new HashMap<List<Double>, ITrObjectRepresentation>();
-        for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()){
+        for(Map.Entry<List<Double>, ITrObjectRepresentation> kvp : ownedObjects.entrySet()){
         	retVal.put(kvp.getKey(), kvp.getValue());
         }
         return retVal;
@@ -585,8 +601,16 @@ public abstract class AbstractAINode {
         if (enabled == 1) {
             double visibility = 0.0;
             double classifier_confidence = 1;
+            
+            if(RANGE_IN_UTILITY){
+                classifier_confidence = (0.95*(1-(camController.getRange()/camController.getMaxRange()))-0.15);
+                if(classifier_confidence < 0){
+                    classifier_confidence = 0;
+                }
+            }
+            
             for (ITrObjectRepresentation obj : this.getAllTrackedObjects_bb().values()) {
-                visibility = this.getConfidence(obj);
+                visibility = this.getVisibility(obj);
     //            utility += calculateValue(obj); 
                 utility += visibility * classifier_confidence * enabled;// * resources;
             }
@@ -649,6 +673,7 @@ public abstract class AbstractAINode {
             strengthenVisionEdge(from, content.getTrObject());
         }
         this.foundObject(content, from);
+        
         return null;
     }
 	
@@ -702,7 +727,7 @@ public abstract class AbstractAINode {
      * @return true if tracked, false otherwise
      */
     protected boolean isTracked(ITrObjectRepresentation rto) {
-        return this.trackedObjects.containsKey(rto.getFeatures());
+        return this.ownedObjects.containsKey(rto.getFeatures());
     }
     
     /** Returns the mapping from owned objects to the neighbouring cameras 
@@ -757,9 +782,9 @@ public abstract class AbstractAINode {
         }
         output += " tracked objects: ";      
 
-        for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : trackedObjects.entrySet()) {
+        for (Map.Entry<List<Double>, ITrObjectRepresentation> kvp : ownedObjects.entrySet()) {
             String features = "" + kvp.getValue().getFeatures();
-            output = output + features + " - " + getConfidence(kvp.getValue()) + " ; ";
+            output = output + features + "; ";
         }
         System.out.println(output);
     }
@@ -845,7 +870,7 @@ public abstract class AbstractAINode {
 	 * @param rto the object to be removed from the tracked ones
 	 */
 	protected void removeTrackedObject(ITrObjectRepresentation rto) {
-	    trackedObjects.remove(rto.getFeatures());
+	    ownedObjects.remove(rto.getFeatures());
         this.freeResources(rto);
     }
 
@@ -929,7 +954,11 @@ public abstract class AbstractAINode {
         this.useResources(target);
         _paidUtility = target.getPrice();
         
-        trackedObjects.put(target.getFeatures(), target);
+        ownedObjects.put(target.getFeatures(), target);
+        if(objectsIBidFor.contains(target)){
+            _nrBidsWon ++;
+            objectsIBidFor.remove(target);
+        }
     }
 
     /**
@@ -938,6 +967,10 @@ public abstract class AbstractAINode {
      */
     protected void stopSearch(ITrObjectRepresentation content) {
         this.searchForTheseObjects.remove(content);
+        if(objectsIBidFor.contains(content)){
+            _nrBidsLost ++;
+            objectsIBidFor.remove(content);
+        }
     }
 
 	/** Called when communication is made with the given camera about the 
@@ -966,7 +999,7 @@ public abstract class AbstractAINode {
             //check if enough resources
             return this.enoughResourcesForOneMore();
         }
-        if(this.camController.getLimit() > this.addedObjectsInThisStep + this.trackedObjects.size()){
+        if(this.camController.getLimit() > this.addedObjectsInThisStep + this.ownedObjects.size()){
             //check if enough resources
             return this.enoughResourcesForOneMore();
         }
@@ -991,8 +1024,11 @@ public abstract class AbstractAINode {
 	 */
     public void update() {
         sentMessages = 0;
-        _nrBids = 0;
+        _nrBidsReceived = 0;
+        _nrBidsMade = 0;
         _receivedUtility = 0.0;
+        _nrBidsLost = 0;
+        _nrBidsWon = 0;
         _paidUtility = 0.0;
         if(DECLINE_VISION_GRAPH)
             this.updateVisionGraph();
@@ -1004,7 +1040,7 @@ public abstract class AbstractAINode {
         printBiddings();
         
         for (Map.Entry<ITrObjectRepresentation, Map<ICameraController, Double>> bids : biddings.entrySet()) {
-            _nrBids += bids.getValue().size();
+            _nrBidsReceived += bids.getValue().size();
         }
         
         checkBidsForObjects();       
@@ -1015,8 +1051,50 @@ public abstract class AbstractAINode {
             updateBroadcastCountdown(); 
         
         updateTotalUtilComm();
+        
+        updateProportionTrackeObjects();
+        
+        updateTotalConfidence();
     }
     
+    private void updateTotalConfidence() {
+        _totalConfidence = 0.0;
+        Location thisloc = camController.getLocation();
+        for (ITrObjectRepresentation tor : getOwnedObjects().values()) {
+            if(camController.getVisibleObjects_bb().containsKey(tor)){
+                _totalConfidence += (1-(tor.getLocation().distanceTo(thisloc)[2]/camController.getMaxRange())) * (0.95*(1-(camController.getRange()/camController.getMaxRange()))-0.15);
+                if(_totalConfidence < 0){
+                    System.out.println("PROBLEM!");
+                }
+            }
+        }
+        
+    }
+
+    private void updateProportionTrackeObjects() {
+        double notTracked = 0.0d;
+        for (ITrObjectRepresentation tro : this.getOwnedObjects().values()) {
+            if(!camController.getVisibleObjects_bb().containsKey(tro)){
+                notTracked ++;
+            }
+        }
+        
+        if(this.getOwnedObjects().size() > 0){
+            _notTrackedProporation = notTracked / this.getOwnedObjects().size(); // / camController.getVisibleObjects_bb().size();
+        }
+        else{
+            _notTrackedProporation = 0.0;
+        }
+    }
+    
+    public double getNotTrackedProportion(){
+        return _notTrackedProporation;
+    }
+    
+    public double getTotalConfidence(){
+        return _totalConfidence;
+    }
+
     /**
      * Checks if there are bids for any objects owned by this camera and if 
      * the corresponding auctions have already ended or if they are still running.
