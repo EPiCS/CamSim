@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
+
+
 
 
 
@@ -499,7 +502,7 @@ public class SimCore {
     	}
     	
         CameraController cc = new CameraController(
-        		name,
+        		name, this,
                 x_pos, y_pos,
                 Math.toRadians(heading_degrees),
                 Math.toRadians(angle_degrees),
@@ -647,11 +650,11 @@ public class SimCore {
   	public void add_random_camera(){
   	    int absCom = randomGen.nextInt(3, RandomUse.USE.UNIV); // Random comm
   	    
-  	    String algo = "epics.ai.dynamicSchedules.DynamicSchedule";
-  	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
-  	    case 0: algo = "epics.ai.dynamicSchedules.ActiveAINodeMulti"; break;
-  	    case 1: algo = "epics.ai.dynamicSchedules.PassiveAINodeMulti"; break;
-  	    }
+  	    String algo = "epics.ai.dynamicSchedules.WeightedDynamicSchedule";
+//  	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
+//  	    case 0: algo = "epics.ai.ActiveAINodeMulti"; break;
+//  	    case 1: algo = "epics.ai.PassiveAINodeMulti"; break;
+//  	    }
   	    
         this.add_camera(
         		"C"+getNextID(),
@@ -1009,6 +1012,7 @@ public class SimCore {
          }
       
          this.computeUtility();
+         this.computeEnergy();
          stats.nextTimeStep();
     }
     
@@ -1025,7 +1029,7 @@ public class SimCore {
 	/**
 	 * Updates the pure simulation for one timestep.
 	 * 
-	 * 1. Checks and precesses Events
+	 * 1. Checks and processes Events
 	 * 2. Moves all trackable objects
 	 * 3. Fails random cameras based on the given failing probability - this rate can be 0
 	 * 4. For all Cameras:
@@ -1197,6 +1201,7 @@ public class SimCore {
             }
         }
         this.computeUtility();
+        this.computeEnergy();
         stats.nextTimeStep();
     }
 
@@ -1450,6 +1455,26 @@ public class SimCore {
         }
         return utility_sum;
     }
+    
+    /**
+     * computes the energy of the entire network and 
+     * adds this to the statistics
+     * @return the sum of all cameras utilities.
+     */
+    public double computeEnergy(){
+        double energy_sum = 0;
+        for (CameraController c : this.cameras){
+            if(!c.isOffline()){
+                energy_sum += c.getEnergy();
+                try {
+                    stats.addEnergy(c.getEnergy(), c.getName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return energy_sum;
+    }
 
     /**
      * returns all cameras
@@ -1565,7 +1590,6 @@ public class SimCore {
                 
         int MIN_THICKNESS = 3;
 
-  
         g2.setColor(Color.white);
         g2.fill( new Rectangle( 0, 0, 100, 100 ) );
         
@@ -1575,12 +1599,6 @@ public class SimCore {
         g2.drawRect(0, 0, bby, bbx);
         
         
-//      g2.setColor(Color.green);
-//
-//  
-//      g2.setColor(Color.white);
-//      g2.fill(new Rectangle(0, 0, width, height));
-        
         g2.setColor(Color.GREEN);
         ArrayList<CameraController> cameras = this.getCameras();
         for(CameraController c : cameras) {
@@ -1588,105 +1606,22 @@ public class SimCore {
             /*
              * Camera dot
              */
+            Random rand = new Random();
+            
+            float r = rand.nextFloat();
+            float g = rand.nextFloat();
+            float b = rand.nextFloat();
+            Color camCol = new Color(r, g, b, 1.0f);
 
             if(c.isOffline()) {
                 g2.setColor(Color.GRAY);
             } else {
-                g2.setColor(Color.GREEN);
+                g2.setColor(camCol);//Color.GREEN);
             }
 
             Point p = new Point(cst.simToWindowX(c.getX()), cst.simToWindowY(c.getY()), 8); //draw spots
             g2.fill(p);
             
-           // g.drawOval((int) this.cst.simToWindowX(0), (int)this.cst.simToWindowY(0), 2, 2);
-            
-//            if(SHOW_LABELS) {
-//                g2.setColor(Color.BLACK);
-//                Font f = new Font("Arial", Font.PLAIN, 10);
-//                g2.setFont(f);
-//                String algo = c.getAINode().getClass().getSimpleName();
-//                if(algo.contains("Passive")) {
-//                    algo = "P";
-//                } else if(algo.contains("Active")) {
-//                    algo = "A";
-//                } // Else actual name
-//                
-//                String comm = "";
-//                if(c.getAINode().getComm() instanceof Broadcast)
-//                    comm = "BC";
-//                if(c.getAINode().getComm() instanceof Smooth)
-//                    comm = "SM";
-//                if(c.getAINode().getComm() instanceof Step)
-//                    comm = "ST";
-//                    
-//                if(SHOW_RES_LABELS) {
-//                    if(c.isOffline()){
-//                        g2.setColor(Color.ORANGE);
-//                        drawString(g2, "OFFLINE: " + c.getName() + "\n Comm: " + comm + " Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-//                    }
-//                    else{
-//                        drawString(g2, c.getName() + " \n Algo: " + algo + "\n Comm: " + comm + "\n Res: " + c.getAvailableResources(), (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-//                    }
-//                } else{
-//                    if(c.isOffline()) {
-//                        g2.setColor(Color.ORANGE);
-//                        drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-//                    } else {
-//                        drawString(g2, c.getName() + " \n Algo: " + algo+ "\n Comm: " + comm, (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY())+5);
-//                    }
-//                }
-//            } else {
-//                if(c.isOffline()){
-//                    g2.setColor(Color.ORANGE);
-//                    Font f = new Font("Arial", Font.PLAIN, 10);
-//                    g2.setFont(f);
-//                    drawString(g2, "OFFLINE", (int) this.cst.simToWindowX(c.getX()), (int) this.cst.simToWindowY(c.getY()));
-//                }
-//            }
-            
-
-            /*
-             * Vision graph here
-             */
-
-            Map<String,Double> vg = c.getDrawableVisionGraph();
-            for (Map.Entry<String,Double> e : vg.entrySet()){
-
-                CameraController cc = getCameraByName(e.getKey());
-                if (cc == null){
-                    continue;
-                }
-                double ccX = cst.simToWindowX(cc.getX());
-                double ccY = cst.simToWindowY(cc.getY());
-
-                double val = e.getValue();
-                int col = (int)(val * 255);
-                if (col > 255) { col = 255; }
-
-                int thickness = 0;
-                if(val > 0) {
-                    thickness = MIN_THICKNESS;
-                }
-                if(val > 1) {
-                    thickness = MIN_THICKNESS + 2;
-                }
-                if(thickness > 6 ) { thickness = 6; }
-                if( thickness < MIN_THICKNESS) {  thickness = MIN_THICKNESS;}
-
-                g2.setStroke(new BasicStroke(thickness));
-
-                // Fading red
-                g2.setColor(new Color(255, 255-col, 255-col ));
-                
-                Line2D.Double edge = new Line2D.Double(
-                    cst.simToWindowX(c.getX()), cst.simToWindowY(c.getY()),
-                    cst.simToWindowX(cc.getX()), cst.simToWindowY(cc.getY()) );
-                g2.draw(edge);
-            }
-
-            g2.setStroke(new BasicStroke(MIN_THICKNESS));
-
-
             /*
              * rest of stuff
              */
@@ -1752,9 +1687,9 @@ public class SimCore {
                  
 //              QuadCurve2D curve = new QuadCurve2D.Float();
 //              curve.setCurve(
-//                      this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),   //from
-//                      this.cst.simToWindowX(cx+xpM), this.cst.simToWindowY(cy+ypM),           //control
-//                      this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) ); //to
+//                      cst.simToWindowX(cx+xpA), cst.simToWindowY(cy+ypA),   //from
+//                      cst.simToWindowX(cx+xpM), cst.simToWindowY(cy+ypM),           //control
+//                      cst.simToWindowX(cx+xpB), cst.simToWindowY(cy+ypB) ); //to
 //              g2.draw(curve);
                 
                 q = new Line2D.Double(
@@ -1762,114 +1697,48 @@ public class SimCore {
                         cst.simToWindowX(cx+xpB), cst.simToWindowY(cy+ypB) );
                 g2.draw(q);
     
-                
-//              //++++++++DRAW CIRCLE SEGMENT
-//              g2.setColor(Color.red);
-//              java.awt.geom.Arc2D arc = new java.awt.geom.Arc2D.Double((int)this.cst.simToWindowX(c.getX()-c.getRange()), (int)this.cst.simToWindowY(c.getY()+c.getRange()), (int)this.cst.simToWindowX(c.getRange()/2), (int)this.cst.simToWindowX(c.getRange()/2), 
-////                       (Math.toDegrees(c.getHeading()) < 0 ? Math.toDegrees(c.getHeading())+Math.toDegrees(c.getAngle())/1.27 : Math.toDegrees(c.getHeading()+180)+Math.toDegrees(c.getAngle())/1.27)
-//                      Math.toDegrees(c.getHeading())*(-1)+Math.toDegrees(c.getAngle())/1.27
-//                     , Math.toDegrees(c.getAngle()), Arc2D.PIE);
-//              g2.draw(arc);
-                
+
             }
-    
-            Map<TraceableObject, Double> objs = c.getVisibleObjects();
-           
-            for (Map.Entry<TraceableObject, Double> e : objs.entrySet()){
-                TraceableObject key = e.getKey();
-                double confidence = e.getValue();
 
-                //int col = (int)(confidence * 200 + 150);
-                int col = (int)(confidence * 128 + 50);
-                if ( col > 255 ){ col = 255; }
-                
-//                if(c.getAINode() instanceof epics.ai.ActiveAINodeSingleAsker){
-//                  if( key == c.getTraced()){
-//                      g2.setColor( Color.green );
-//  
-//                      col = (int)(confidence * 128 + 128);
-//                      if ( col > 255 ){ col = 255; }
-//  
-//                      g2.setColor( new Color(255-col, 255, 255-col )  );
-//  
-//                      Line2D.Double q = new Line2D.Double(
-//                      this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-//                      this.cst.simToWindowX(key.getX()), this.cst.simToWindowY(key.getY()) );
-//                      g2.draw(q);
-//                  }
-//                  else{
-//                      /*
-//  
-//                      g2.setColor( new Color(255-col, 255-col, 255-col )  );
-//  
-//                      Line2D.Double q = new Line2D.Double(
-//                          this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-//                          this.cst.simToWindowX(key.getX()), this.cst.simToWindowY(key.getY()) );
-//                      g2.draw(q);
-//                       * 
-//                       */
-//                  }
-//              }
-//                else{
-                    for(TraceableObject tracked : c.getTrackedObjects().values()){
-                        if(key.equals(tracked)){
-                            g2.setColor( Color.green );
-
-                            col = (int)(confidence * 128 + 128);
-                            if ( col > 255 ){ col = 255; }
-
-                            g2.setColor( new Color(255-col, 255, 255-col )  );
-
-                            Line2D.Double q = new Line2D.Double(
-                            cst.simToWindowX(cx), cst.simToWindowY(cy),
-                            cst.simToWindowX(key.getX()), cst.simToWindowY(key.getY()) );
-                            g2.draw(q);
-                        }
-                    }
-//                }
-            }
-            
-            g2.setColor(Color.PINK);
-            p = new Point(cst.simToWindowX(c.getVisualCenter().getX()), cst.simToWindowY(c.getVisualCenter().getY()), 2);
-            g2.fill(p);
             
            
+            Color test = new Color(r, g, b, 0.1f);
             
             Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
             if(nbLoc != null){
                 for (Location loc : nbLoc.keySet()) {
-                    g2.setColor(Color.DARK_GRAY);
+                    g2.setColor(test);//camCol.brighter()); // Color.LIGHT_GRAY);
                     p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
                     g2.fill(p);
+                    
                 }
             }
-            
+                        
             Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
             if(hoLoc != null){
                 for (Location loc : hoLoc.keySet()) {
-                    g2.setColor(Color.CYAN);
-                    p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
-                    g2.fill(p);
+                    g2.setColor(camCol); //Color.BLUE);
+                    p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+//                    g2.fill(p);
+                    g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()-2, (int)p.getCenterX()+2, (int) p.getCenterY()+2);
+                    g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()+2, (int)p.getCenterX()+2, (int) p.getCenterY()-2);
                 }
             }
             
             
+            Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
+            if(olLoc != null){
+                for (Location loc : olLoc.keySet()){
+                    g2.setColor(test); //camCol.brighter()); //Color.RED);
+                    p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+
+                    g2.drawRect((int)p.getCenterX()-2, (int)p.getCenterY()-1, 2, 2);
+                }
+            }
+            
         }
 
-        
-        
-        
-        // Draw objects which move through the scene
-        g2.setColor(Color.BLACK);
-        ArrayList<TraceableObject> objects = getObjects();
-        for( TraceableObject tc : objects ){
-            Point p = new Point( cst.simToWindowX(tc.getX()), cst.simToWindowY(tc.getY()), 5);        //draw spots
-            //System.out.println( "coord x: " + this.cst.simToWindowX(tc.getX()) + " coord y: " + 20 );
-            g2.fill(p);
-//            if(SHOW_LABELS)
-//                g2.drawString(tc.toString(), (int) this.cst.simToWindowX(tc.getX()), (int) this.cst.simToWindowY(tc.getY()));
-        }
-        
+        g2.flush();
         g2.close();
     }
 }

@@ -46,4 +46,12 @@ public interface ICameraController{
 	
 	public double getHeading();
 	public double getAngle();
+	
+	public double getEnergy();
+
+    public void increaseRange(double increaseBy);
+
+    public Location getLocation();
+
+    public double getRange();
 }

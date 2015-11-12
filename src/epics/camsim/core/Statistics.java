@@ -31,6 +31,8 @@ public class Statistics {
     private double util_cumulative = 0;
     private double comm_cumulative = 0;
     private double handover_cumulative = 0;
+    private double energy_cumulative = 0;
+    private double energy_tmp = 0;
     private Map<String, Map<String,Double>> tmp_camUtil = new HashMap<String, Map<String,Double>>();
     private Map<String, Statistics> perCam = new HashMap<String, Statistics>();
     private ArrayList<Integer> time = new ArrayList<Integer>();
@@ -39,6 +41,8 @@ public class Statistics {
     private ArrayList<Double> handover = new ArrayList<Double>();
     private ArrayList<Integer> visible = new ArrayList<Integer>();
     private ArrayList<Integer> strategy = new ArrayList<Integer>();
+    private ArrayList<Double> energy = new ArrayList<Double>();
+    
     
     private long threadId;
 	private Integer strategy_tmp;
@@ -53,6 +57,8 @@ public class Statistics {
 //    static {
 //        init(null, null);
 //    }
+
+    
     
     public Statistics(String outputFile, String summaryFile, boolean allStatistics, long randSeed) {
     	init(outputFile, summaryFile, allStatistics, randSeed);
@@ -87,6 +93,9 @@ public class Statistics {
         strategy.clear();
         totComOH.clear();
         totUtil.clear();
+        energy.clear();
+        energy_cumulative = 0;
+        energy_tmp = 0;
     }
 
     public void close() throws Exception{
@@ -102,11 +111,11 @@ public class Statistics {
 	                FileWriter outFile = new FileWriter(output);
 	                out = new PrintWriter(outFile);
 	
-	                out.println( "time;utility;communication;visible;strategy;totUtil;totComm");
+	                out.println( "time;utility;communication;visible;strategy;totUtil;totComm;energy");
 	                String outString = "";
 	                for ( int i = 0; i < time.size(); i++ ){
 	                    outString = (time.get(i) + ";" + utility.get(i) + ";" + communication.get(i) + ";" + visible.get(i));
-	                    outString = outString  + ";" + (strategy.get(i) == null ? 0 : strategy.get(i))+ ";" + totUtil.get(i) + ";" + totComOH.get(i);
+	                    outString = outString  + ";" + (strategy.get(i) == null ? 0 : strategy.get(i))+ ";" + totUtil.get(i) + ";" + totComOH.get(i) + ";" + energy.get(i);
 	                    
 	                    out.println(outString);
 	                }
@@ -162,6 +171,8 @@ public class Statistics {
         strategy.add(strategy_tmp);
         totUtil.add(tmp_totutil);
         totComOH.add(comm_oh_tmp);
+        energy.add(energy_tmp);
+        energy_cumulative += energy_tmp;
 
         if(!quiet){
             System.out.println(getSummaryDesc(true));
@@ -178,6 +189,7 @@ public class Statistics {
         tmp_totutil = 0.0;
         tmp_camUtil = new HashMap<String, Map<String,Double>>();
         strategy_tmp = 0;
+        energy_tmp = 0;
         
         for(Statistics s : perCam.values()){
         	s.nextTimeStep();
@@ -199,7 +211,8 @@ public class Statistics {
     			+ handover_tmp + comma 
     			+ handover_cumulative + comma
     			+ comm_oh_cumulative + comma
-    			+ visible_tmp;
+    			+ visible_tmp + comma
+    			+ energy_cumulative;
     	return summary;
     }
     
@@ -218,7 +231,8 @@ public class Statistics {
     			+ "HANDOVER" + comma
     			+ "CUMULATIVE_HANDOVER" + comma
     			+ "CUMULATIVE_COMM_OH" + comma 
-    			+ "VISIBLE";
+    			+ "VISIBLE" + comma
+    			+ "ENERGY";
     	return desc;
     }
     
@@ -312,6 +326,19 @@ public class Statistics {
 	        	perCam.get(camName).setReward(utility2, commOverhead, "");
 	        }
 		}
+	}
+	
+	public void addEnergy(double en, String camName){
+	    energy_tmp += en;
+        
+        if(addPerCam){
+            if(!camName.isEmpty()){
+                if(!perCam.containsKey(camName)){
+                    createCamStatistics(camName);   
+                }
+                perCam.get(camName).addEnergy(en, "");
+            }
+        }
 	}
 	
 	public void setQuiet(boolean q){

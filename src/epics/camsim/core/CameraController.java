@@ -32,6 +32,8 @@ public class CameraController implements ICameraController{
     private double range; // meters
     private Resources resources;
     
+    private double initialRange;
+    
     private Map<IMessage, Integer> sendOut = new HashMap<IMessage, Integer>();
     private static int DELAY_COMM = 0; 
 
@@ -47,6 +49,8 @@ public class CameraController implements ICameraController{
 	private ArrayList<ArrayList<Double>> predefConf;
 	private ArrayList<ArrayList<Integer>> predefVis;
 	private int step;
+	
+	private SimCore sim;
     
 	/**
 	 * Instantiates a new camera in the simulator
@@ -56,11 +60,12 @@ public class CameraController implements ICameraController{
 	 * 	ArrayList of their visibility (0 = visible, 1 = not visible or at 
 	 * 	touching border) where each element is for one frame/timestep
 	 */
-    public CameraController( String name, double x, double y,
+    public CameraController( String name, SimCore sim, double x, double y,
                 double heading, double viewing_angle, double range, AbstractAINode ai, int limit, Statistics stats, RandomNumberGenerator rg, ArrayList<ArrayList<Double>> predefConfidences, ArrayList<ArrayList<Integer>> predefVisibility){
     	this.LIMIT = limit;
         this.x = x;
         this.y = y;
+        this.sim = sim;
         this.heading = heading;
         this.viewing_angle = viewing_angle;
         this.range = range;
@@ -73,6 +78,7 @@ public class CameraController implements ICameraController{
         this.predefConf = predefConfidences;
         this.predefVis = predefVisibility;
         this.step = -1;
+        this.initialRange = range;
     }
     
     /** Gets the amount of resources available to this camera */
@@ -190,12 +196,15 @@ public class CameraController implements ICameraController{
 		            double angle = Math.acos(dot);
 		
 		            if (angle < this.getAngle() / 2) {
-		                double dist_conf = (this.getRange() - dist) / this.getRange();
+		                double dist_conf = Math.abs(this.initialRange - dist) / this.getRange(); //(this.getRange() - dist) / this.getRange();
 		
 		                //dist_conf = dist_conf * 5; // so we use more of atan
 		                //dist_conf = Math.atan( 1 / dist_conf );
 		
-		                double ang_conf = (this.getAngle() / 2 - angle) / (this.getAngle() / 2);
+		                double ang_conf = 1.0; 
+		                if(Math.toDegrees(getAngle()) != 360){
+		                    ang_conf = (this.getAngle() / 2 - angle) / (this.getAngle() / 2);
+		                }
 		
 		                double total_conf = dist_conf * ang_conf;
 
@@ -327,6 +336,25 @@ public class CameraController implements ICameraController{
      * with heading) */
     public double getAngle() {
     	return this.viewing_angle;
+    }
+    
+    public Location getLocation(){
+        return new Location(getTotalX(), getTotalY());//this.x, this.y);
+    }
+    
+    /**
+     * calculates x position based on upper left corner as (0,0)
+     * @return
+     */
+    public double getTotalX(){
+        return this.x-(sim.get_min_x());
+    }
+    /**
+     * calculates y position based on upper left corner as (0,0)
+     * @return
+     */
+    public double getTotalY(){
+        return (sim.get_min_y()+this.y)*(-1);
     }
     
     public Location getVisualCenter(){
@@ -673,5 +701,13 @@ public class CameraController implements ICameraController{
 		catch(IndexOutOfBoundsException e){
 			return 1.0;
 		}
+	}
+	
+	public double getEnergy(){
+	    return this.range; //*this.viewing_angle;
+	}
+	
+	public void increaseRange(double increaseBy){
+	    this.range += increaseBy;
 	}
 }

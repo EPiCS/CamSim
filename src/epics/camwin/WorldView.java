@@ -239,15 +239,15 @@ public class WorldView extends JPanel implements Observer {
 
             } else {
                 
-	            Line2D.Double q = new Line2D.Double(
-	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-	                    this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA) );
-	            g2.draw(q);
-	
-	            q = new Line2D.Double(
-	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-	                    this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
-	            g2.draw(q);
+//	            Line2D.Double q = new Line2D.Double(
+//	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
+//	                    this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA) );
+//	            g2.draw(q);
+//	
+//	            q = new Line2D.Double(
+//	                    this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
+//	                    this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
+//	            g2.draw(q);
 
 	            double headingMiddle = c.getHeading();
 	            double xpM = x * Math.cos( headingMiddle ) - y * Math.sin( headingMiddle );
@@ -255,37 +255,22 @@ public class WorldView extends JPanel implements Observer {
 	            xpM = xpM * range;
 	            ypM = ypM * range;
 	            
-	             
-//	            QuadCurve2D curve = new QuadCurve2D.Float();
-//	            curve.setCurve(
-//	            		this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),  	//from
-//	            		this.cst.simToWindowX(cx+xpM), this.cst.simToWindowY(cy+ypM), 			//control
-//	            		this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );	//to
-//	            g2.draw(curve);
-	            
-	            q = new Line2D.Double(
-	                    this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),
-	                    this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
-	            g2.draw(q);
+//	            q = new Line2D.Double(
+//	                    this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),
+//	                    this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
+//	            g2.draw(q);
 	
-	            
-//	            //++++++++DRAW CIRCLE SEGMENT
-//	            g2.setColor(Color.red);
-//	            java.awt.geom.Arc2D arc = new java.awt.geom.Arc2D.Double((int)this.cst.simToWindowX(c.getX()-c.getRange()), (int)this.cst.simToWindowY(c.getY()+c.getRange()), (int)this.cst.simToWindowX(c.getRange()/2), (int)this.cst.simToWindowX(c.getRange()/2), 
-////	                   (Math.toDegrees(c.getHeading()) < 0 ? Math.toDegrees(c.getHeading())+Math.toDegrees(c.getAngle())/1.27 : Math.toDegrees(c.getHeading()+180)+Math.toDegrees(c.getAngle())/1.27)
-//	                    Math.toDegrees(c.getHeading())*(-1)+Math.toDegrees(c.getAngle())/1.27
-//	                   , Math.toDegrees(c.getAngle()), Arc2D.PIE);
-//	            g2.draw(arc);
-	            
+	           
 	            
 //	            //ALMOST --> ONLY THE RANGE DOES NOT WORK YET! RANGE IS DEPENDENT ON THE ORIENTATION OF THE CAMERA AS THIS DEFINES HOW MUCH IT NEEDS TO BE EXPANDED TOWARDS X AND Y AXIS
-//	            g2.setColor(Color.blue);
-//	            java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
-//	            double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
-//	            double head = chead - Math.toDegrees(c.getAngle())/2;
-//	            double r = c.getRange();
-//	            arc2.setArcByCenter((int)this.cst.simToWindowX(c.getX()), (int)this.cst.simToWindowY(c.getY()), (int)this.cst.simToWindowX((c.getRange()))*0.595, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);
-//	            g2.draw(arc2); 
+	            java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
+	            double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
+	            double head = chead - Math.toDegrees(c.getAngle())/2;
+	            double r = c.getRange();
+	            
+	            double simWinDist = Math.sqrt(Math.pow(this.cst.simToWindowX(cx)-this.cst.simToWindowX(cx+xpB),2) + Math.pow(this.cst.simToWindowY(cy)-this.cst.simToWindowY(cy+ypB),2));
+	            arc2.setArcByCenter((int)this.cst.simToWindowX(c.getX()), (int)this.cst.simToWindowY(c.getY()),simWinDist, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);
+                g2.draw(arc2);
 	            
           	}
 	
@@ -355,9 +340,10 @@ public class WorldView extends JPanel implements Observer {
             if(nbLoc != null){
                 for (Map.Entry<Location, Double> e : nbLoc.entrySet()){//Location loc : nbLoc.keySet()) {
                     Location loc = e.getKey();
-                    float f = (float)((255-(192f*e.getValue()%255))/192);
-                    g2.setColor(new Color(f, f, f));
-                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+//                    float f = (float)((255-(192f*e.getValue()%255))/192);
+//                    g2.setColor(new Color(f, f, f));
+                    g2.setColor(Color.MAGENTA);
+                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
                     g2.fill(p);
                 }
             }
@@ -366,8 +352,9 @@ public class WorldView extends JPanel implements Observer {
             if(hoLoc != null){
                 for ( Map.Entry<Location, Double> e : hoLoc.entrySet()){
                     Location loc = e.getKey();
-                    int colourcode = (int) (255-(255*e.getValue()%255));
-                    g2.setColor(new Color(colourcode, colourcode, 255));
+//                    int colourcode = (int) (255-(255*e.getValue()%255));
+//                    g2.setColor(new Color(colourcode, colourcode, 255));
+                    g2.setColor(Color.BLUE);
                     p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
                     g2.fill(p);
                 }
@@ -377,9 +364,10 @@ public class WorldView extends JPanel implements Observer {
             if(olLoc != null){
                 for ( Map.Entry<Location, Double> e : olLoc.entrySet()){
                     Location loc = e.getKey();
-                    float colourcode2 = (float)((255-(255*e.getValue()%255))/255);
-                    g2.setColor(new Color(1.0f,colourcode2,colourcode2));
-                  p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+//                    float colourcode2 = (float)((255-(255*e.getValue()%255))/255);
+//                    g2.setColor(new Color(1.0f,colourcode2,colourcode2));
+                    g2.setColor(Color.CYAN);
+                  p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
                   g2.fill(p);
 //                    g2.drawRect((int)p.getCenterX()-1, (int)p.getCenterY()-1, 2, 2);
                 }
@@ -599,44 +587,35 @@ public class WorldView extends JPanel implements Observer {
 
             } else {
                 
-                Line2D.Double q = new Line2D.Double(
-                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-                        this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA) );
-                g2.draw(q);
-    
-                q = new Line2D.Double(
-                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-                        this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
-                g2.draw(q);
+//                Line2D.Double q = new Line2D.Double(
+//                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
+//                        this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA) );
+//                g2.draw(q);
+//    
+//                q = new Line2D.Double(
+//                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
+//                        this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
+//                g2.draw(q);
 
                 double headingMiddle = c.getHeading();
                 double xpM = x * Math.cos( headingMiddle ) - y * Math.sin( headingMiddle );
                 double ypM = x * Math.sin( headingMiddle ) - y * Math.cos( headingMiddle );
                 xpM = xpM * range;
                 ypM = ypM * range;
+
                 
-                 
-//              QuadCurve2D curve = new QuadCurve2D.Float();
-//              curve.setCurve(
-//                      this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),   //from
-//                      this.cst.simToWindowX(cx+xpM), this.cst.simToWindowY(cy+ypM),           //control
-//                      this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) ); //to
-//              g2.draw(curve);
-                
-                q = new Line2D.Double(
-                        this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),
-                        this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
-                g2.draw(q);
+//                q = new Line2D.Double(
+//                        this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),
+//                        this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
+//                g2.draw(q);
     
-                
-////              //++++++++DRAW CIRCLE SEGMENT
-//                g2.setColor(Color.blue);
-//                java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
-//                double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
-//                double head = chead - Math.toDegrees(c.getAngle())/2;
-//                double r = c.getRange();
-//                arc2.setArcByCenter((int)this.cst.simToWindowX(c.getX()), (int)this.cst.simToWindowY(c.getY()), (int)this.cst.simToWindowX((c.getRange()))/2, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);
-//                g2.draw(arc2); 
+                java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
+                double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
+                double head = chead - Math.toDegrees(c.getAngle())/2;
+               
+                double simWinDist = Math.sqrt(Math.pow(this.cst.simToWindowX(cx)-this.cst.simToWindowX(cx+xpB),2) + Math.pow(this.cst.simToWindowY(cy)-this.cst.simToWindowY(cy+ypB),2));
+                arc2.setArcByCenter((int)this.cst.simToWindowX(c.getX()), (int)this.cst.simToWindowY(c.getY()),simWinDist, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);
+                g2.draw(arc2);
                 
             }
     
@@ -710,7 +689,7 @@ public class WorldView extends JPanel implements Observer {
             if(nbLoc != null){
                 for (Location loc : nbLoc.keySet()) {
                     g2.setColor(test);//camCol.brighter()); // Color.LIGHT_GRAY);
-                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
                     g2.fill(p);
                     
                 }
@@ -732,7 +711,7 @@ public class WorldView extends JPanel implements Observer {
             if(olLoc != null){
                 for (Location loc : olLoc.keySet()){
                     g2.setColor(test); //camCol.brighter()); //Color.RED);
-                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+                    p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
 //                  g2.fill(p);
                     g2.drawRect((int)p.getCenterX()-2, (int)p.getCenterY()-1, 2, 2);
                 }

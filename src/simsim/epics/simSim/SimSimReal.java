@@ -18,12 +18,12 @@ import epics.camsim.core.SimSettings.CameraSettings;
 public class SimSimReal {
     
     public static boolean allStatistics = false;
-    public static boolean runOnlyHomogeneous = false;
+    public static boolean runOnlyHomogeneous = true;
 	public static boolean runSequential = true;
 	public static boolean runByParameter = false;
 	private static boolean runAllErrorVersions = false;
-	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = true;
+	public static boolean runAllPossibleVersions = false;
+	public static boolean runBandits = false;
 	private static boolean diffSeed = true;
 	
 	static int duration = 7120; //14240; //how many timesteps
@@ -51,7 +51,7 @@ public class SimSimReal {
 		DateFormat df = new SimpleDateFormat("ddMMYYYY");
 		
 		
-		initTotalDirName = "E://Results//" + df.format(new java.util.Date());;
+		initTotalDirName = "D://Results//" + df.format(new java.util.Date());;
 		directory = new File(initTotalDirName);
 		int count = 0;
 		while(!directory.mkdirs()){
@@ -65,7 +65,7 @@ public class SimSimReal {
 		
 		
 		//get folder
-		File dir = new File("E:\\Scenarios\\RealDataT1.4_AR");
+		File dir = new File("D:\\Scenarios\\RealDataT1.4_AR");
 		
 		RunAllRealDataScen(dir);
 	}
@@ -579,22 +579,39 @@ public class SimSimReal {
         String algo = "epics.ai.ActiveAINodeMulti";
         
         //for all cameras load the same configuration
-        for(int i = 0; i < 2; i++){
+        for(int i = 0; i < 3; i++){
             String dirname = "";
-            if(i == 0){
+            switch (i) {
+            case 0:
                 algo = "epics.ai.ActiveAINodeMulti";
-            }
-            else{
+                break;
+            case 1:
                 algo = "epics.ai.PassiveAINodeMulti";
+                break;
+            case 2:
+                algo = "epics.ai.dynamicSchedules.WeightedDynamicSchedule";
+                break;  
+            default:
+                algo = "epics.ai.dynamicSchedules.WeightedDynamicSchedule";
+                break;
             }
             for(int j = 0; j < 3; j++){
                 for(CameraSettings cs : ss.cameras){
-                    if(i == 0){
+                    switch (i) {
+                    case 0:
                         dirname += "a"+j;
-                    }
-                    else{
+                        break;
+                    case 1:
                         dirname += "p"+j;
+                        break;
+                    case 2:
+                        dirname += "w"+j;
+                        break;  
+                    default:
+                        dirname += "darn"+j;
+                        break;
                     }
+                    
                         
                     cs.ai_algorithm = algo; 
                     cs.comm = j;

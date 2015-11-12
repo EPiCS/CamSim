@@ -30,8 +30,7 @@ import epics.commpolicy.Fix;
 public class SimSim {
 	
 
-
-    public static String loadScenariosFrom = ".//scenarios//SASO-RAN"; //"..//..//..//..//scenarios//test-anticipation"; //can be overwriten using argument [0]
+    public static String loadScenariosFrom = ".//scenarios//LARGE-RANDOM"; //"..//..//..//..//scenarios//test-anticipation"; //can be overwriten using argument [0]
     public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
     public static boolean allStatistics = false;
 	public static boolean runHomogeneous = false;
@@ -873,7 +872,7 @@ public class SimSim {
 		                    try {
 								sim.update();
 								if(r==10){
-								    if(dirname.startsWith("W")){
+								    if(dirname.startsWith("E")){
         								if(k == 250){
         								    sim.createSnapshot(dirname + "_" + scenName + "_r"+r+"_"+k+ ".eps");
         								}
