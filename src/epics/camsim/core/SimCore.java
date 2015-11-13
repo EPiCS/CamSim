@@ -80,8 +80,10 @@ public class SimCore {
 	private double alpha = 0.5;
 	private double beta = 0.5;
 	private double gamma = 0.0;
-	private int selectInterval = 0; //if < 1, a new strategy is selected every timestep
-	private int currentSelectInt = 0;
+	@SuppressWarnings("unused")
+    private int selectInterval = 0; //if < 1, a new strategy is selected every timestep
+	@SuppressWarnings("unused")
+    private int currentSelectInt = 0;
 	String movement = "";
 	
 	Statistics stats;
@@ -144,6 +146,7 @@ public class SimCore {
     /**
      * settings for this simulation from an XML file
      */
+    @SuppressWarnings("unused")
     private SimSettings settings;
     private String paramFile;
 
@@ -202,8 +205,10 @@ public class SimCore {
      * @param output outputfilename for statistics
      * @param ss settings of simulations - generated from an scenariofile
      * @param global global coordination used
+	 * @param epsilon 
      * @param banditParam the epsilon/temperature value for bandit solvers
      * @param alpha the alpha value for the weighted reward function used in bandit solvers
+	 * @param movement 
 	 * @param realData indicates if real data has been used
 	 * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
@@ -222,6 +227,7 @@ public class SimCore {
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
      * @param alpha the alpha value for the weighted reward function used in bandit solvers
+	 * @param movement 
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
@@ -242,6 +248,7 @@ public class SimCore {
      * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
+     * @param movement 
 	 * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
      */
@@ -407,6 +414,7 @@ public class SimCore {
     }
     
     /** Outputs all information from all bandit solvers into files */
+    @SuppressWarnings("unused")
     private void printAllBanditResults(){
     	for(CameraController cc : this.cameras){
 			IBanditSolver bs = cc.getAINode().getBanditSolver();
@@ -454,6 +462,8 @@ public class SimCore {
      * @param angle_degrees defines the width of the viewing angle
      * @param range defines the range (distance) of the camera's view
      * @param ai_algorithm defines the initial algorithm approach used
+     * @param commValue 
+     * @param customComm 
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
@@ -494,6 +504,8 @@ public class SimCore {
      * @param heading_degrees defines the direction of the viewing point
      * @param angle_degrees defines the width of the viewing angle
      * @param range defines the range (distance) of the camera's view
+     * @param commValue 
+     * @param customComm 
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
@@ -622,6 +634,12 @@ public class SimCore {
      * @param banditS the class name of a bandit solver
      * @return AbstractAINode the created AINode
      * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
+     * @throws SecurityException 
+     * @throws NoSuchMethodException 
+     * @throws IllegalArgumentException 
+     * @throws InstantiationException 
+     * @throws IllegalAccessException 
+     * @throws InvocationTargetException 
      */
     public AbstractAuctionSchedule newAINodeFromName(String fullyQualifiedClassName, 
     		boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
@@ -656,6 +674,13 @@ public class SimCore {
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param ai the pre-existing AINode
      * @return a specific implementation of an abstract AINode
+     * @throws ClassNotFoundException 
+     * @throws SecurityException 
+     * @throws NoSuchMethodException 
+     * @throws IllegalArgumentException 
+     * @throws InstantiationException 
+     * @throws IllegalAccessException 
+     * @throws InvocationTargetException 
      */
     public AbstractAuctionSchedule newAINodeFromName(String fullyQualifiedClassName, 
             AbstractCommunication comm, AbstractAuctionSchedule ai)
@@ -664,7 +689,7 @@ public class SimCore {
     				InvocationTargetException {
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
     	Class<?>[] constructorTypes = {AbstractAuctionSchedule.class};
-    	Constructor<?>[] allCons = nodeType.getDeclaredConstructors();
+//    	Constructor<?>[] allCons = nodeType.getDeclaredConstructors();
     	
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
     	AbstractAuctionSchedule node = (AbstractAuctionSchedule) cons.newInstance(ai);
@@ -817,6 +842,8 @@ public class SimCore {
      * @param speed speed of the object
      * @param features unique identification of the object
      * @param waypoints a list of waypoints - if empty, and fqName is empty, epics.movement.Straight is being used
+     * @param mean 
+     * @param std 
      * @param fqName the full qualifying name for MOVEMENT CLASS. if empty and waypoints is too, epics.movement.Straight is being used. 
      * if fqName is empty and waypoints is NOT empty epics.movement.Waypoints is being used.
      */
@@ -915,6 +942,7 @@ public class SimCore {
     /** 
      * Adds the given TraceableObject to the simulation. 
      * For convenience methods, see other add_object methods 
+     * @param to 
      */
     public void add_object(TraceableObject to) {
     	if(!getObjects().contains(to)){
@@ -966,6 +994,7 @@ public class SimCore {
    
     /**
      * Updates the simulation by one step - decides if it uses pure simulation or works with real data
+     * @throws Exception 
      */
     public void update() throws Exception{
     	if(_runReal){
@@ -975,11 +1004,9 @@ public class SimCore {
     		updateSim();
     	}
     	firstUpdate = false;
-//    	System.out.println(step);
     	step ++;
     }
     
-    //TODO: FIX SEQUENCE!!
     /**
      * updates the simulation by one timestep. using real data this corresponds to one frame.
      * 
@@ -990,7 +1017,9 @@ public class SimCore {
      *      a. AINode is updated 
      *      b. BanditSolver reward is updated if applicable
      * 3. statistics are updated
+     * @throws Exception 
      */
+    @SuppressWarnings("unused")
     public void updateReal() throws Exception{
     	if(firstUpdate)
     		setSearchFor();
@@ -1010,7 +1039,7 @@ public class SimCore {
 
          	//run BanditSolver, select next method, set AI! hope it works ;)
          	AbstractAuctionSchedule ai = c.getAINode();
-         	AbstractCommunication prevComm = ai.getComm();
+//         	AbstractCommunication prevComm = ai.getComm();
          	IBanditSolver bs = ai.getBanditSolver();
          	int strategy = -1;
          	if(bs != null){
@@ -1226,20 +1255,20 @@ public class SimCore {
             return;
         }
         
-        boolean doSelection = false;
-        //update interval for selecting new strategy
-        if(selectInterval > 1){
-            if(currentSelectInt >= selectInterval){
-                doSelection = true;
-                currentSelectInt = 0;
-            }
-            else{
-                currentSelectInt ++;
-            }
-        }
-        else{ 
-            doSelection = true; 
-        }
+//        boolean doSelection = false;
+//        //update interval for selecting new strategy
+//        if(selectInterval > 1){
+//            if(currentSelectInt >= selectInterval){
+//                doSelection = true;
+//                currentSelectInt = 0;
+//            }
+//            else{
+//                currentSelectInt ++;
+//            }
+//        }
+//        else{ 
+//            doSelection = true; 
+//        }
 
         //check events - process event
         checkAndProcessEvent(stats.get_time_step());
@@ -1283,7 +1312,7 @@ public class SimCore {
 
                 //run BanditSolver, select next method, set AI! hope it works ;)
                 AbstractAuctionSchedule ai = c.getAINode();
-                AbstractCommunication prevComm = ai.getComm();
+//                AbstractCommunication prevComm = ai.getComm();
                 IBanditSolver bs = ai.getBanditSolver();
                 int strategy = -1;
                 if(bs != null){
@@ -1560,7 +1589,8 @@ public class SimCore {
 	 * Helper method to print the properties of all objects
 	 * @throws Exception
 	 */
-	private void printObjects() throws Exception {
+	@SuppressWarnings("unused")
+    private void printObjects() throws Exception {
 		Map<TraceableObject, List<CameraController>> tracked = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
 		for(CameraController c : this.cameras){
@@ -1809,7 +1839,7 @@ public class SimCore {
         EpsGraphics g2 = new EpsGraphics("EpsTools Drawable Export", 
                 new FileOutputStream(filename), 0, 0, bbx, bby, ColorMode.COLOR_RGB);
                 
-        int MIN_THICKNESS = 3;
+//        int MIN_THICKNESS = 3;
 
         g2.setColor(Color.white);
         g2.fill( new Rectangle( 0, 0, 100, 100 ) );
