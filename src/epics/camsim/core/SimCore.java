@@ -1,6 +1,5 @@
 package epics.camsim.core;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Polygon;
@@ -40,12 +39,16 @@ import com.sun.javafx.geom.Arc2D;
 
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
+import epics.ai.commpolicy.Broadcast;
+import epics.ai.commpolicy.Fix;
+import epics.ai.commpolicy.Smooth;
+import epics.ai.commpolicy.Step;
 import epics.camwin.CoordinateSystemTransformer;
 import epics.camwin.Point;
 import epics.camwin.SimCoreModel;
 import epics.camwin.WindowMain;
 //import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
-import epics.common.AbstractAINode;
+import epics.common.AbstractAuctionSchedule;
 import epics.common.AbstractCommunication;
 import epics.common.AbstractMovement;
 import epics.common.CmdLogger;
@@ -58,10 +61,6 @@ import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 import epics.common.RunParams;
-import epics.commpolicy.Broadcast;
-import epics.commpolicy.Fix;
-import epics.commpolicy.Smooth;
-import epics.commpolicy.Step;
 import epics.movement.Brownian;
 import epics.movement.Waypoints;
 
@@ -91,6 +90,10 @@ public class SimCore {
 	int interval = 1;
 	
     static int camIDGenerator = 0;
+    /**
+     * returns a new unique id for camera
+     * @return
+     */
     public static int getNextID(){ return camIDGenerator++; }
 
     /*
@@ -126,7 +129,11 @@ public class SimCore {
      * @return maximum simulation time
      */
     public long get_sim_time(){return sim_time;}
-    private String ai_alg; 	  public boolean staticVG = false;
+    private String ai_alg; 	  
+    /**
+     * sets if vision graph should be static or not
+     */
+    public boolean staticVG = false;
    
     private boolean firstUpdate;
     private ArrayList<SimSettings.Event> events;
@@ -134,6 +141,9 @@ public class SimCore {
     private int step;
     
     private IRegistration reg = null;
+    /**
+     * settings for this simulation from an XML file
+     */
     private SimSettings settings;
     private String paramFile;
 
@@ -242,6 +252,20 @@ public class SimCore {
     	this.interpretFile(ss);
     }
 
+	/**
+	 * Constructor for SimCore
+	 * @param seed for random number generator
+	 * @param output output file
+	 * @param ss settings from xml
+	 * @param global global registration (NOT USED)
+	 * @param epsilon epsilon for epsilon greedy bandit solver
+	 * @param alpha alpha for reward function
+	 * @param beta for reward function
+	 * @param gamma for reward function
+	 * @param movement for objects in this simulation
+	 * @param realData if real data was used
+	 * @param allStatistics if statistics should be kept for all cameras and objects individually
+	 */
 	public SimCore(long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, double beta, double gamma, String movement, boolean realData, boolean allStatistics) {
 	    initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null, movement);
 	    this.beta = beta;
@@ -511,7 +535,7 @@ public class SimCore {
     	    }
     	}
         
-        AbstractAINode aiNode = null;
+        AbstractAuctionSchedule aiNode = null;
     	try {
     		aiNode = newAINodeFromName(ai_alg, staticVG, vg, reg, bandit);
     	} catch (Exception e) {
@@ -530,7 +554,7 @@ public class SimCore {
 
 
         try {
-            Class<?>[] commConstructorTypes = {AbstractAINode.class, ICameraController.class};
+            Class<?>[] commConstructorTypes = {AbstractAuctionSchedule.class, ICameraController.class};
             Class<?> commClass = getCommClass(commValue, customComm);
             Constructor<?> cons = commClass.getConstructor(commConstructorTypes); 
             _comm = (AbstractCommunication) cons.newInstance(aiNode, cc);
@@ -557,11 +581,18 @@ public class SimCore {
         
         this.getCameras().add(cc);
         for (CameraController c1 : this.cameras){
-            c1.addCamera(cc);
-            cc.addCamera(c1);
+            c1.addNeighbouringCamera(cc);
+            cc.addNeighbouringCamera(c1);
         }
 	}
     
+    /**
+     * mapping between communication policy NUMBER from bandit solver and actual implementation  
+     * @param commValue
+     * @param customComm
+     * @return
+     * @throws ClassNotFoundException
+     */
     public Class<?> getCommClass(int commValue, String customComm) throws ClassNotFoundException {
     	switch(commValue){
     		case 0: return Broadcast.class;
@@ -592,7 +623,7 @@ public class SimCore {
      * @return AbstractAINode the created AINode
      * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
      */
-    public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
+    public AbstractAuctionSchedule newAINodeFromName(String fullyQualifiedClassName, 
     		boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
@@ -615,7 +646,7 @@ public class SimCore {
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
     	Class<?>[] constructorTypes = {boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
-    	AbstractAINode node = (AbstractAINode) cons.newInstance(staticVG, vg, r, randomGen, bs);
+    	AbstractAuctionSchedule node = (AbstractAuctionSchedule) cons.newInstance(staticVG, vg, r, randomGen, bs);
     	return node;
     }
     
@@ -626,17 +657,17 @@ public class SimCore {
      * @param ai the pre-existing AINode
      * @return a specific implementation of an abstract AINode
      */
-    public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
-            AbstractCommunication comm, AbstractAINode ai)
+    public AbstractAuctionSchedule newAINodeFromName(String fullyQualifiedClassName, 
+            AbstractCommunication comm, AbstractAuctionSchedule ai)
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
     				InvocationTargetException {
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
-    	Class<?>[] constructorTypes = {AbstractAINode.class};
+    	Class<?>[] constructorTypes = {AbstractAuctionSchedule.class};
     	Constructor<?>[] allCons = nodeType.getDeclaredConstructors();
     	
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
-    	AbstractAINode node = (AbstractAINode) cons.newInstance(ai);
+    	AbstractAuctionSchedule node = (AbstractAuctionSchedule) cons.newInstance(ai);
     	node.setComm(comm);
     	return node;
     }
@@ -651,7 +682,7 @@ public class SimCore {
      * @param paramsFilepath contains the filepath for the parameterfile
      * @throws IOException in case opening of file fails
      */
-    public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
+    public void applyParamsToAINode(AbstractAuctionSchedule node, String paramsFilepath) throws IOException {
     	RunParams.loadIfNotLoaded(paramsFilepath);
     	System.out.println("Setting params for " + node.getName() + "...");
     	Set<Entry<Object,Object>> props = RunParams.getAllProperties();
@@ -743,7 +774,7 @@ public class SimCore {
         int rnd_int = randomGen.nextInt( this.cameras.size(), RandomUse.USE.UNIV );
         CameraController cam_to_remove = this.cameras.get(rnd_int);
         for ( CameraController c : this.cameras ){
-            c.removeCamera( cam_to_remove );
+            c.removeNeighbouringCamera( cam_to_remove );
         }
         this.cameras.remove(cam_to_remove);
         if(USEGLOBAL){
@@ -821,6 +852,7 @@ public class SimCore {
         add_object(to);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private AbstractMovement createMovement(double pos_x, double pos_y,
             double heading_degrees, double speed, double features,
             List<Point2D> waypoints, double mean, double std, String fqName) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, ClassNotFoundException {
@@ -857,10 +889,14 @@ public class SimCore {
      * @param pos_y starting position
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
+     * @param waypoints list of waypoints of added object
+     * @param mean mean value for using (directed) brownian motion 
+     * @param std standard deviation for using (directed) brownian motion
+     * @param movementName full qualified name of movement
      */
-    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, double mean, double std, String fqName ){
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, double mean, double std, String movementName ){
         double features = 0.111 * getNextID();
-        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, mean, std, ((this.movement.equals("")) ? fqName : this.movement));
+        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, mean, std, ((this.movement.equals("")) ? movementName : this.movement));
     }
 
 //    /**
@@ -973,7 +1009,7 @@ public class SimCore {
 		
 
          	//run BanditSolver, select next method, set AI! hope it works ;)
-         	AbstractAINode ai = c.getAINode();
+         	AbstractAuctionSchedule ai = c.getAINode();
          	AbstractCommunication prevComm = ai.getComm();
          	IBanditSolver bs = ai.getBanditSolver();
          	int strategy = -1;
@@ -987,27 +1023,27 @@ public class SimCore {
          	
          	switch (strategy) {
  			case 0:	//ABC
- 				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); 
+ 				AbstractAuctionSchedule newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); 
  				c.setAINode(newAI1);
  				break;
  			case 1:	//ASM
- 				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai);  
  				c.setAINode(newAI2);
  				break;
  			case 2:	//AST
- 				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c),ai);  
+ 				AbstractAuctionSchedule newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c),ai);  
  				c.setAINode(newAI3);
  				break;
  			case 3: //PBC
- 				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai);  
  				c.setAINode(newAI4);
  				break;
  			case 4: //PSM
- 				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai);  
  				c.setAINode(newAI5);
  				break;
  			case 5: //PST
- 				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai);  
  				c.setAINode(newAI6);
  				break;
  			default:
@@ -1155,7 +1191,7 @@ public class SimCore {
     private void setSearchFor() {
     	IMessage im = new Message("", "3.cvs", MessageType.StartSearch, new TraceableObjectRepresentation(this.objects.get(0), this.objects.get(0).getFeatures()));
     	CameraController cc = this.cameras.get(2);
-    	AbstractAINode ai = cc.getAINode();
+    	AbstractAuctionSchedule ai = cc.getAINode();
 		ai.receiveMessage(im);
 	}
 
@@ -1246,7 +1282,7 @@ public class SimCore {
             
 
                 //run BanditSolver, select next method, set AI! hope it works ;)
-                AbstractAINode ai = c.getAINode();
+                AbstractAuctionSchedule ai = c.getAINode();
                 AbstractCommunication prevComm = ai.getComm();
                 IBanditSolver bs = ai.getBanditSolver();
                 int strategy = -1;
@@ -1262,27 +1298,27 @@ public class SimCore {
     //          System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
                 switch (strategy) {
                 case 0: //ABC
-                    AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    AbstractAuctionSchedule newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
                     c.setAINode(newAI1);
                     break;
                 case 1: //ASM
-                    AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
+                    AbstractAuctionSchedule newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
                     c.setAINode(newAI2);
                     break;
                 case 2: //AST
-                    AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
+                    AbstractAuctionSchedule newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
                     c.setAINode(newAI3);
                     break;
                 case 3: //PBC
-                    AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    AbstractAuctionSchedule newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
                     c.setAINode(newAI4);
                     break;
                 case 4: //PSM
-                    AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    AbstractAuctionSchedule newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
                     c.setAINode(newAI5);
                     break;
                 case 5: //PST
-                    AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    AbstractAuctionSchedule newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
                     c.setAINode(newAI6);
                     break;
                 default:
@@ -1355,7 +1391,7 @@ public class SimCore {
                    
                 }
                 visited.add(c); //keep track of which elements have been already added to the area
-                stats.addConfidence(c.getAINode().getTotalConfidence(), c.getName());
+                stats.addConfidence(c.getAINode().getRelativeConfidence(), c.getName());
     //            stats.addProportion(c.getAINode().getTrackedProportion(), c.getName());
                 totalTracked += c.getAINode().getTotalTrackedObjects();
             }
@@ -1392,8 +1428,8 @@ public class SimCore {
 	 * @param ai the ai to get the index for
 	 * @return index for ai 
 	 */
-	private int getStratForAI(AbstractAINode ai) {
-		if(ai.getClass() == epics.ai.ActiveAINodeMulti.class){
+	private int getStratForAI(AbstractAuctionSchedule ai) {
+		if(ai.getClass() == epics.ai.auctionSchedules.ActiveAuctionSchedule.class){
 		    if(ai.getComm() instanceof Broadcast)
 		        return 0;
 		    else
@@ -1404,7 +1440,7 @@ public class SimCore {
 		                return 2;
 		}
 		else{
-			if(ai.getClass() == epics.ai.PassiveAINodeMulti.class){
+			if(ai.getClass() == epics.ai.auctionSchedules.PassiveAuctionSchedule.class){
 			    if(ai.getComm() instanceof Broadcast)
 	                return 3;
 	            else
@@ -1748,10 +1784,20 @@ public class SimCore {
 	    return stats.getSummaryDesc(spaces);
 	}
 
+	/**
+	 * no statistics output
+	 * @param b
+	 */
     public void setQuiet(boolean b) {
         stats.setQuiet(b);
     }
     
+    /**
+     * creats a snapshot of the current simulation at current point in time. stores it as EPS file in location of simulator
+     * @param filename
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     public void createSnapshot(String filename) throws FileNotFoundException, IOException {
         double w = 600;
         double h = 600;
