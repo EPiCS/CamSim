@@ -7,7 +7,15 @@ import java.util.TreeMap;
 
 import epics.common.RandomUse.USE;
 
-
+/**
+ * Abstract bandit solver based on the bandit solver interface.
+ * The abstract class is used to select strategies as well as zoom levels.
+ * 
+ * The bandit solver keeps a record of actions and the associated benefit for each action.  Based on the implementation the bandit solver selects an action when triggered.
+ * 
+ * @author Lukas Esterle
+ *
+ */
 public abstract class AbstractBanditSolver implements IBanditSolver {
 
 	// Place to store the running total of how many times each arm has been tried.
@@ -112,6 +120,18 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	    this.epsilon = epsilon;
 	}
 	
+	/**
+	 * 
+	 * Constructor for AbstractBanditSolver when used to select zoom levels
+	 * 
+	 * @param numberOfOptions number of options to select from
+	 * @param epsilon epsilon value for epsilon greedy
+	 * @param alpha alpha value to set priority of tracking performance
+	 * @param beta beta value to set priority of proportion of tracked objects
+	 * @param gamma gamma value to set priority of overlapping fields of view
+	 * @param interval interval of selecting a new arm
+	 * @param rg random number generator for this bandit solver
+	 */
 	public AbstractBanditSolver(int numberOfOptions, double epsilon, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg) {
 	    this(numberOfOptions, epsilon, alpha, interval, rg);
 	    this.beta = beta;
@@ -122,8 +142,8 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	 * Constructor
 	 * builds bandit solver from existing solver
 	 * @param bandit the existing bandit solver 
-	 * @param comm
-	 * @param algo
+	 * @param comm communication number (0 = broadcast, 1 = smooth, 2 = step)
+	 * @param algo full qualifier name of auction schedule
 	 */
 	public AbstractBanditSolver(AbstractBanditSolver bandit, int comm, String algo){
 		  this.armsCount = bandit.armsCount;
@@ -136,7 +156,7 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 		  
 		  int alg = 0;
 		    try {
-				if(Class.forName(algo).equals(epics.ai.ActiveAINodeMulti.class))
+				if(Class.forName(algo).equals(epics.auctionSchedules.ActiveAINodeMulti.class))
 					alg = 0;
 				else
 					alg = 1;
@@ -218,6 +238,10 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 	@Override
     public abstract String bestAction();
 	
+	/*
+	 * (non-Javadoc)
+	 * @see epics.common.IBanditSolver#selectActionWithoutReward()
+	 */
 	@Override 
 	public abstract int selectActionWithoutReward();
 	
