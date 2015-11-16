@@ -3,8 +3,10 @@ package simsim.epics.simSim;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -12,14 +14,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import epics.camsim.core.CameraController;
 import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 import epics.camsim.core.SimSettings.CameraSettings;
-import epics.common.AbstractAINode;
+import epics.common.AbstractAuctionSchedule;
 
 /**
  * 
@@ -28,21 +30,60 @@ import epics.common.AbstractAINode;
  */
 public class SimSim {
 	
-    public static String loadScenariosFrom = "..//..//..//..//scenarios//2Cams"; //can be overwriten using argument [0]
+
+    /**
+     * Folder for simulation scenarioS (!) in XML - Obsolete if a folder is provided in the starting parameters
+     */
+    public static String loadScenariosFrom = ".//scenarios//SASO-FIXED"; //"..//..//..//..//scenarios//test-anticipation"; //can be overwriten using argument [0]
+    /**
+     * folder where results are stored
+     */
     public static String writeResultsTo = "..//..//..//..//..//..//Results//"; //can be overwriten using argument [1] (automatically overwrites loadScenariosFrom)
+    
+    /**
+     * defines if statistics for the individiual cameras should be stored
+     */
     public static boolean allStatistics = false;
+    
+    /**
+     * run only homogeneous settings (auction schedules and communication policies)
+     */
 	public static boolean runHomogeneous = false;
+	
+	/**
+	 * parameters to start simulator (by Horatio Caine)
+	 */
 	public static boolean runByParameter = false;
-	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = true;
+	
+	/**
+	 * run all possible variations of auction schedules and communication policies.
+	 */
+	public static boolean runAllPossibleVersions = false;
+	
+	/**
+	 * run bandit solvers for auction schedules and communication policies.
+	 */
+	public static boolean runBandits = false;
+
+	private static boolean runBanditRange = true;
+	private static boolean runAllPossibleZooms = false;
+	
+	/**
+	 * defines what type of movement the objects should use
+	 *  SET movement = "" if file specific movment should be used!
+	 */
+	public static String movement = "";//"epics.movement.DirectedBrownian"; // .Brownian"; // .Straight"; // .Waypoints"; //   
 	
 	static int duration = 1000; //how many timesteps
 	static int runs = 30;      // how many runs of a single simulation are being made - if diffSeed = true, each run uses a different random seed value
 	static long initialSeed = 10;
-	static int banditParamRuns = 2; // how many epsilon / temperature values are being tried for the bandits
+	static int banditParamRuns = 1; // how many epsilon / temperature values are being tried for the bandits
 	static double standardBanditParameter = 0.1;
 	
-	static double banditRuns = 20.0d; //how many different alpha values are being tried out 
+	static double banditRuns = 4.0d; //how many different alpha values are being tried out 
+    
+    
+    
 
 
 	
@@ -50,6 +91,28 @@ public class SimSim {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+//	    BigDecimal banditBD = BigDecimal.valueOf((long) banditRuns);
+//	    BigDecimal alphaCoef = BigDecimal.valueOf(1.0d).divide(banditBD, 5, RoundingMode.HALF_UP);
+////        BigDecimal betaCoef = BigDecimal.valueOf(1.0d).divide(BigDecimal.valueOf(banditRuns));
+//        
+//	    int total = 0;
+//	    for(int a = 0; a <= banditRuns; a++){
+//	        for(int b = 0; b <= banditRuns; b++){
+//	            double al = BigDecimal.valueOf(a).multiply(alphaCoef).setScale(2, RoundingMode.HALF_UP).doubleValue();
+//                double be = BigDecimal.valueOf(b).multiply(alphaCoef).setScale(2, RoundingMode.HALF_UP).doubleValue();
+////	            double al = BigDecimal.valueOf(Math.floor(BigDecimal.valueOf(a).multiply(alphaCoef).multiply(BigDecimal.valueOf(10)).doubleValue())).divide(BigDecimal.valueOf(10)).doubleValue();
+////	            double be = BigDecimal.valueOf(Math.floor(BigDecimal.valueOf(b).multiply(alphaCoef).multiply(BigDecimal.valueOf(10)).doubleValue())).divide(BigDecimal.valueOf(10)).doubleValue();
+//	            if(al + be <= 1.0){
+////	                double ga = BigDecimal.valueOf(Math.floor((BigDecimal.valueOf(1).subtract(BigDecimal.valueOf(al).add(BigDecimal.valueOf(be))).multiply(BigDecimal.valueOf(10)).doubleValue()))).divide(BigDecimal.valueOf(10)).doubleValue();
+//	                double ga = BigDecimal.valueOf(1).subtract(BigDecimal.valueOf(al).add(BigDecimal.valueOf(be))).setScale(2, RoundingMode.HALF_UP).doubleValue();
+//	                total ++;
+//	                double sum = al+be+ga;
+//	                System.out.println(total + ": \t" + al + " \t " + be + " \t " + ga + " \t sum: " + sum);
+//	            }
+//	        }
+//	    }
+	    
+	    
 		File folder;
 		if(args.length > 0){
 			folder = new File(args[0]);
@@ -115,6 +178,12 @@ public class SimSim {
 					runBanditSimulations(runs, duration, f, scenName);
 				}
 				
+				if(runBanditRange){
+				    runBanditRangeSimulation(runs, duration, f, scenName);
+				}
+				if(runAllPossibleZooms ){
+                    runSimulationForAllZooms(runs, duration, f, scenName);
+                }
 				if(runAllPossibleVersions){
 					runSimulationForAll(runs, duration, f, scenName);
 				}
@@ -138,13 +207,234 @@ public class SimSim {
 
 	}
 
+	private static void runSimulationForAllZooms(int runs2, int duration2,
+            File f, String scenName) {
+	    SimSettings ss = new SimSettings("", "", null, 1, "");
+        ss.loadFromXML(f.getAbsolutePath());
+        LinkedList<ArrayList<CameraSettings>> items = new LinkedList<ArrayList<CameraSettings>>();
+        
+//        ArrayList<CameraSettings> item = ss.cameras;
+        List<Double> l = new ArrayList<Double>();
+        double arms = 6.0d;
+        for (double i = 0.0; i < arms; i++) {
+            l.add(CameraController.MAX_VISIBILITY / arms * (i+1));
+        }
+        
+        
+        Object[] test = l.toArray();
+//        States[] input = {States.ABC, States.ASM, States.AST, States.PBC, States.PSM, States.PST};
+        String scenDirName = totalDirName + "//"+ scenName + "//";
+        doZoomVariation(items, test, ss, 0, scenDirName);//item, 0, scenDirName);
+    }
 
-	private static void runBanditSimulations(int runs2, int duration2, File f,
+	/**
+	 * recursively generates and traverses a list of possible combinations for zoom levels
+	 * @param reps the camera settings
+	 * @param input the used objects in the simulation
+	 * @param ss the simsetting that is being updated recursevly
+	 * @param count how many recursions have been made
+	 * @param scenDirName scenario file
+	 */
+	   private static void doZoomVariation(LinkedList<ArrayList<CameraSettings>> reps, Object[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
+	        long seed = initialSeed;
+	        SimSettings simS = ss.copy();
+	        if (count < simS.cameras.size()){//item.size()){
+	            for (int i = 0; i < input.length; i++) {
+	                CameraSettings cs = simS.cameras.get(count).clone(); //item.get(count);
+	                Double zoom = (Double) input[i];
+	                cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
+	                cs.comm = 4;
+	                cs.customComm = "epics.ai.commpolicy.Broadcast";
+	                cs.range = zoom;
+
+	                simS.cameras.set(count, cs); // item.set(count, cs);
+	                
+	                doZoomVariation(reps, input, simS, count+1, scenDirName); //item, count+1, scenDirName);
+	            }
+	        }else{
+	            String dirName = "";
+	            //ss.cameras = item;
+	            for (int i = 0; i < simS.cameras.size(); i++){ 
+	                dirName += "z"+ (
+	                        ((Math.floor(simS.cameras.get(i).range * 10) / 10) >= 10) ? 
+	                                (Math.floor(simS.cameras.get(i).range * 10) / 10) : 
+	                                    "0" + (Math.floor(simS.cameras.get(i).range * 10)/ 10)); //new DecimalFormat("#.#").format(simS.cameras.get(i).range); 
+	            }
+	            
+	            File dir = new File(scenDirName + dirName);
+	             //directory for currently used setting 
+	            if(!runSequential){
+	                exService.execute(new SimRunner(seed, scenDirName + dirName, "summary.csv", runs, simS, false, -1, 50, duration, 0.5, false, diffSeed, allStatistics));
+	            }
+	            else{
+	                System.out.print(dirName + " runs: ");
+	                for(int r = 0; r < runs; r++){
+	                    System.out.print(r + "; ");
+	                    if (showgui == false) {
+	                        if(randomSeed){
+	                            seed = System.currentTimeMillis() % 1000;
+	                        }
+	                        else{
+	                            if(diffSeed){
+	                                seed =r;
+	                            }
+	                        }
+	                        
+	                        if(!runSequential){
+	                            exService.execute(new SimRunner(seed, scenDirName + dirName, "run" + r + ".csv", simS, false, -1, 50, duration, 0.5, false, allStatistics));
+	                        }
+	                        else{
+	                            dir.mkdirs();
+	                            
+	                            SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, movement, false, allStatistics);//output_file, ss, false);
+	                            sim.setQuiet(true);
+	                            for (int i = 0; i < duration; i++) {
+	                                try {
+	                                    sim.update();
+	                                } catch (Exception e) {
+	                                    e.printStackTrace();
+	                                }
+	                            }
+	                            sim.close_files();
+	                        }
+	                    } 
+	                }
+	                System.out.println("");
+	            }
+	        }
+	    }
+	
+
+    private static void runBanditRangeSimulation(int runs2, int duration2,
+            File f, String scenName) {
+	    long seed = initialSeed;
+        String dirName = "";
+        String scenDirName = totalDirName + "//"+ scenName + "//";
+        SimSettings ss = new SimSettings("", "", null, 1, "");
+        ss.loadFromXML(f.getAbsolutePath());
+        for(int i = 0; i < ss.cameras.size(); i++){
+            dirName += "ex";
+        }
+        
+        
+        
+        BigDecimal banditBD = BigDecimal.valueOf((long) banditRuns);
+        BigDecimal alphaCoef = BigDecimal.valueOf(1.0d).divide(banditBD, 5, RoundingMode.HALF_UP);       
+        BigDecimal paraCoef = new BigDecimal(0.1d); //BigDecimal.valueOf(1.0d).divide(BigDecimal.valueOf(epsilonRuns));
+        
+        
+        
+        //Set for all cameras SoftMax bandit solving mechanism
+        DecimalFormat df = new DecimalFormat("0.00");
+        for (CameraSettings cs : ss.cameras) {
+            cs.bandit = "epics.bandits.SoftMax";
+            cs.ai_algorithm = "epics.ai.dynamicZoom.BanditSolverZoom"; //BanditRange";
+        }
+        if(paraCoef.doubleValue() > 0){
+            for(int e = 0; e < banditParamRuns; e++){
+                
+                double epsilon = BigDecimal.valueOf(e+1).multiply(paraCoef).doubleValue();
+                System.out.println("SOFTMAX " + epsilon);
+                for(int a = 0; a <= banditRuns; a++){
+                    for(int b = 0; b <= banditRuns; b++){
+                        double alpha = BigDecimal.valueOf(a).multiply(alphaCoef).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                        double beta = BigDecimal.valueOf(b).multiply(alphaCoef).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                        if(alpha + beta <= 1.0){
+                            double gamma = BigDecimal.valueOf(1).subtract(BigDecimal.valueOf(alpha).add(BigDecimal.valueOf(beta))).setScale(1, RoundingMode.HALF_UP).doubleValue(); //1-(alpha+beta);
+                            
+                            System.out.print(" a: " + alpha + " b: " + beta + " c: " + gamma + " - runs: ");
+                            
+                            //double alpha = 0.5;
+                            directory = new File(scenDirName + dirName + "//RangeSoftMax-" +epsilon + "//" + df.format(alpha) + df.format(beta) + df.format(gamma) + "//");
+                            directory.mkdirs();
+                            //run all scenarios for a certain amount
+                            for(int r = 0; r < runs; r++){
+                                if (showgui == false) {
+                                    System.out.print(r + "; ");
+                                    if(randomSeed){
+                                        seed = System.currentTimeMillis() % 1000;
+                                    }
+                                    else{
+                                        if(diffSeed){
+                                            seed = r;
+                                        }
+                                    }
+                                    
+                                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//RangeSoftMax-"+ epsilon+"//" + df.format(alpha) + df.format(beta) + df.format(gamma) + "//run" + r + ".csv", ss, false, epsilon, alpha, beta, gamma, movement, false, true);
+                                    sim.setQuiet(true);
+                                                              
+                                    
+                                    for (int p = 0; p < duration; p++) {
+                                        try {
+                                            sim.update();
+                                           
+                                        } catch (Exception x) {
+                                            x.printStackTrace();
+                                        }
+                                    }
+                                    sim.close_files();
+                                } 
+                            }
+                            System.out.println("");
+                        }
+                    }
+                }
+                
+            }
+        }
+        
+        
+        
+        
+        //################################### SENSIBLE RUN #################################
+        double alpha = 0.33; //prop
+        double beta = 0.33; //overlap
+        double gamma = 0.33; //conf
+        double epsilon = 0.1; //temperature for SOFTMAX
+        System.out.print(" a: " + alpha + " b: " + beta + " c: " + gamma + " - runs: ");
+        
+        //double alpha = 0.5;
+        directory = new File(scenDirName + dirName + "//RangeSoftMax-" +epsilon + "//" + df.format(alpha) + df.format(beta) + df.format(gamma) + "//");
+        directory.mkdirs();
+        //run all scenarios for a certain amount
+        for(int r = 0; r < runs; r++){
+            if (showgui == false) {
+                System.out.print(r + "; ");
+                if(randomSeed){
+                    seed = System.currentTimeMillis() % 1000;
+                }
+                else{
+                    if(diffSeed){
+                        seed = r;
+                    }
+                }
+                
+                SimCore sim = new SimCore(seed, scenDirName + dirName + "//RangeSoftMax-"+ epsilon+"//" + df.format(alpha) + df.format(beta) + df.format(gamma) + "//run" + r + ".csv", ss, false, epsilon, alpha, beta, gamma, movement, false, true);
+                sim.setQuiet(true);
+                                          
+                
+                for (int p = 0; p < duration; p++) {
+                    try {
+                        sim.update();
+                       
+                    } catch (Exception x) {
+                        x.printStackTrace();
+                    }
+                }
+                sim.close_files();
+            } 
+        }
+        System.out.println("");
+    }
+
+
+
+    private static void runBanditSimulations(int runs2, int duration2, File f,
 			String scenName) {
 		long seed = initialSeed;
 		String dirName = "";
 		String scenDirName = totalDirName + "//"+ scenName + "//";
-		SimSettings ss = new SimSettings("", "", null, 1);
+		SimSettings ss = new SimSettings("", "", null, 1, "");
 		ss.loadFromXML(f.getAbsolutePath());
 		for(int i = 0; i < ss.cameras.size(); i++){
 			dirName += "ex";
@@ -154,25 +444,80 @@ public class SimSim {
 		
 		BigDecimal paraCoef = new BigDecimal(0.1d); //BigDecimal.valueOf(1.0d).divide(BigDecimal.valueOf(epsilonRuns));
 		
-		
-		
-		//Set for all cameras SoftMax bandit solving mechanism
+		runSoftmaxBandit(seed, dirName, scenDirName, ss, alphaCoef, paraCoef, "epics.bandits.SoftMax");
+	}
+
+
+    protected static void runBandit(long seed, String dirName,
+            String scenDirName, SimSettings ss, BigDecimal alphaCoef, String bandit, double epsilon) {
+        for (CameraSettings cs : ss.cameras) {
+			cs.bandit = bandit;
+		}
+        String b = bandit.substring(bandit.lastIndexOf('.'), bandit.length());
+		System.out.println(b);
+
+		for(int i = 0; i <= banditRuns; i++){
+			double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
+            System.out.print(" alpha: " + alpha + " - runs: ");
+			directory = new File(scenDirName + dirName + "//"+ b + "//" + alpha + "//");
+			directory.mkdirs();
+			//run all scenarios for a certain amount
+			for(int r = 0; r < runs; r++){
+			    System.out.print(r + "; ");
+	        	if (showgui == false) {
+	        	    
+	        		if(randomSeed){
+	        			seed = System.currentTimeMillis() % 1000;
+	        		}
+	        		else{
+	        			if(diffSeed){
+	        				seed = r;
+	        			}
+	        		}
+	        				        		
+	        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//"+ b + "//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, movement, false, true);//output_file, ss, false);
+	        		sim.setQuiet(true);
+	                for (int k = 0; k < duration; k++) {
+	                    try {
+							sim.update();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+	                }
+	                sim.close_files();
+	            } 
+	    	}
+            System.out.println("");
+		}
+    }
+
+
+    protected static void runSoftmaxBandit(long seed, String dirName,
+            String scenDirName, SimSettings ss, BigDecimal alphaCoef,
+            BigDecimal paraCoef, String bandit) {
+        //Set for all cameras SoftMax bandit solving mechanism
 		
 		for (CameraSettings cs : ss.cameras) {
-			cs.bandit = "epics.bandits.SoftMax";
+			cs.bandit = bandit;
 		}
+		
+		
 		if(paraCoef.doubleValue() > 0){
 			for(int e = 0; e < banditParamRuns; e++){
 			    
 				double epsilon = BigDecimal.valueOf(e+1).multiply(paraCoef).doubleValue();
-				System.out.println("SOFTMAX " + epsilon);
+				String b = bandit.substring(bandit.lastIndexOf('.'), bandit.length());
+				
+				System.out.println(b + " " + epsilon);
 				for(int i = 0; i <= banditRuns; i++){
 				    double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
 				    
 				    System.out.print(" alpha: " + alpha + " - runs: ");
 				    
 					//double alpha = 0.5;
-					directory = new File(scenDirName + dirName + "//SoftMax-" +epsilon + "//" + alpha + "//");
+				    
+				    
+					directory = new File(scenDirName + dirName + "//" + b + "-" +epsilon + "//" + alpha + "//");
 					directory.mkdirs();
 					//run all scenarios for a certain amount
 					for(int r = 0; r < runs; r++){
@@ -187,7 +532,7 @@ public class SimSim {
 			        			}
 			        		}
 			        		
-			        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, false, true);
+			        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//" + b + "-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, movement, false, true);
 			        		sim.setQuiet(true);
 			        		
 			                for (int k = 0; k < duration; k++) {
@@ -205,297 +550,16 @@ public class SimSim {
 				
 			}
 		}
-		
-		
-//		//Set for all cameras UCB2 bandit solving mechanism
-//		for (CameraSettings cs : ss.cameras) {
-//			cs.bandit = "epics.bandits.UCB2";
-//		}
-//		if(epsCoef.doubleValue() > 0){
-//			for(int i = 0; i < banditRuns; i++){
-//				double alpha = alphaCoef.multiply(BigDecimal.valueOf(i + 1.0)).doubleValue();
-//	//			double alpha = 0.5;
-//				directory = new File(scenDirName + dirName + "//UCB2//" + alpha + "//");
-//				directory.mkdirs();
-//				//run all scenarios for a certain amount
-//				for(int r = 0; r < runs; r++){
-//		        	if (showgui == false) {
-//		        		
-//		        		if(randomSeed){
-//		        			seed = System.currentTimeMillis() % 1000;
-//		        		}
-//		        		else{
-//		        			if(diffSeed){
-//		        				seed = r;
-//		        			}
-//		        		}
-//		        		
-//		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//UCB2//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, false, true);
-//		        				
-//		                for (int k = 0; k < duration; k++) {
-//		                    try {
-//								sim.update();
-//		                    } catch (Exception x) {
-//								x.printStackTrace();
-//							}
-//		                }
-//		                sim.close_files();
-//		            } 
-//		    	}
-//			}
-//		}
-//				
-//		
-//		
-//		//Set for all cameras UCBTuned bandit solving mechanism
-//		for (CameraSettings cs : ss.cameras) {
-//			cs.bandit = "epics.bandits.UCBTuned";
-//		}
-//		if(epsCoef.doubleValue() > 0){
-//		    for(int e = 0; e < epsilonRuns; e++){
-//		        double epsilon = BigDecimal.valueOf(e+1).multiply(epsCoef).doubleValue();
-//		        for(int i = 0; i < banditRuns; i++){
-//				    double alpha = alphaCoef.multiply(BigDecimal.valueOf(i + 1.0)).doubleValue();
-//	//			    double alpha = 0.5;
-//				    directory = new File(scenDirName + dirName + "//UCBTuned-" + epsilon + "//" + alpha + "//");
-//				    directory.mkdirs();
-//				    //run all scenarios for a certain amount
-//				    for(int r = 0; r < runs; r++){
-//				        if (showgui == false) {
-//				            if(randomSeed){
-//				                seed = System.currentTimeMillis() % 1000;
-//		        		    }
-//		        		    else{
-//		        			    if(diffSeed){
-//		        				    seed = r;
-//		        			    }
-//		        		    }
-//		        		
-//		        		    SimCore sim = new SimCore(seed, scenDirName + dirName + "//UCBTuned-" + epsilon + "//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, false, true);
-//    		        				
-//    		                for (int k = 0; k < duration; k++) {
-//    		                    try {
-//    								sim.update();
-//    		                    } catch (Exception x) {
-//    								x.printStackTrace();
-//    							}
-//    		                }
-//    		                sim.close_files();
-//				        }
-//		            } 
-//		    	}
-//			}
-//		}
-//		
-//		
-//		
-//		
-//		
-//		
-//		Set for all cameras epsilon greedy bandit solving mechanism
-		for (CameraSettings cs : ss.cameras) {
-			cs.bandit = "epics.bandits.EpsilonGreedy";
-		}
-		System.out.println("EPSILONGREEDY");
-//		if(epsCoef.doubleValue() > 0){
-//			for(int e = 0; e < epsilonRuns; e++){
-//				double epsilon = BigDecimal.valueOf(e+1).multiply(epsCoef).doubleValue(); 
-//				double alpha = 0.5;
-//				directory = new File(scenDirName + dirName + "//epsilonGreedy-" +epsilon + "//" + alpha + "//");
-//				directory.mkdirs();
-//				//run all scenarios for a certain amount
-//				for(int r = 0; r < runs; r++){
-//		        	if (showgui == false) {
-//		        		
-//		        		if(randomSeed){
-//		        			seed = System.currentTimeMillis() % 1000;
-//		        		}
-//		        		else{
-//		        			if(diffSeed){
-//		        				seed = r;
-//		        			}
-//		        		}
-//		        		
-//		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, false, true);
-//		        				
-//		                for (int k = 0; k < duration; k++) {
-//		                    try {
-//								sim.update();
-//		                    } catch (Exception x) {
-//								x.printStackTrace();
-//							}
-//		                }
-//		                sim.close_files();
-//		            } 
-//		    	}
-//			}
-//		}
-		for(int i = 0; i <= banditRuns; i++){
-			double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
-            System.out.print(" alpha: " + alpha + " - runs: ");
-			directory = new File(scenDirName + dirName + "//epsilonGreedy//" + alpha + "//");
-			directory.mkdirs();
-			//run all scenarios for a certain amount
-			for(int r = 0; r < runs; r++){
-			    System.out.print(r + "; ");
-	        	if (showgui == false) {
-	        	    
-	        		if(randomSeed){
-	        			seed = System.currentTimeMillis() % 1000;
-	        		}
-	        		else{
-	        			if(diffSeed){
-	        				seed = r;
-	        			}
-	        		}
-	        				        		
-	        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, false, true);//output_file, ss, false);
-	        		sim.setQuiet(true);
-	                for (int k = 0; k < duration; k++) {
-	                    try {
-							sim.update();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-	                }
-	                sim.close_files();
-	            } 
-	    	}
-            System.out.println("");
-		}
-		
-		
-//		for (CameraSettings cs : ss.cameras) {
-//			cs.bandit = "epics.bandits.FullRandom";
-//		}
-//		for(int i = 0; i < banditRuns; i++){
-//			//double alpha = alphaCoef.multiply(BigDecimal.valueOf(i + 1.0)).doubleValue();
-//			directory = new File(scenDirName + dirName + "//fullRandom//" + i + "//");
-//			directory.mkdirs();
-//			//run all scenarios for a certain amount
-//			for(int r = 0; r < runs; r++){
-//	        	if (showgui == false) {
-//	        		
-//	        		if(randomSeed){
-//	        			seed = System.currentTimeMillis() % 1000;
-//	        		}
-//	        		else{
-//	        			if(diffSeed){
-//	        				seed = r;
-//	        			}
-//	        		}
-//		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//fullRandom//"+ i + "//run" + r + ".csv", ss, false, -1, 50, -1, i, false, true);//output_file, ss, false);
-//		                for (int k = 0; k < duration; k++) {
-//		                    try {
-//								sim.update();
-//							} catch (Exception e) {
-//								e.printStackTrace();
-//							}
-//		                }
-//		                sim.close_files();
-//	            } 
-//	    	}
-//		}
-//		
-//		
-		
-		
-//		//Set for all cameras epsilon greedy bandit solving mechanism
-//		for (CameraSettings cs : ss.cameras) {
-//			cs.bandit = "epics.bandits.UCB1e";
-//		}
-//		if(epsCoef.doubleValue() > 0){
-//			for(int e = 0; e < epsilonRuns; e++){
-//				double epsilon = BigDecimal.valueOf(e+1).multiply(epsCoef).doubleValue(); 
-////				for(int i = 0; i < banditRuns; i++){
-//					double alpha = 0.5; //alphaCoef.multiply(BigDecimal.valueOf(i + 1.0)).doubleValue();
-//					directory = new File(scenDirName + dirName + "//UCB1e-" +epsilon + "//");
-//					directory.mkdirs();
-//					//run all scenarios for a certain amount
-//					for(int r = 0; r < runs; r++){
-//			        	if (showgui == false) {
-//			        		
-//			        		if(randomSeed){
-//			        			seed = System.currentTimeMillis() % 1000;
-//			        		}
-//			        		else{
-//			        			if(diffSeed){
-//			        				seed = r;
-//			        			}
-//			        		}
-//			        		
-//			        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//UCB1e-"+ epsilon+"//" + alpha +"//run" + r + ".csv", ss, false, epsilon, alpha, false, true);
-//			        				
-//			                for (int k = 0; k < duration; k++) {
-//			                    try {
-//									sim.update();
-//			                    } catch (Exception x) {
-//									x.printStackTrace();
-//								}
-//			                }
-//			                sim.close_files();
-//			            } 
-//			    	}
-////				}
-//			}
-//		}
-//		
-//		
-//		
-		//Set for all cameras epsilon greedy bandit solving mechanism
-		for (CameraSettings cs : ss.cameras) {
-			cs.bandit = "epics.bandits.UCB1";
-		}
-		System.out.println("UCB1");
-		for(int i = 0; i <= banditRuns; i++){
-			double alpha = alphaCoef.multiply(BigDecimal.valueOf(i)).doubleValue();
-            System.out.print(" alpha: " + alpha + " - runs: ");
-			directory = new File(scenDirName + dirName + "//ucb1//" + alpha + "//");
-			
-			//run all scenarios for a certain amount
-			for(int r = 0; r < runs; r++){
-                System.out.print(r + "; ");
-	        	if (showgui == false) {
-	        		
-	        		if(randomSeed){
-	        			seed = System.currentTimeMillis() % 1000;
-	        		}
-	        		else{
-	        			if(diffSeed){
-	        				seed = r;
-	        			}
-	        		}
-	        		if(!runSequential){
-	        			exService.execute(new SimRunner(seed, scenDirName + dirName + "//ucb1//" + alpha, "run" + r + ".csv", ss, false, -1, 50, duration, alpha, false, true));
-	        		}
-	        		else{
-	        			directory.mkdirs();
-		        		SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, false, true);//output_file, ss, false);
-		        		sim.setQuiet(true);
-		                for (int k = 0; k < duration; k++) {
-		                    try {
-								sim.update();
-	//							System.out.println(i);
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-		                }
-		                sim.close_files();
-	        		}
-	            } 
-	    	}
-            System.out.println("");
-		}
-	}
+    }
 
 
 	private static void runSimulationsForAllErrors(int runs2, int duration2, File f, String scenName) {
-		SimSettings ss = new SimSettings("", "", null, 1);
+		SimSettings ss = new SimSettings("", "", null, 1,"");
 		ss.loadFromXML(f.getAbsolutePath());
 		long seed = initialSeed;
        		
 		String dirName = "";
-    	String outputfile = dirName;
+//    	String outputfile = dirName;
     	String scenDirName = totalDirName + "//"+ scenName + "//";
     	directory = new File(scenDirName);
     	//directory.mkdir(); //directory for currently used setting 
@@ -517,32 +581,32 @@ public class SimSim {
     					CameraSettings cs = item.get(count);
     					switch (input[i]) {
     					case ABC: 
-    						cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+    						cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
     						cs.comm = 0;
     						dirName += "a0";
     						break;
     					case ASM:
-    						cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+    						cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
     						cs.comm = 1;
     						dirName += "a1";
     						break;
     					case AST:
-    						cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+    						cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
     						cs.comm = 2;
     						dirName += "a2";
     						break;
     					case PBC:
-    						cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+    						cs.ai_algorithm = "epics.ai.auctionSchedules.PassiveAuctionSchedule";
     						cs.comm = 0;
     						dirName += "p0";
     						break;
     					case PSM:
-    						cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+    						cs.ai_algorithm = "epics.ai.auctionSchedules.PassiveAuctionSchedule";
     						cs.comm = 1;
     						dirName += "p1";
     						break;
     					case PST:
-    						cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+    						cs.ai_algorithm = "epics.ai.auctionSchedules.PassiveAuctionSchedule";
     						cs.comm = 2;
     						dirName += "p2";
     						break;
@@ -571,7 +635,7 @@ public class SimSim {
     						}
     						else{
     							directory.mkdirs();
-    							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, false, false);//output_file, ss, false);
+    							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, movement, false, false);//output_file, ss, false);
     							sim.setQuiet(true);
     							for (int dur = 0; dur < duration; dur++) {
     								try {
@@ -592,7 +656,15 @@ public class SimSim {
 	     
 	}
 
-	public static void doVariation(LinkedList<ArrayList<CameraSettings>> reps, Object[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
+	/**
+     * recursively generates and traverses a list of possible combinations for auction schedules and communication policies
+     * @param reps the camera settings
+     * @param input the used objects in the simulation
+     * @param ss the simsetting that is being updated recursevly
+     * @param count how many recursions have been made
+     * @param scenDirName scenario file
+     */
+	private static void doVariation(LinkedList<ArrayList<CameraSettings>> reps, Object[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
 		long seed = initialSeed;
 		SimSettings simS = ss.copy();
         if (count < simS.cameras.size()){//item.size()){
@@ -602,34 +674,7 @@ public class SimSim {
             	cs.customComm = ((CommPolicy) o[0]).toString();
             	cs.comm = 4;
             	cs.ai_algorithm = ((AuctionsSchedule) o[1]).toString();
-//            	switch (input[i]) {
-//				case ABC: 
-//					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-//					cs.comm = 0;
-//					break;
-//				case ASM:
-//					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-//					cs.comm = 1;
-//					break;
-//				case AST:
-//					cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
-//					cs.comm = 2;
-//					break;
-//				case PBC:
-//					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-//					cs.comm = 0;
-//					break;
-//				case PSM:
-//					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-//					cs.comm = 1;
-//					break;
-//				case PST:
-//					cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
-//					cs.comm = 2;
-//					break;
-//				default:
-//					break;
-//				}
+
             	simS.cameras.set(count, cs); // item.set(count, cs);
             	
                 doVariation(reps, input, simS, count+1, scenDirName); //item, count+1, scenDirName);
@@ -637,20 +682,14 @@ public class SimSim {
         }else{
         	String dirName = "";
         	//ss.cameras = item;
-        	for (int i = 0; i < simS.cameras.size(); i++){ //item.size(); i++) {
-//				if(simS.cameras.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){ // item.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
-//					dirName += "a";
-//				}
-//				else{
-//					dirName += "p";
-//				}
+        	for (int i = 0; i < simS.cameras.size(); i++){
         	    dirName += AuctionsSchedule.fromString(simS.cameras.get(i).ai_algorithm).toShortString();
 				if(simS.cameras.get(i).comm == 4){
 				    CommPolicy cp = CommPolicy.fromString(simS.cameras.get(i).customComm);
-				    dirName += cp.toShortString(); //simS.cameras.get(i).customComm;
+				    dirName += cp.toShortString(); 
 				}
 				else{
-				    dirName += simS.cameras.get(i).comm; // item.get(i).comm;
+				    dirName += simS.cameras.get(i).comm; 
 				}
 			}
         	
@@ -679,7 +718,7 @@ public class SimSim {
 		        		else{
 		        			dir.mkdirs();
 		        			
-			                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, false, allStatistics);//output_file, ss, false);
+			                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, movement, false, allStatistics);//output_file, ss, false);
 			                sim.setQuiet(true);
 			                for (int i = 0; i < duration; i++) {
 			                    try {
@@ -697,8 +736,9 @@ public class SimSim {
         }
 	}
 	
-	private static void runSimulationForAll(int runs, int duration, File f, String scenName) {
-		SimSettings ss = new SimSettings("", "", null, 1);
+	@SuppressWarnings("rawtypes")
+    private static void runSimulationForAll(int runs, int duration, File f, String scenName) {
+		SimSettings ss = new SimSettings("", "", null, 1, "");
 		ss.loadFromXML(f.getAbsolutePath());
 		LinkedList<ArrayList<CameraSettings>> items = new LinkedList<ArrayList<CameraSettings>>();
 		
@@ -711,7 +751,7 @@ public class SimSim {
     }
 	
 	private static void runRandomStatic(int runs, int duration, File f, String scenDirName){
-	    SimSettings simS = new SimSettings("", "", null, 1);
+	    SimSettings simS = new SimSettings("", "", null, 1, "");
         simS.loadFromXML(f.getAbsolutePath());
         LinkedList<ArrayList<CameraSettings>> items = new LinkedList<ArrayList<CameraSettings>>();
         long seed = initialSeed;
@@ -729,27 +769,27 @@ public class SimSim {
                 CameraSettings cs = simS.cameras.get(i).clone(); //item.get(count);
                 switch (input[ran.nextInt(6)]) {
                 case ABC: 
-                    cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+                    cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
                     cs.comm = 0;
                     break;
                 case ASM:
-                    cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+                    cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
                     cs.comm = 1;
                     break;
                 case AST:
-                    cs.ai_algorithm = "epics.ai.ActiveAINodeMulti";
+                    cs.ai_algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
                     cs.comm = 2;
                     break;
                 case PBC:
-                    cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+                    cs.ai_algorithm = "epics.ai.auctionSchedules.PassiveAuctionSchedule";
                     cs.comm = 0;
                     break;
                 case PSM:
-                    cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+                    cs.ai_algorithm = "epics.ai.auctionSchedules.PassiveAuctionSchedule";
                     cs.comm = 1;
                     break;
                 case PST:
-                    cs.ai_algorithm = "epics.ai.PassiveAINodeMulti";
+                    cs.ai_algorithm = "epics.ai.auctionSchedules.PassiveAuctionSchedule";
                     cs.comm = 2;
                     break;
                 default:
@@ -758,7 +798,7 @@ public class SimSim {
                 simS.cameras.set(i, cs); // item.set(count, cs);
                 
              
-                if(simS.cameras.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){ // item.get(i).ai_algorithm.equals("epics.ai.ActiveAINodeMulti")){
+                if(simS.cameras.get(i).ai_algorithm.equals("epics.ai.auctionSchedules.ActiveAuctionSchedule")){ // item.get(i).ai_algorithm.equals("epics.ai.auctionSchedules.ActiveAuctionSchedule")){
                     dirName += "a";
                 }
                 else{
@@ -794,7 +834,7 @@ public class SimSim {
 //                  testing.put(scenDirName + dirName + "//run" + r + ".csv", simS);
                     
                         
-                        SimCore sim = new SimCore(seed, totalDirName + "//" + scenDirName + "//" + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, false, allStatistics);//output_file, ss, false);
+                        SimCore sim = new SimCore(seed, totalDirName + "//" + scenDirName + "//" + dirName + "//run" + r + ".csv", simS, false, -1, 50, 0.5, movement, false, allStatistics);//output_file, ss, false);
                         sim.setQuiet(true);
                         //new SimCore(seed, run, ss, global, camError, camReset, alpha);
                         for (int i = 0; i < duration; i++) {
@@ -814,16 +854,24 @@ public class SimSim {
 	
 	
 	private static void runHomogeneous(int runs, int duration, File f, String scenName){
-		SimSettings ss = new SimSettings("", "", null, 1);
+		SimSettings ss = new SimSettings("", "", null, 1, "");
 		ss.loadFromXML(f.getAbsolutePath());
 		long seed = initialSeed;
 		
 		String scenDirName = totalDirName + "//"+ scenName + "//";
-		String algo = "epics.ai.ActiveAINodeMulti";
-		
 
 		List<Object[]> input = loadAllCombos();
         for(Object[] o : input){
+            
+            if(((CommPolicy) o[0]).toString().equals("epics.ai.commpolicy.Fix")){
+                ss = new SimSettings("", "", null, 0, "");
+                ss.loadFromXML(f.getAbsolutePath());
+            }
+            else{
+                ss = new SimSettings("", "", null, 1, "");
+                ss.loadFromXML(f.getAbsolutePath());
+            }
+            
             String dirname = ((AuctionsSchedule) o[1]).toShortString() + ((CommPolicy) o[0]).toShortString();
 			for(CameraSettings cs : ss.cameras){
 			    cs.ai_algorithm = ((AuctionsSchedule) o[1]).toString();
@@ -850,14 +898,17 @@ public class SimSim {
 	        			directory = new File(scenDirName + dirname);
 	        			directory.mkdirs();
 	        			
-		                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, false, true);//output_file, ss, false);
+		                SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, movement, false, true);//output_file, ss, false);
 		                sim.setQuiet(true);
 		                for (int k = 0; k < duration; k++) {
 		                    try {
 								sim.update();
+								
+								
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
+		                    
 		                }
 		                sim.close_files();
 	        		}
@@ -888,7 +939,7 @@ public class SimSim {
 		arguments[2] = "--no-gui";
 		arguments[3] = ""; //global -- changes
 		arguments[4] = "-a";
-		arguments[5] = "epics.ai.ActiveAINodeMulti"; //algorithm -- changes
+		arguments[5] = "epics.ai.auctionSchedules.ActiveAuctionSchedule"; //algorithm -- changes
 		arguments[6] = "-c";
 		arguments[7] = "1"; //communication -- changes
 		arguments[8] = "-t";
@@ -916,8 +967,8 @@ public class SimSim {
 								dirName = scenDirName;
 								
 								switch(algo){
-									case 0: algoN = "ACTIVE//"; arguments[5] = "epics.ai.ActiveAINodeMulti"; dirName += "a"; break;
-									case 1: algoN = "PASSIVE//"; arguments[5] = "epics.ai.PassiveAINodeMulti"; dirName += "p";break;
+									case 0: algoN = "ACTIVE//"; arguments[5] = "epics.ai.auctionSchedules.ActiveAuctionSchedule"; dirName += "a"; break;
+									case 1: algoN = "PASSIVE//"; arguments[5] = "epics.ai.auctionSchedules.PassiveAuctionSchedule"; dirName += "p";break;
 									case 2: algoN = "ASKER//"; arguments[5]= "asker"; break;
 								}
 								
@@ -940,10 +991,7 @@ public class SimSim {
 								directory = new File(dirName += "//");
 								directory.mkdir();
 								
-//									switch(glob){
-//										case 0: arguments[3] = "-g"; grcN = "GRC//"; break;
-//										case 1: arguments[3] = ""; grcN = "NOGRC//"; break;
-//									}
+
 								
 								if(algo == 2){
 									if(comm == 0){
@@ -978,28 +1026,7 @@ public class SimSim {
 									
 									}
 								}
-								else{
-//									boolean skip = false;
-////									if((comm == 3) && (vg != 0)){
-////										skip = true;
-////									}
-//									if(!skip){
-//										dirName += commN;
-//										directory = new File(dirName);
-//										directory.mkdir(); //for communication
-//										
-//										dirName += algoN;
-//										directory = new File(dirName);
-//										directory.mkdir(); //for algo
-//										
-//										dirName += vgN;
-//										directory = new File(dirName);
-//										directory.mkdir(); //for VisionGraph
-//										
-//										dirName += grcN;
-//										directory = new File(dirName);
-//										directory.mkdir(); //for grc
-										
+								else{										
 										arguments[1] = dirName + "run" + i + ".csv";
 										
 										for(int argsindex = 1; argsindex < arguments.length; argsindex++){
@@ -1040,10 +1067,11 @@ public class SimSim {
 	    return result;
 	}
 	
-	private static void loadAllFiles(){
+	@SuppressWarnings("unused")
+    private static void loadAllFiles(){
 	 // Prepare.
 	    String packageName = "epics.ai";
-	    List<Class<AbstractAINode>> commands = new ArrayList<Class<AbstractAINode>>();
+	    List<Class<AbstractAuctionSchedule>> commands = new ArrayList<Class<AbstractAuctionSchedule>>();
 	    URL root = Thread.currentThread().getContextClassLoader().getResource(packageName.replace(".", "/"));
 
 	    // Filter .class files.
@@ -1059,8 +1087,8 @@ public class SimSim {
 	        Class<?> cls;
             try {
                 cls = Class.forName(packageName + "." + className);
-    	        if (AbstractAINode.class.isAssignableFrom(cls)) {
-    	            commands.add((Class<AbstractAINode>) cls);
+    	        if (AbstractAuctionSchedule.class.isAssignableFrom(cls)) {
+    	            commands.add((Class<AbstractAuctionSchedule>) cls);
     	        }
     	        System.out.println(cls.toString());
 	        } catch (ClassNotFoundException e) {
@@ -1078,8 +1106,8 @@ public class SimSim {
     static Random ran = new Random(initialSeed);
     
 	private static boolean diffSeed = true;
-    public static boolean runSequential = true;
-    public static int runRandomConfigs = 0;
+    private static boolean runSequential = true;
+    private static int runRandomConfigs = 0;
     private static boolean randomSeed = false; // DOES NOT MAKE SENSE TO USE!! SINCE THIS WOULD CHANGE THE PATH OF THE OBJECTS IN EVERY USE!!!
     private static boolean runAllErrorVersions = false;
     static boolean showgui = false;
@@ -1101,19 +1129,23 @@ enum States{
     ABC,
     AST,
     ASM,
+    DBC,
+    DST,
+    DSM,
     PBC,
     PST,
     PSM
 }
 
 enum CommPolicy{
-    BROADCAST("epics.commpolicy.Broadcast", "0")
-    ,SMOOTH("epics.commpolicy.Smooth", "1")
-    ,STEP("epics.commpolicy.Step", "2")
-   // ,FIX("epics.commpolicy.Fix", "3")
+    BROADCAST("epics.ai.commpolicy.Broadcast", "0")
+//    ,SMOOTH("epics.ai.commpolicy.Smooth", "1")
+//    ,STEP("epics.ai.commpolicy.Step", "2")
+   // ,FIX("epics.ai.commpolicy.Fix", "3")
     ;  
     /**
      * @param text
+     * @param st 
      */
     private CommPolicy(final String text, final String st) {
         this.text = text;
@@ -1147,11 +1179,13 @@ enum CommPolicy{
 }
 
 enum AuctionsSchedule {
-    ACTIVE("epics.ai.ActiveAINodeMulti", "A")
-    , PASSIVE("epics.ai.PassiveAINodeMulti", "P")
+    ACTIVE("epics.ai.auctionSchedules.ActiveAuctionSchedule", "A")
+    , PASSIVE("epics.ai.auctionSchedules.PassiveAuctionSchedule", "P")
     ;  
+    
     /**
      * @param text
+     * @param st 
      */
     private AuctionsSchedule(final String text, final String st) {
         this.text = text;

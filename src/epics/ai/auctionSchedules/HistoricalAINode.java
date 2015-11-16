@@ -1,4 +1,4 @@
-package epics.ai;
+package epics.ai.auctionSchedules;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -12,8 +12,7 @@ import java.util.Set;
 
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
-import epics.common.AbstractAINode;
-import epics.common.AbstractCommunication;
+import epics.common.AbstractAuctionSchedule;
 import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
@@ -38,21 +37,36 @@ public class HistoricalAINode {
 
 	/** Whether to display debug msgs about historical positions/bidding */
     private static boolean DEBUG_HIST = false;
+    /**
+     * pre-print for this class debug messages
+     */
     public static final String KEY_DEBUG_HIST = "DebugHist";
 	
 	/** If we have never seen an object before, we don't have an avgTS, so we 
 	 * cannot calculate the bid coefficient. This is the default in that case. */
 	public static final double DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT = 20.0;
+	/**
+	 * 
+	 */
 	public static final String KEY_PRE_INSTANTIATION_BID_COEFFICIENT = "PreInstantiationBidCoefficient";
 	private double preInstantiationBidCoefficient = DEFAULT_PRE_INSTANTIATION_BID_COEFFICIENT;
 	
 	/** If the avgTS is 5 but an object is still around after 10 TS, the bid
 	 * coefficient is not calculable by the standard formula, so use this default */
     public static final double DEFAULT_OVERSTAY_BID_COEFFICIENT = 0.0;
+    /**
+     * 
+     */
 	public static final String KEY_OVERSTAY_BID_COEFFICIENT = "OverstayBidCoefficient"; 
     private double overstayBidCoefficient = DEFAULT_OVERSTAY_BID_COEFFICIENT;
 	
+    /**
+     * 
+     */
     public static final boolean DEFAULT_CLASSIFICATION_ENABLED = true;
+    /**
+     * 
+     */
 	public static final String KEY_CLASSIFICATION_ENABLED = "ClassificationEnabled"; 
     private boolean classificationEnabled = DEFAULT_CLASSIFICATION_ENABLED;
 	
@@ -65,7 +79,13 @@ public class HistoricalAINode {
      * With three categories, anything -180 to -60 is category 1, anything -60 to 60
      * is category 2, anything 60 to 180 is category 3.  */
     public static final int DEFAULT_OBJ_CATEGORIES = 4;
+    /**
+     * 
+     */
     public static final String KEY_OBJ_CATEGORIES = "ObjectCategories";
+    /**
+     * 
+     */
     public int objCategories = DEFAULT_OBJ_CATEGORIES;
 	
     /** Whether history is taken on a per-category basis for each camera 
@@ -74,35 +94,82 @@ public class HistoricalAINode {
      * depending on the category the object is in. 
      * Note that classification must be enabled for this feature to work */
     public static final boolean DEFAULT_HIST_PER_CATEGORY = true;
+    /**
+     * 
+     */
 	public static final String KEY_HIST_PER_CATEGORY_ENABLED = "HistPerCategoryEnabled"; 
 	private boolean histPerCategoryEnabled = DEFAULT_HIST_PER_CATEGORY;
 	
 	/** Whether hist-based bidding is used */ 
     public static final boolean DEFAULT_HIST_ENABLED = true; 
+    /**
+     * 
+     */
 	public static final String KEY_HIST_ENABLED = "HistEnabled"; 
 	private boolean histEnabled = DEFAULT_HIST_ENABLED;
-	    
-	public static class Active extends ActiveAINodeMulti {
+	   
+	/**
+	 * 
+	 * 
+	 * @author Horatio Caine
+	 *
+	 */
+	public static class Active extends ActiveAuctionSchedule {
 		private HistoricalAINode histNode;
 
+		/**
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param auctionDuration
+		 * @param rg
+		 */
 		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
 	    	super(staticVG, vg, r, auctionDuration, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param auctionDuration
+		 * @param rg
+		 * @param bs
+		 */
 		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(staticVG, vg, r, auctionDuration, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param rg
+		 */
 		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 	    	super(staticVG, vg, r, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param rg
+		 * @param bs
+		 */
 		public Active(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(staticVG, vg, r, rg, bs);
@@ -198,27 +265,69 @@ public class HistoricalAINode {
 	    }
 	}
 	
-	public static class Passive extends PassiveAINodeMulti {
+	/**
+	 * 
+	 * 
+	 * @author Horatio Caine
+	 *
+	 */
+	public static class Passive extends PassiveAuctionSchedule {
 		private HistoricalAINode histNode;
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param auctionDuration
+		 * @param rg
+		 */
 		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg) {
 	    	super(staticVG, vg, r, auctionDuration, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param auctionDuration
+		 * @param rg
+		 * @param bs
+		 */
 		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(staticVG, vg, r, auctionDuration, rg, bs);
 	    	histNode = new HistoricalAINode();
 	    }
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param rg
+		 */
 		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg) {
 	    	super(staticVG, vg, r, rg);
 	    	histNode = new HistoricalAINode();
 	    }
 		
+		/**
+		 * 
+		 * Constructor for HistoricalAINode.java
+		 * @param staticVG
+		 * @param vg
+		 * @param r
+		 * @param rg
+		 * @param bs
+		 */
 		public Passive(boolean staticVG, 
 	    		Map<String, Double> vg, IRegistration r, RandomNumberGenerator rg, IBanditSolver bs) {
 	    	super(staticVG, vg, r, rg, bs);
@@ -345,8 +454,15 @@ public class HistoricalAINode {
 	 * contains each category mapped to values of the pheromones */
 	private Map<String, Map<Integer, Double>> visionGraph = new HashMap<String, Map<Integer, Double>>();
 	
+	/**
+	 * 
+	 * Constructor for HistoricalAINode.java
+	 */
 	public HistoricalAINode() { /* Nothing here */ }
 	
+	/**
+	 * 
+	 */
 	public void update() {
 		updateHistoricalPoints();
 	}
@@ -543,7 +659,9 @@ public class HistoricalAINode {
 	/** Given an object, look at first two time steps of movement and 
 	 * categorise based on the object's direction.
 	 * See information around the categories field for information on what
-	 * each category means.  */
+	 * each category means.  
+	 * @param itro 
+	 * @return */
 	public int getCategoryForObject(ITrObjectRepresentation itro) {
 		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 
@@ -609,7 +727,7 @@ public class HistoricalAINode {
 	}
 	
 	/** Applies params for general Hist-based functions. Used by nested classes.
-	 * See {@link AbstractAINode#setParam(String, String)} */
+	 * See {@link AbstractAuctionSchedule#setParam(String, String)} */
 	public boolean setParam(String key, String value) {
 		if (KEY_OVERSTAY_BID_COEFFICIENT.equalsIgnoreCase(key)) {
 			overstayBidCoefficient = Double.parseDouble(value);

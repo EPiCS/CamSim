@@ -8,9 +8,20 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+/**
+ * DataPanel was intended to show information about the different elemetns in the simulation. 
+ * !! NOT IN USE !!
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class DataPanel extends JPanel {
 	
-	ArrayList<Double> values = new ArrayList<Double>(1000);
+	/**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    ArrayList<Double> values = new ArrayList<Double>(1000);
 	ArrayList<Integer> steps = new ArrayList<Integer>(1000);
 	double maxValue = 0.0;
 	int s = 0;
@@ -21,17 +32,31 @@ public class DataPanel extends JPanel {
 	private int xVal;
 	private int yVal;
 	
+	/**
+	 * 
+	 * Constructor for DataPanel
+	 * @param xval x location
+	 * @param yval y location
+	 */
 	public DataPanel(int xval, int yval){
 		xVal = xval;
 		yVal = yval;
 	}
 	
+	/**
+	 * add new value
+	 * @param v
+	 */
 	public void add(double v){
 		values.add(v);		
 		steps.add(s++);
 		repaint();
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+	 */
 	@Override
 	public void paintComponent(Graphics g){ //paintComponent(Graphics g){
 				

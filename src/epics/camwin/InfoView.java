@@ -7,12 +7,23 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import epics.camsim.core.CameraController;
 
+/**
+ * NOT USED
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class InfoView implements TreeSelectionListener {
 	JFrame infoView;
 	JTree tree;
 	SimCoreModel sim_core;
 	JPanel infostuff;
 	
+	/**
+	 * NOT USED!!
+	 * Constructor for InfoView.java
+	 * @param sm
+	 */
 	public InfoView(SimCoreModel sm){
 		sim_core = sm;
 		buildAndShow();
@@ -67,7 +78,12 @@ public class InfoView implements TreeSelectionListener {
 }
 
 class CameraPanel extends JPanel{
-	public CameraPanel(CameraController cc){
+	/**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    public CameraPanel(CameraController cc){
 		JLabel n = new JLabel("Name: ");
 		this.add(n);
 		JTextField jtf = new JTextField(cc.getName());

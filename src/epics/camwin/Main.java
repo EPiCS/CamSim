@@ -28,7 +28,9 @@ public class Main {
     static String paramFile = null;
     static String algo = "";
     static String comm = "";
+    static String bandit = "";
     static String customComm = null;
+    static String movement = "";
     static int predefVG = -1;
     static int camErr = -1;
     static int camReset = 50;
@@ -57,12 +59,18 @@ public class Main {
         System.out.println();
     }
 
+    /**
+     * prompts a short usage info on the command line
+     */
     public static void usage() {
         System.out.println("USAGE: ");
         System.out.println("  program [OPTIONS] input_file");
         System.out.println("\nuse -h for help");
     }
 
+    /**
+     * prints the help information on the command line
+     */
     public static void help() {
         usage();
 
@@ -94,6 +102,7 @@ public class Main {
 
     /**
      * @param args the command line arguments
+     * @throws Exception 
      */
     public static void main(String[] args) throws Exception {
 
@@ -101,7 +110,7 @@ public class Main {
 
         int c;
         String arg;
-        LongOpt[] longopts = new LongOpt[14];
+        LongOpt[] longopts = new LongOpt[16];
 
         StringBuffer sb = new StringBuffer();
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
@@ -118,9 +127,12 @@ public class Main {
         longopts[11] = new LongOpt("camerr", LongOpt.REQUIRED_ARGUMENT, null, 'e');
         longopts[12] = new LongOpt("camreset", LongOpt.REQUIRED_ARGUMENT, null, 'r');
         longopts[13] = new LongOpt("paramfile", LongOpt.REQUIRED_ARGUMENT, null, 'p');
+        longopts[14] = new LongOpt("movement", LongOpt.REQUIRED_ARGUMENT, null, 'm');
+        longopts[15] = new LongOpt("bandit", LongOpt.REQUIRED_ARGUMENT, null, 'b');
         
         
-        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:", longopts);
+        
+        Getopt g = new Getopt("guiapp", args, "a:c:u:v:gho:e:r:s:t:f:p:m:b:", longopts);
         while ((c = g.getopt()) != -1) {
             switch (c) {
                 case 0:
@@ -148,13 +160,19 @@ public class Main {
                     System.out.println("Setting output file to: " + arg);
                     output_file = arg;
                     break;
-
+                case 'b':
+                    arg = g.getOptarg();
+                    bandit = arg;
+                    break;
                 case 'f':
                     arg = g.getOptarg();
                     System.out.println("Setting summary file: " + arg);
                     summaryFile = arg;
                     break;
-
+                case 'm':
+                    arg = g.getOptarg();
+                    movement = arg;
+                    break;
                 case 's':
                     arg = g.getOptarg();
                     try {
@@ -252,7 +270,7 @@ public class Main {
         }
 
         
-        SimSettings ss = new SimSettings(algo, comm, customComm, predefVG);
+        SimSettings ss = new SimSettings(algo, comm, customComm, predefVG, bandit);
         if (input_file == null) {
             System.err.println("Error, no simulation file provided");
             usage();
@@ -270,7 +288,7 @@ public class Main {
         }
         
         SimCore sim = new SimCore(seed, output_file, summaryFile, paramFile, ss, 
-        		useGlobal, camErr, camReset, false, true);
+        		useGlobal, camErr, camReset, movement, false, true);
         if (showgui == false) {
             for (int i = 0; i < simulation_time; i++) {
                 sim.update();
@@ -285,6 +303,9 @@ public class Main {
         print_parameters();
     }
 
+    /**
+     * sim core model for this simulation
+     */
     public static SimCoreModel sim_model;
 
 }

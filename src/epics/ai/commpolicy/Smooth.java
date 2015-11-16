@@ -1,11 +1,11 @@
-package epics.commpolicy;
+package epics.ai.commpolicy;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import epics.common.AbstractAINode;
+import epics.common.AbstractAuctionSchedule;
 import epics.common.ICameraController;
 import epics.common.IMessage.MessageType;
 import epics.common.ITrObjectRepresentation;
@@ -21,7 +21,12 @@ public class Smooth extends AbstractCommunication {
 
 	Broadcast broadcast;
 	
-	public Smooth(AbstractAINode ai, ICameraController camController) {
+	/**
+	 * Constructor for Smooth.java
+	 * @param ai
+	 * @param camController
+	 */
+	public Smooth(AbstractAuctionSchedule ai, ICameraController camController) {
 		super(ai, camController);
 		broadcast = new Broadcast(ai, camController);
 	}
@@ -34,9 +39,9 @@ public class Smooth extends AbstractCommunication {
 		
 		if(mt == MessageType.StartSearch){
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
-			if(AbstractAINode.USE_BROADCAST_AS_FAILSAVE){
+			if(AbstractAuctionSchedule.USE_BROADCAST_AS_FAILSAVE){
 				if(!stepsTillBroadcast.containsKey(io)){
-					stepsTillBroadcast.put(io, AbstractAINode.STEPS_TILL_BROADCAST);
+					stepsTillBroadcast.put(io, AbstractAuctionSchedule.STEPS_TILL_BROADCAST);
 				}
 			}
 			//get max strength
@@ -75,7 +80,7 @@ public class Smooth extends AbstractCommunication {
 					}
 				}
 				if(sent == 0){
-					if(AbstractAINode.DEBUG_CAM){
+					if(AbstractAuctionSchedule.DEBUG_CAM){
 						System.out.println(camController.getName() + " tried to MC --> now BC");
 					}
 					
@@ -83,7 +88,7 @@ public class Smooth extends AbstractCommunication {
 				}
 			}
 			else{
-				if(AbstractAINode.DEBUG_CAM){
+				if(AbstractAuctionSchedule.DEBUG_CAM){
 					System.out.println(camController.getName() + " tried to MC --> now BC 2");
 				}
 				broadcast(mt, o);   
@@ -107,6 +112,6 @@ public class Smooth extends AbstractCommunication {
 	
 	@Override
 	public void broadcast(MessageType mt, Object o) {
-		broadcast.multicast(mt, o);
+		broadcast.broadcast(mt, o);
 	}
 }

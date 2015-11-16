@@ -8,7 +8,8 @@ import epics.common.AbstractMovement;
 import epics.common.RandomNumberGenerator;
 
 /**
- * 
+ * Movement behaviour based on defiend waypoints. the objects starts at a given starting point and moves towards the first waypoint. each waypoint is traversed as given in the list in a direct line. 
+ * if the starting point is not on a waypoint (or on any point laying on the line between two waypoints), this starting point is never reached again.  
  * @author Lukas Esterle <Lukas.Esterle@aau.at>
  *
  */
@@ -16,6 +17,17 @@ public class Waypoints extends AbstractMovement{
     private List<Point2D> waypoints;
     private int currentWaypoint = 0;
 
+    /**
+     * 
+     * Constructor for Waypoints to be traversed by object
+     * @param x x-coordinate of starting point of the object - moves towards first waypoint from here
+     * @param y y-coordinate of starting point of the object - moves towards first waypoint from here
+     * @param speed initial speed of object
+     * @param heading initial heading of object
+     * @param rg random number generator
+     * @param waypoints set of waypoints tobe traveresed
+     * @param sim
+     */
     public Waypoints(double x, double y, double speed, double heading, RandomNumberGenerator rg, List<Point2D> waypoints, SimCore sim)
     {
         super(x, y, heading, speed, rg, sim);
@@ -23,11 +35,10 @@ public class Waypoints extends AbstractMovement{
         currentWaypoint = 1;
     }
     
-//    public Waypoints(double x, double y, double speed, double heading, RandomNumberGenerator rg, SimCore sim, object)
-//    {
-//        super(x, y, heading, speed, rg, sim);
-//    }
-
+    /*
+     * (non-Javadoc)
+     * @see epics.common.AbstractMovement#update()
+     */
     @Override
     public void update() {
         double x_move = 0;
@@ -41,13 +52,9 @@ public class Waypoints extends AbstractMovement{
                 this.currentWaypoint = 0;
             }
         }
-
-        //System.out.println( "WAYPOINT n=" + this.currentWaypoint + " of " + this.waypoints.size() + " [x" + waypoints.get(currentWaypoint).getX() + ", y" +waypoints.get(currentWaypoint).getY() + " ]");
-
         double delta_x = waypoints.get(currentWaypoint).getX() - this.x;
         double delta_y = waypoints.get(currentWaypoint).getY() - this.y;
 
-        // Magic way to compute our new heading :)
         // Radians
         this.heading = Math.atan2(1,0) - Math.atan2(delta_y, delta_x);
 
@@ -60,22 +67,25 @@ public class Waypoints extends AbstractMovement{
         checkBoundaryCollision(x_move, y_move);
     }
     
+    /*
+     * (non-Javadoc)
+     * @see epics.common.AbstractMovement#getWaypoints()
+     */
     @Override
     public List<Point2D> getWaypoints() {
         return this.waypoints;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see epics.common.AbstractMovement#toXMLString(java.lang.String)
+     */
     @Override
     public String toXMLString(String feat) {
         String indent = "                    ";
         String name = "brownian_motion";
         String retVal = "<" + name + " features=\"" + feat + "\" speed=\"" + this.speed;
         
-        /*
-         * <object_with_waypoints features="2.0" speed="1.0">
-                <waypoint x="-28.0" y="2.0"/>
-            </object_with_waypoints>
-         */
         retVal += "\">";
         for (Point2D waypoint : this.getWaypoints()) {
             retVal += "\n"+indent+"<waypoint x=\"" + waypoint.getX() + "\" y=\"" + waypoint.getY() + "\"/>";

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <simulation max_x="40.0" max_y="20.0" min_x="-40.0" min_y="-20.0">
+        <cameras>
+		<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="277.2101241250277" name="C93" range="28.741868473098254" viewing_angle="62.462999763482934" x="-0.4117382962876093" y="1.8705490879332878" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="69.87325910900769" name="C94" range="23.007947381065364" viewing_angle="47.632752313116164" x="-17.761195645291146" y="-16.5122108612768" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="374.7924461700453" name="C95" range="24.43043697248153" viewing_angle="64.62607758693606" x="29.628260128307076" y="16.533634829170488" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="36.506472895924006" name="C96" range="25.04910249358502" viewing_angle="90.99944777754007" x="-36.08088210000194" y="-10.791221425435097" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="15.592689936374708" name="C97" range="22.644340607932406" viewing_angle="30.985642520022886" x="-33.6849968848599" y="17.3406533877637" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="58.773415706024416" name="C98" range="26.666378951832236" viewing_angle="61.77842053790314" x="39.65438961455851" y="-8.318072890683254" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="159.0221661115493" name="C99" range="14.429473124056836" viewing_angle="61.10690018883993" x="23.981733567488632" y="-5.891970532305699" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="327.9716725008094" name="C100" range="25.392354649236314" viewing_angle="20.679027196052566" x="38.94066207244373" y="-12.422123740065118" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="234.31779560151898" name="C101" range="22.078533728669537" viewing_angle="35.29040136011841" x="6.420913509475085" y="1.536162314754776" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="321.7413739106912" name="C102" range="18.856496459702043" viewing_angle="37.75170447637338" x="-38.071981067058104" y="11.31874289091045" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="193.43206593485198" name="C103" range="18.83215092849786" viewing_angle="73.57006940511903" x="33.66929962218941" y="17.624976862175302" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="293.47315910831196" name="C104" range="12.039016585572078" viewing_angle="70.35911498574092" x="-10.749879326981258" y="-15.938675982418198" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="384.0972173937133" name="C105" range="14.413132285161801" viewing_angle="38.83472581198776" x="35.86136792180078" y="-2.7724163196923683" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="241.61865586217914" name="C106" range="22.104814265092138" viewing_angle="15.147225062322377" x="36.88884318767779" y="10.528835908647011" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="112.25758959487356" name="C107" range="17.571033772965034" viewing_angle="59.137698068186936" x="36.69527113393718" y="-13.474786596652802" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="156.61579270828148" name="C108" range="11.027180767173089" viewing_angle="20.21366017356496" x="-33.23630245059375" y="18.583203846638995" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="35.837819284241505" name="C109" range="24.448611746962023" viewing_angle="52.21959645280604" x="-31.91570151253775" y="-6.409045766295634" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="207.804263612941" name="C110" range="21.140836070515665" viewing_angle="56.632984413715185" x="-37.39709580139839" y="18.223337630507622" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="10.892048773116146" name="C111" range="13.18701048214843" viewing_angle="75.20525476298246" x="-35.41230655629209" y="-3.8933310547978977" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="17.1878995737397" name="C112" range="19.58852354033336" viewing_angle="93.11732721208871" x="27.541239688746714" y="-18.680916348644832" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="123.47848278011621" name="C113" range="11.251065585241422" viewing_angle="70.50624296315092" x="30.27026198053419" y="-3.359655563252087" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="229.81371993983618" name="C114" range="11.239352554932765" viewing_angle="61.637030598371915" x="-26.31380891351108" y="0.7479652349699748" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="387.1636021896143" name="C115" range="27.030657397906964" viewing_angle="34.88870552453938" x="-30.78854580771501" y="5.301138173762581" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="22.142442086389707" name="C116" range="29.517395990126374" viewing_angle="62.26817422865282" x="-0.5776454389786068" y="4.782216802918214" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="271.1323658757973" name="C117" range="14.971860192898445" viewing_angle="93.56652717753079" x="-35.11106981326175" y="0.3751533008971286" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="166.6307999562061" name="C118" range="15.705213845186401" viewing_angle="28.03816604109773" x="33.24646605989041" y="-11.145648281233559" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="243.37176960079236" name="C119" range="21.48854972477029" viewing_angle="51.60191644783636" x="22.454880009626635" y="-9.297466718352702" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="145.90274749583932" name="C120" range="11.26105582117555" viewing_angle="64.26551116425692" x="-24.85911282293562" y="-1.3245336154852936" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="95.65180787629397" name="C121" range="23.93937822685797" viewing_angle="79.46362591233402" x="-35.70149484328296" y="14.76948810208428" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="372.6202853197669" name="C122" range="27.654997617864932" viewing_angle="67.55523108129687" x="30.538765769250844" y="-15.256080763904066" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="359.83979342190565" name="C123" range="17.827423539740376" viewing_angle="79.70041105784732" x="14.4752815178866" y="6.128336592111552" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="55.70232052161528" name="C124" range="13.895240628918227" viewing_angle="16.055187919863634" x="-33.61656268749944" y="14.402854238391463" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="45.2819241408595" name="C125" range="27.953624452467697" viewing_angle="91.5309718844126" x="-13.748845855201346" y="12.88331955247706" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="188.663852005255" name="C126" range="24.550768315221106" viewing_angle="20.353839363148133" x="-26.850195869771028" y="-8.189370865523895" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="331.97552042320024" name="C127" range="11.456109202340679" viewing_angle="82.7962746636306" x="22.263115081958333" y="0.33570977503593014" comm="0"/>
+<camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="219.67358422269535" name="C128" range="18.51253448904417" viewing_angle="35.76828430668299" x="36.425579603958454" y="-16.306743393226466" comm="0"/>
+
+	</cameras>
+        <objects>
+	        <object features="1.0" heading="1.7225709266833233" speed="1.0" x="-30.0" y="-2.0"/>
+		<object features="3.996" heading="4.850550990756193" speed="0.5936606789459328" x="-8.018355329160237" y="-1.3417852945847173"/>
+		<object features="4.107" heading="5.135692669722958" speed="0.7643729491375706" x="-29.300709703407133" y="12.062336290944273"/>
+		<object features="4.218" heading="6.280275602809609" speed="0.5004334531506441" x="-15.895096448150035" y="-6.657408986782286"/>
+		<object features="4.329" heading="6.151762132988459" speed="0.578540958946469" x="-29.765188162966748" y="-14.106250352851701"/>
+		<object features="4.44" heading="2.8146563282791193" speed="0.6118314996659319" x="-4.26573124021575" y="11.253098291031826"/>
+		<object features="4.551" heading="6.162912454144392" speed="0.7479746699612003" x="10.30551404997221" y="14.425030810162966"/>
+		<object features="4.662" heading="3.7223338614605685" speed="0.9838645907049757" x="0.645328796895587" y="-11.281815783972512"/>
+		<object features="4.773" heading="4.747526154098078" speed="0.7781735655737227" x="6.818256151635524" y="-28.369856287866806"/>
+		<object features="4.884" heading="4.350732397208153" speed="0.5889354091053732" x="19.070250365103128" y="14.467100786068457"/>
+		<object features="4.995" heading="0.8440689009591884" speed="0.827973397621236" x="15.021098276696861" y="-18.58681582448265"/>
+		<object features="5.106" heading="3.6486310559839836" speed="0.5073867667109249" x="25.982587926392313" y="-11.333473394196254"/>
+		<object features="5.217" heading="2.6131403161575553" speed="0.7554574255745552" x="-23.1670785217402" y="11.036479888083683"/>
+		<object features="5.328" heading="1.475862213394935" speed="0.6002378063107506" x="26.436555913027192" y="2.048732081371611"/>
+		<object features="5.439" heading="0.6280256705629725" speed="0.5587284306917943" x="-14.967829410681572" y="14.132421898867726"/>
+		<object features="5.55" heading="5.226079546186687" speed="0.42795281744914526" x="-18.67990453382449" y="-12.134317090796888"/>
+		<object features="5.6615" heading="3.6838127480167255" speed="0.45138539137820854" x="-24.83588592610179" y="23.533421791231994"/>
+		<object features="5.772" heading="1.2179888876234584" speed="0.9300866652233193" x="1.8811527416836142" y="-25.596566341484177"/>
+		<object features="5.883" heading="3.9680629744310165" speed="0.7625484757701086" x="-8.974030377957234" y="29.154349573620898"/>
+		<object features="5.994" heading="6.50952842022219" speed="0.5306502701574548" x="-13.613481904039833" y="0.7912108562982283"/>
+		<object features="6.105" heading="1.8893803883331786" speed="0.801276090262202" x="24.589304368997574" y="-28.838153108812964"/>
+		<object features="6.216" heading="1.559010104745007" speed="0.4840401963847499" x="-12.727392125046258" y="-26.16045681417192"/>
+		<object features="6.327" heading="2.093709334629628" speed="0.7752178232805527" x="6.219046422815957" y="13.66486836370769"/>
+		<object features="6.438" heading="0.6385241940752292" speed="0.8263758801031982" x="-27.85243371762196" y="-1.3581819090422336"/>
+		<object features="6.549" heading="4.165307875822821" speed="0.8033469291432012" x="-3.95148386629662" y="19.160850570350753"/>
+		<object features="6.66" heading="1.8562064535985463" speed="0.8470883007269205" x="-2.9959331850045743" y="-9.32635301587403"/>
+		<object features="6.771" heading="6.34162561617852" speed="0.8126162047216832" x="-17.630165200037393" y="-21.028138066256037"/>
+		<object features="6.882" heading="1.3446922994304271" speed="0.7456039530342247" x="25.0021643660574" y="-27.8756017662391"/>
+		<object features="6.993" heading="0.9521882746074734" speed="0.458380863512349" x="27.899084822173634" y="-10.094875469755497"/>
+		<object features="7.104" heading="2.9551586412277158" speed="0.6879677126278371" x="19.18161369453435" y="10.195296669323433"/>
+		<object features="14.319" heading="166.79692488325577" speed="0.6539287462570256" x="-24.820617094690107" y="-25.097607593829423"/>
+       	 </objects>
+
+	<events>
+	    <event timestep="437" participant="camera" name="C93" event="error" duration="-1"/>
+	    <event timestep="476" participant="camera" name="C115" event="error" duration="-1"/>
+	    <event timestep="460" participant="camera" name="C94" event="error" duration="-1"/>
+	    <event timestep="461" participant="camera" name="C122" event="error" duration="-1"/>
+	    <event timestep="440" participant="camera" name="C101" event="error" duration="-1"/>
+	</events>
+
+	<visiongraph static="false">
+	    <graphnode name="C102">
+		<neighbour name="C121" />
+		<!-- <neighbour name="C110" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C121">
+		<neighbour name="C108" />
+		<neighbour name="C97" />
+	    </graphnode>
+	    <graphnode name="C110">
+		<neighbour name="C121" />
+		<neighbour name="C117" />
+		<!-- <neighbour name="C97" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C108" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C96">
+		<neighbour name="C117" />
+		<!-- <neighbour name="C109" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C126" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C114" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C108">
+		<neighbour name="C97" />
+		<neighbour name="C115" />
+	    </graphnode>
+	    <graphnode name="C115">
+		<neighbour name="C124" />
+		<neighbour name="C109" />
+		<neighbour name="C111" />
+		<neighbour name="C121" /> 
+	    </graphnode>
+	    <graphnode name="C109">
+		<neighbour name="C111" />
+		<neighbour name="C114" />
+		<neighbour name="C93" />
+		<neighbour name="C124" />
+	    </graphnode>
+	    <graphnode name="C114">
+		<neighbour name="C111" />
+		<neighbour name="C93" /> 
+		<!-- <neighbour name="C120" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C126" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C120">
+		<neighbour name="C104" />
+		<neighbour name="C101" />
+		<neighbour name="C93" />
+		<!-- <neighbour name="C126" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C93">
+		<neighbour name="C126" />
+		<neighbour name="C104" />
+		<!-- <neighbour name="C116" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C125" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C124" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C115" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C101">
+		<neighbour name="C104" />
+		<neighbour name="C94" />
+	    </graphnode>
+	    <graphnode name="C94">
+		<neighbour name="C119" />
+		<!-- <neighbour name="C104" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C125">
+		<neighbour name="C116" />
+		<neighbour name="C123" />
+	    </graphnode>
+	    <graphnode name="C123">
+		<neighbour name="C116" />
+		<neighbour name="C127" />
+		<neighbour name="C103" />
+	    </graphnode>
+	    <graphnode name="C103">
+		<neighbour name="C105" />
+		<neighbour name="C127" />
+		<!-- <neighbour name="C95" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C99">
+		<neighbour name="C112" />
+		<!-- <neighbour name="C119" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C112">
+		<neighbour name="C98" />
+		<!-- <neighbour name="C119" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C118" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C122" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C106">
+		<neighbour name="C105" />
+		<neighbour name="C100" />
+		<!-- <neighbour name="C103" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C98" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C105">
+		<neighbour name="C100" />
+		<!-- <neighbour name="C98" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C118">
+		<neighbour name="C128" />
+		<!-- <neighbour name="C122" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C107" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C122">
+		<neighbour name="C107" />
+		<neighbour name="C113" />
+		<neighbour name="C100" />
+		<neighbour name="C113" />
+		<neighbour name="C98" />
+		<!-- <neighbour name="C107" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+		<!-- <neighbour name="C105" />  COMMENTED OUT. TAKE OUT IF NOT ONLY OVERLAPPING FoV!! -->
+	    </graphnode>
+	    <graphnode name="C107">
+		<neighbour name="C113" />
+	    </graphnode>
+	</visiongraph>	
+
+
+    </simulation>
+</root>
+
+

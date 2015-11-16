@@ -1,7 +1,13 @@
 package epics.camsim.core;
 
+import java.awt.Color;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,11 +17,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
 
-//import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
-import epics.common.AbstractAINode;
+import com.sun.javafx.geom.Arc2D;
+
+import net.sf.epsgraphics.ColorMode;
+import net.sf.epsgraphics.EpsGraphics;
+import epics.ai.commpolicy.Broadcast;
+import epics.ai.commpolicy.Fix;
+import epics.ai.commpolicy.Smooth;
+import epics.ai.commpolicy.Step;
+import epics.camwin.CoordinateSystemTransformer;
+import epics.camwin.Point;
+import epics.common.AbstractAuctionSchedule;
 import epics.common.AbstractCommunication;
 import epics.common.AbstractMovement;
 import epics.common.CmdLogger;
@@ -27,9 +43,6 @@ import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse;
 import epics.common.RunParams;
-import epics.commpolicy.Broadcast;
-import epics.commpolicy.Smooth;
-import epics.commpolicy.Step;
 import epics.movement.Brownian;
 import epics.movement.Waypoints;
 
@@ -46,9 +59,14 @@ public class SimCore {
 	boolean USEGLOBAL = false;
 	String EPSILONGREEDY = "epics.learning.EpsilonGreedy";
 	private double epsilon = 0.1;
-	double alpha = 0.5;
-	private int selectInterval = 0; //if < 1, a new strategy is selected every timestep
-	private int currentSelectInt = 0;
+	private double alpha = 0.5;
+	private double beta = 0.5;
+	private double gamma = 0.0;
+	@SuppressWarnings("unused")
+    private int selectInterval = 0; //if < 1, a new strategy is selected every timestep
+	@SuppressWarnings("unused")
+    private int currentSelectInt = 0;
+	String movement = "";
 	
 	Statistics stats;
 	RandomNumberGenerator randomGen;
@@ -56,6 +74,10 @@ public class SimCore {
 	int interval = 1;
 	
     static int camIDGenerator = 0;
+    /**
+     * returns a new unique id for camera
+     * @return
+     */
     public static int getNextID(){ return camIDGenerator++; }
 
     /*
@@ -91,7 +113,11 @@ public class SimCore {
      * @return maximum simulation time
      */
     public long get_sim_time(){return sim_time;}
-    private String ai_alg; 	  public boolean staticVG = false;
+    private String ai_alg; 	  
+    /**
+     * sets if vision graph should be static or not
+     */
+    public boolean staticVG = false;
    
     private boolean firstUpdate;
     private ArrayList<SimSettings.Event> events;
@@ -99,6 +125,10 @@ public class SimCore {
     private int step;
     
     private IRegistration reg = null;
+    /**
+     * settings for this simulation from an XML file
+     */
+    @SuppressWarnings("unused")
     private SimSettings settings;
     private String paramFile;
 
@@ -119,6 +149,7 @@ public class SimCore {
     private ArrayList<TraceableObject> objects = new ArrayList<TraceableObject>();
 	private AbstractCommunication _comm = null;
 	private String outputFile;
+   
     
 
 	/**
@@ -131,7 +162,7 @@ public class SimCore {
 	 * @param camReset probability of a reset after a camera failed
 	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global){
-		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null);
+		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null, "");
 		this.interpretFile(ss);
 	}
 	
@@ -146,7 +177,7 @@ public class SimCore {
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
 	 */
 	public SimCore( long seed, String output, SimSettings ss, boolean global, double banditParam, double alpha){
-		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null);
+		initSimCore(seed, output, global, -1, 50, alpha, false, false, "", null, "");
 		this.interpretFile(ss);
 	}
 
@@ -156,13 +187,15 @@ public class SimCore {
      * @param output outputfilename for statistics
      * @param ss settings of simulations - generated from an scenariofile
      * @param global global coordination used
+	 * @param epsilon 
      * @param banditParam the epsilon/temperature value for bandit solvers
      * @param alpha the alpha value for the weighted reward function used in bandit solvers
+	 * @param movement 
 	 * @param realData indicates if real data has been used
 	 * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
-	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, boolean realData, boolean allStatistics){
-		initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null);
+	public SimCore( long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, String movement, boolean realData, boolean allStatistics){
+		initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null, movement);
 		this.epsilon = epsilon;
 		this.interpretFile(ss); 
 	}
@@ -176,13 +209,14 @@ public class SimCore {
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
      * @param alpha the alpha value for the weighted reward function used in bandit solvers
+	 * @param movement 
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
 	 */
 	public SimCore( long seed, String output, SimSettings ss, 
-			boolean global, int camError, int camReset, double alpha, boolean realData, boolean allStatistics) {
+			boolean global, int camError, int camReset, double alpha, String movement, boolean realData, boolean allStatistics) {
 	    initSimCore(seed, output, global, camError, camReset,
-				alpha, realData, allStatistics, "", null);
+				alpha, realData, allStatistics, "", null, movement);
 		this.interpretFile(ss);
 	}
 	
@@ -196,17 +230,41 @@ public class SimCore {
      * @param global global coordination used
      * @param camError the probability of failing cameras
      * @param camReset probability of a reset after a camera failed
+     * @param movement 
 	 * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
      */
 	public SimCore(long seed, String output, String summaryFile, String paramFile, SimSettings ss, 
-    		boolean global, int camError, int camReset, boolean realData, boolean allStatistics) {
+    		boolean global, int camError, int camReset, String movement, boolean realData, boolean allStatistics) {
     	initSimCore(seed, output, global, camError, camReset,
-				alpha, realData, allStatistics, summaryFile, paramFile);
+				alpha, realData, allStatistics, summaryFile, paramFile, movement);
     	this.interpretFile(ss);
     }
 
 	/**
+	 * Constructor for SimCore
+	 * @param seed for random number generator
+	 * @param output output file
+	 * @param ss settings from xml
+	 * @param global global registration (NOT USED)
+	 * @param epsilon epsilon for epsilon greedy bandit solver
+	 * @param alpha alpha for reward function
+	 * @param beta for reward function
+	 * @param gamma for reward function
+	 * @param movement for objects in this simulation
+	 * @param realData if real data was used
+	 * @param allStatistics if statistics should be kept for all cameras and objects individually
+	 */
+	public SimCore(long seed, String output, SimSettings ss, boolean global, double epsilon, double alpha, double beta, double gamma, String movement, boolean realData, boolean allStatistics) {
+	    initSimCore(seed, output, global, -1, 50, alpha, realData, allStatistics, "", null, movement);
+	    this.beta = beta;
+	    this.gamma = gamma;
+        this.epsilon = epsilon;
+        this.interpretFile(ss); 
+    }
+
+
+    /**
 	 * Initiation method for the simcore. Sets all the parameters
      * @param seed for the random number generators
      * @param output outputfilename for statistics
@@ -216,16 +274,20 @@ public class SimCore {
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
+     * @param summary 
 	 * @param summaryFile File for a summarised statistics file
 	 * @param paramFile parameterfile for simulations
+     * @param movement 
 	 */
 	private void initSimCore(long seed, String output, boolean global,
 			int camError, int camReset, double alpha,
-			boolean realData, boolean allStatistics, String summary, String paramFile) {
+			boolean realData, boolean allStatistics, String summary, String paramFile, String movement) {
 		this.RESETRATE = camReset;
 	    this.CAMERRORRATE = camError;
 	    this.alpha = alpha;
 		
+	    this.movement = movement;
+	    
 		USEGLOBAL = global;
 		
 		_runReal = realData;
@@ -316,7 +378,7 @@ public class SimCore {
         }
 
         for (SimSettings.TrObjectSettings tro : ss.objects){
-            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.mean, tro.std, tro.fqName);
+            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.mean, tro.std, ((this.movement.equals("")) ? tro.movementClass : this.movement));
         }
         
 //        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {
@@ -336,6 +398,7 @@ public class SimCore {
     }
     
     /** Outputs all information from all bandit solvers into files */
+    @SuppressWarnings("unused")
     private void printAllBanditResults(){
     	for(CameraController cc : this.cameras){
 			IBanditSolver bs = cc.getAINode().getBanditSolver();
@@ -383,6 +446,8 @@ public class SimCore {
      * @param angle_degrees defines the width of the viewing angle
      * @param range defines the range (distance) of the camera's view
      * @param ai_algorithm defines the initial algorithm approach used
+     * @param commValue 
+     * @param customComm 
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
@@ -423,6 +488,8 @@ public class SimCore {
      * @param heading_degrees defines the direction of the viewing point
      * @param angle_degrees defines the width of the viewing angle
      * @param range defines the range (distance) of the camera's view
+     * @param commValue 
+     * @param customComm 
      * @param comm defines the initial/predefined communication strategy
      * @param limit sets limit for amount of objects being tracked (0 = unlimited)
      * @param vg contains the predefined vision graph
@@ -448,8 +515,23 @@ public class SimCore {
             ArrayList<ArrayList<Integer>> predefVisibility){
 
     	checkCoordInRange(x_pos, y_pos);
+    	
+    	if(commValue == 3){
+    	    staticVG = true;
+    	}
+    	else{
+    	    staticVG = false;
+    	}
+    	if(commValue == 4){
+    	    if(customComm.equals("epics.commpolicy.Fix")){
+    	        staticVG = true;
+    	    }
+    	    else{
+    	        staticVG = false;
+    	    }
+    	}
         
-        AbstractAINode aiNode = null;
+        AbstractAuctionSchedule aiNode = null;
     	try {
     		aiNode = newAINodeFromName(ai_alg, staticVG, vg, reg, bandit);
     	} catch (Exception e) {
@@ -460,7 +542,7 @@ public class SimCore {
     	}
     	
         CameraController cc = new CameraController(
-        		name,
+        		name, this,
                 x_pos, y_pos,
                 Math.toRadians(heading_degrees),
                 Math.toRadians(angle_degrees),
@@ -468,7 +550,7 @@ public class SimCore {
 
 
         try {
-            Class<?>[] commConstructorTypes = {AbstractAINode.class, ICameraController.class};
+            Class<?>[] commConstructorTypes = {AbstractAuctionSchedule.class, ICameraController.class};
             Class<?> commClass = getCommClass(commValue, customComm);
             Constructor<?> cons = commClass.getConstructor(commConstructorTypes); 
             _comm = (AbstractCommunication) cons.newInstance(aiNode, cc);
@@ -495,16 +577,24 @@ public class SimCore {
         
         this.getCameras().add(cc);
         for (CameraController c1 : this.cameras){
-            c1.addCamera(cc);
-            cc.addCamera(c1);
+            c1.addNeighbouringCamera(cc);
+            cc.addNeighbouringCamera(c1);
         }
 	}
     
+    /**
+     * mapping between communication policy NUMBER from bandit solver and actual implementation  
+     * @param commValue
+     * @param customComm
+     * @return
+     * @throws ClassNotFoundException
+     */
     public Class<?> getCommClass(int commValue, String customComm) throws ClassNotFoundException {
     	switch(commValue){
     		case 0: return Broadcast.class;
     		case 1: return Smooth.class;
     		case 2: return Step.class;
+    		case 3: return Fix.class;
     		case 4: 
     			if (customComm == null || customComm.equals("")) {
     				throw new IllegalArgumentException("No CustomComm value provided");
@@ -528,8 +618,14 @@ public class SimCore {
      * @param banditS the class name of a bandit solver
      * @return AbstractAINode the created AINode
      * @throws ClassNotFoundException if the class for the AINode or the BanditSolver wasn't found
+     * @throws SecurityException 
+     * @throws NoSuchMethodException 
+     * @throws IllegalArgumentException 
+     * @throws InstantiationException 
+     * @throws IllegalAccessException 
+     * @throws InvocationTargetException 
      */
-    public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
+    public AbstractAuctionSchedule newAINodeFromName(String fullyQualifiedClassName, 
     		boolean staticVG, Map<String, Double> vg, IRegistration r, String banditS) 
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
@@ -539,9 +635,9 @@ public class SimCore {
     		if(banditS != null){
 	    		if(!banditS.equals("")){
 					Class<?> banditType = Class.forName(banditS);
-					Class<?>[] banditConstructorTypes = {int.class, double.class, double.class, int.class, RandomNumberGenerator.class};
+					Class<?>[] banditConstructorTypes = {int.class, double.class, double.class, double.class, double.class, int.class, RandomNumberGenerator.class};
 					Constructor<?> banditCons = banditType.getConstructor(banditConstructorTypes);
-					bs =  (IBanditSolver) banditCons.newInstance(6, epsilon, alpha, interval, randomGen);
+					bs =  (IBanditSolver) banditCons.newInstance(6, epsilon, alpha, beta, gamma, interval, randomGen);
 	    		}	    		
     		}
 		} catch (ClassNotFoundException e) {
@@ -552,7 +648,7 @@ public class SimCore {
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
     	Class<?>[] constructorTypes = {boolean.class, Map.class, IRegistration.class, RandomNumberGenerator.class, IBanditSolver.class};
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
-    	AbstractAINode node = (AbstractAINode) cons.newInstance(staticVG, vg, r, randomGen, bs);
+    	AbstractAuctionSchedule node = (AbstractAuctionSchedule) cons.newInstance(staticVG, vg, r, randomGen, bs);
     	return node;
     }
     
@@ -562,18 +658,25 @@ public class SimCore {
      * @param comm the communication policy: 0 = Broadcast, 1 = Smooth, 2 = step
      * @param ai the pre-existing AINode
      * @return a specific implementation of an abstract AINode
+     * @throws ClassNotFoundException 
+     * @throws SecurityException 
+     * @throws NoSuchMethodException 
+     * @throws IllegalArgumentException 
+     * @throws InstantiationException 
+     * @throws IllegalAccessException 
+     * @throws InvocationTargetException 
      */
-    public AbstractAINode newAINodeFromName(String fullyQualifiedClassName, 
-            AbstractCommunication comm, AbstractAINode ai)
+    public AbstractAuctionSchedule newAINodeFromName(String fullyQualifiedClassName, 
+            AbstractCommunication comm, AbstractAuctionSchedule ai)
     				throws ClassNotFoundException, SecurityException, NoSuchMethodException, 
     				IllegalArgumentException, InstantiationException, IllegalAccessException, 
     				InvocationTargetException {
     	Class<?> nodeType = Class.forName(fullyQualifiedClassName);
-    	Class<?>[] constructorTypes = {AbstractAINode.class};
-    	Constructor<?>[] allCons = nodeType.getDeclaredConstructors();
+    	Class<?>[] constructorTypes = {AbstractAuctionSchedule.class};
+//    	Constructor<?>[] allCons = nodeType.getDeclaredConstructors();
     	
     	Constructor<?> cons = nodeType.getConstructor(constructorTypes);
-    	AbstractAINode node = (AbstractAINode) cons.newInstance(ai);
+    	AbstractAuctionSchedule node = (AbstractAuctionSchedule) cons.newInstance(ai);
     	node.setComm(comm);
     	return node;
     }
@@ -588,7 +691,7 @@ public class SimCore {
      * @param paramsFilepath contains the filepath for the parameterfile
      * @throws IOException in case opening of file fails
      */
-    public void applyParamsToAINode(AbstractAINode node, String paramsFilepath) throws IOException {
+    public void applyParamsToAINode(AbstractAuctionSchedule node, String paramsFilepath) throws IOException {
     	RunParams.loadIfNotLoaded(paramsFilepath);
     	System.out.println("Setting params for " + node.getName() + "...");
     	Set<Entry<Object,Object>> props = RunParams.getAllProperties();
@@ -607,11 +710,11 @@ public class SimCore {
   	public void add_random_camera(){
   	    int absCom = randomGen.nextInt(3, RandomUse.USE.UNIV); // Random comm
   	    
-  	    String algo = "";
-  	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
-  	    case 0: algo = "epics.ai.ActiveAINodeMulti"; break;
-  	    case 1: algo = "epics.ai.PassiveAINodeMulti"; break;
-  	    }
+  	    String algo = "epics.ai.dynamicSchedules.WeightedDynamicSchedule";
+//  	    switch(randomGen.nextInt(2, RandomUse.USE.UNIV)){
+//  	    case 0: algo = "epics.ai.ActiveAINodeMulti"; break;
+//  	    case 1: algo = "epics.ai.PassiveAINodeMulti"; break;
+//  	    }
   	    
         this.add_camera(
         		"C"+getNextID(),
@@ -680,7 +783,7 @@ public class SimCore {
         int rnd_int = randomGen.nextInt( this.cameras.size(), RandomUse.USE.UNIV );
         CameraController cam_to_remove = this.cameras.get(rnd_int);
         for ( CameraController c : this.cameras ){
-            c.removeCamera( cam_to_remove );
+            c.removeNeighbouringCamera( cam_to_remove );
         }
         this.cameras.remove(cam_to_remove);
         if(USEGLOBAL){
@@ -723,6 +826,8 @@ public class SimCore {
      * @param speed speed of the object
      * @param features unique identification of the object
      * @param waypoints a list of waypoints - if empty, and fqName is empty, epics.movement.Straight is being used
+     * @param mean 
+     * @param std 
      * @param fqName the full qualifying name for MOVEMENT CLASS. if empty and waypoints is too, epics.movement.Straight is being used. 
      * if fqName is empty and waypoints is NOT empty epics.movement.Waypoints is being used.
      */
@@ -758,6 +863,7 @@ public class SimCore {
         add_object(to);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private AbstractMovement createMovement(double pos_x, double pos_y,
             double heading_degrees, double speed, double features,
             List<Point2D> waypoints, double mean, double std, String fqName) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, ClassNotFoundException {
@@ -794,10 +900,14 @@ public class SimCore {
      * @param pos_y starting position
      * @param heading_degrees initial direction of movement
      * @param speed speed of the object
+     * @param waypoints list of waypoints of added object
+     * @param mean mean value for using (directed) brownian motion 
+     * @param std standard deviation for using (directed) brownian motion
+     * @param movementName full qualified name of movement
      */
-    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, double mean, double std, String fqName ){
+    public void add_object(double pos_x, double pos_y, double heading_degrees, double speed, List<Point2D> waypoints, double mean, double std, String movementName ){
         double features = 0.111 * getNextID();
-        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, mean, std, fqName);
+        add_object(pos_x, pos_y, heading_degrees, speed, features, waypoints, mean, std, ((this.movement.equals("")) ? movementName : this.movement));
     }
 
 //    /**
@@ -816,16 +926,21 @@ public class SimCore {
     /** 
      * Adds the given TraceableObject to the simulation. 
      * For convenience methods, see other add_object methods 
+     * @param to 
      */
     public void add_object(TraceableObject to) {
-    	this.getObjects().add(to);
+    	if(!getObjects().contains(to)){
+    	    this.getObjects().add(to);
+    	}
         if(USEGLOBAL){
         	reg.advertiseGlobally(new TraceableObjectRepresentation(to, to.getFeatures()));
         } else {
         	for (CameraController cc : this.getCameras()) {
-        		if (!cc.isOffline())
-        			cc.getAINode().receiveMessage(
-        					new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures())));
+        		if (!cc.isOffline()){
+        		    Message m = new Message("", cc.getName(), MessageType.StartSearch, new TraceableObjectRepresentation(to, to.getFeatures()));
+//        		    System.out.println(m.toString());
+        			cc.getAINode().receiveMessage(m);
+        		}
         	}
         }
     }
@@ -838,8 +953,9 @@ public class SimCore {
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_x - min_x) + min_x,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * (max_y - min_y) + min_y,
         		randomGen.nextDouble(RandomUse.USE.UNIV) * 360,
-        		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4,
-        		new ArrayList<Point2D>(), 0, 1, "");
+        		0.3,
+//        		randomGen.nextDouble(RandomUse.USE.UNIV) * 0.6 + 0.4,
+        		new ArrayList<Point2D>(), 0, 1, this.movement);
     }
 
     /**
@@ -862,6 +978,7 @@ public class SimCore {
    
     /**
      * Updates the simulation by one step - decides if it uses pure simulation or works with real data
+     * @throws Exception 
      */
     public void update() throws Exception{
     	if(_runReal){
@@ -874,7 +991,6 @@ public class SimCore {
     	step ++;
     }
     
-    //TODO: FIX SEQUENCE!!
     /**
      * updates the simulation by one timestep. using real data this corresponds to one frame.
      * 
@@ -885,7 +1001,9 @@ public class SimCore {
      *      a. AINode is updated 
      *      b. BanditSolver reward is updated if applicable
      * 3. statistics are updated
+     * @throws Exception 
      */
+    @SuppressWarnings("unused")
     public void updateReal() throws Exception{
     	if(firstUpdate)
     		setSearchFor();
@@ -904,8 +1022,8 @@ public class SimCore {
 		
 
          	//run BanditSolver, select next method, set AI! hope it works ;)
-         	AbstractAINode ai = c.getAINode();
-         	AbstractCommunication prevComm = ai.getComm();
+         	AbstractAuctionSchedule ai = c.getAINode();
+//         	AbstractCommunication prevComm = ai.getComm();
          	IBanditSolver bs = ai.getBanditSolver();
          	int strategy = -1;
          	if(bs != null){
@@ -918,27 +1036,27 @@ public class SimCore {
          	
          	switch (strategy) {
  			case 0:	//ABC
- 				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); 
+ 				AbstractAuctionSchedule newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); 
  				c.setAINode(newAI1);
  				break;
  			case 1:	//ASM
- 				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai);  
  				c.setAINode(newAI2);
  				break;
  			case 2:	//AST
- 				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c),ai);  
+ 				AbstractAuctionSchedule newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c),ai);  
  				c.setAINode(newAI3);
  				break;
  			case 3: //PBC
- 				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai);  
  				c.setAINode(newAI4);
  				break;
  			case 4: //PSM
- 				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai);  
  				c.setAINode(newAI5);
  				break;
  			case 5: //PST
- 				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai);  
+ 				AbstractAuctionSchedule newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai);  
  				c.setAINode(newAI6);
  				break;
  			default:
@@ -946,7 +1064,10 @@ public class SimCore {
  			}
          }
 
-         //do trading for all cameras
+		List<CameraController> visited = new ArrayList<CameraController>();
+		double area = 0.0;
+		
+		 //do trading for all cameras
          for( CameraController c : this.cameras ){
  		    c.updateAI();
  		    
@@ -962,26 +1083,135 @@ public class SimCore {
  					stats.setReward(utility, commOverhead, c.getName());
  					bs.setCurrentReward(utility, commOverhead); 
  			}
+ 			
+ 			// calculate overlapping FOV
+ 			for(CameraController c2 : this.cameras){
+ 			   if(!c.getName().equals(c2.getName())){ //two different cameras
+ 			       if(!visited.contains(c2)){
+ 			           area += calculateOverlap(c,c2);
+ 			       }
+ 			   }
+ 			}
+ 			visited.add(c); //keep track of which elements have been already added to the area
          }
-      
+         
          this.computeUtility();
+//         this.computeEnergy();
          stats.nextTimeStep();
     }
     
+    
+
+    /**
+     * Calculates the overlap between two cameras.
+     * This is onle used for calculating the overlap when knowing the cameras position and their radius and complete omnidirectional (360-degree) cameras are assumed.
+     * get location and radius of all cameras
+     * caluculate the euclidean distance to all other cameras and see if their ranges intersect [if(distance(c1,c2) > radius(c1)+radius(c2)) ==> no overlap]         DONE
+     * for those overlapping, find intersecting points on the radius of both cameras                                                                                 DONE
+     * for each camera, calculate the angle alpha from the two intersecting points to the center                                                                     DONE
+     * calculate the circle section for both cameras s1 = (radius(c1)/2)*(alpha1-sin(alpha1)) as well as for s2                                                      DONE
+     * add up s1 and s2 for full overlap                                                                                                                             DONE
+     * repeat this for all cameras and all overlaps                                                                                                                  DONE
+     * add up all s1 and s2 from all cameras for overlap of entire network     
+     * @param c1 first camera
+     * @param c2 second camera
+     * @return returns the overlapping area
+     */
+    private double calculateOverlap(CameraController c1, CameraController c2){
+         
+        double a = c1.getRange();
+        double b = c2.getRange();
+        double AB0 = Math.abs(c1.getLocation().distanceTo(c2.getLocation())[0]);
+        double AB1 =Math.abs(c1.getLocation().distanceTo(c2.getLocation())[1]); 
+        double c = c1.getLocation().distanceTo(c2.getLocation())[2];
+        if (c == 0) {
+          // same center: A = B
+          return 0.0;
+        }
+        
+        double x = (a*a + c*c - b*b) / (2*c);
+        double y = a*a - x*x;
+        if (y < 0) {
+          // no intersection
+            return 0.0;
+        }
+        
+        if (y > 0){ 
+            y = Math.sqrt( y );
+        }
+        // compute unit vectors ex and ey
+        double ex0 = AB0 / c;
+        double ex1 = AB1 / c;
+        double ey0 = -ex1;
+        double ey1 =  ex0;
+        double Q1x = c1.getLocation().x + x * ex0;
+        double Q1y = c1.getLocation().y + x * ex1;
+        if (y == 0) {
+          // one touch point
+          return 0.0;
+        } 
+        // two intersections
+        double Q2x = Q1x - y * ey0;
+        double Q2y = Q1y - y * ey1;
+        Q1x += y * ey0;
+        Q1y += y * ey1;
+
+        //we have two intersecting points Q1x, Q1y and Q2x, Q2y
+        Location intersect1 = new Location(Q1x, Q1y);
+        Location intersect2 = new Location(Q2x, Q2y);
+        
+        double a1 = c1.getLocation().angleTo(intersect1);
+        double a2 = c1.getLocation().angleTo(intersect2);
+        
+        if(a1 > a2){ //switch angles
+            double tmpA = a1;
+            a1 = a2;
+            a2 = tmpA;
+        }
+        
+        double dir1 = c1.getLocation().angleTo(c2.getLocation());
+        
+        double angle1 = Math.abs(a1-dir1) * 2;
+        
+        
+        double a3 = c2.getLocation().angleTo(intersect1);
+        double a4 = c2.getLocation().angleTo(intersect2);
+        
+        if(a3 > a4){ //switch angles
+            double tmpA = a3;
+            a3 = a4;
+            a4 = tmpA;
+        }
+        
+        double dir2 = c2.getLocation().angleTo(c1.getLocation());
+        double angle2 = Math.abs(a3-dir2) * 2;
+        
+        double area1 = 0.0;
+        double area2 = 0.0;
+                
+        area1 = Math.abs(Math.pow(c1.getRange(), 2)/2 * (Math.toRadians(angle1) - Math.sin(Math.toRadians(angle1))));
+        area2 = Math.abs(Math.pow(c2.getRange(), 2)/2 * (Math.toRadians(angle2) - Math.sin(Math.toRadians(angle2))) );
+        
+        return (area1+area2);
+    }
+    
+    
+    
+
     /**
      * USED ONLY WITH REAL DATA
      */
     private void setSearchFor() {
     	IMessage im = new Message("", "3.cvs", MessageType.StartSearch, new TraceableObjectRepresentation(this.objects.get(0), this.objects.get(0).getFeatures()));
     	CameraController cc = this.cameras.get(2);
-    	AbstractAINode ai = cc.getAINode();
+    	AbstractAuctionSchedule ai = cc.getAINode();
 		ai.receiveMessage(im);
 	}
 
 	/**
 	 * Updates the pure simulation for one timestep.
 	 * 
-	 * 1. Checks and precesses Events
+	 * 1. Checks and processes Events
 	 * 2. Moves all trackable objects
 	 * 3. Fails random cameras based on the given failing probability - this rate can be 0
 	 * 4. For all Cameras:
@@ -1000,8 +1230,8 @@ public class SimCore {
 	 *  
 	 * @throws Exception
 	 */
-	public void updateSim() throws Exception{
-    	    	
+
+    public void updateSim() throws Exception{
         // Print messages on the screen, one per step
         if( CmdLogger.hasSomething() ){
             CmdLogger.update();
@@ -1009,26 +1239,26 @@ public class SimCore {
             return;
         }
         
-        boolean doSelection = false;
-        //update interval for selecting new strategy
-        if(selectInterval > 1){
-	        if(currentSelectInt >= selectInterval){
-	        	doSelection = true;
-	        	currentSelectInt = 0;
-	        }
-	        else{
-	        	currentSelectInt ++;
-	        }
-        }
-        else{ 
-        	doSelection = true; 
-        }
+//        boolean doSelection = false;
+//        //update interval for selecting new strategy
+//        if(selectInterval > 1){
+//            if(currentSelectInt >= selectInterval){
+//                doSelection = true;
+//                currentSelectInt = 0;
+//            }
+//            else{
+//                currentSelectInt ++;
+//            }
+//        }
+//        else{ 
+//            doSelection = true; 
+//        }
 
         //check events - process event
         checkAndProcessEvent(stats.get_time_step());
         
         if(USEGLOBAL){
-        	reg.update();
+            reg.update();
         }
         
         // Update all traceable objects (move them around)
@@ -1037,117 +1267,169 @@ public class SimCore {
         }
 
         // random camera select - random timespan to go offline...
-		int random = randomGen.nextInt(100, RandomUse.USE.ERROR);
+        int random = randomGen.nextInt(100, RandomUse.USE.ERROR);
         
-		if(random <= CAMERRORRATE){
-        	//select random camera and set it offline for a random number of timesteps
-			int ranCam = randomGen.nextInt(this.cameras.size(), RandomUse.USE.ERROR);
-        	int sleepFor = randomGen.nextInt(10, RandomUse.USE.ERROR);
-        	
-        	CameraController cc = cameras.get(ranCam);
-        	cc.setOffline(sleepFor);
-        	int ranReset = randomGen.nextInt(100, RandomUse.USE.ERROR);
-        	if(ranReset > RESETRATE){
-        		cc.resetCamera();
-        	}
+        if(random <= CAMERRORRATE){
+            //select random camera and set it offline for a random number of timesteps
+            int ranCam = randomGen.nextInt(this.cameras.size(), RandomUse.USE.ERROR);
+            int sleepFor = randomGen.nextInt(10, RandomUse.USE.ERROR);
+            
+            CameraController cc = cameras.get(ranCam);
+            cc.setOffline(sleepFor);
+            int ranReset = randomGen.nextInt(100, RandomUse.USE.ERROR);
+            if(ranReset > RESETRATE){
+                cc.resetCamera();
+            }
         }
         
-		//update all objects position in the world view
-		//select a new ai if bandit solvers are used
+        //update all objects position in the world view
+        //select a new ai if bandit solvers are used
         for(CameraController c : this.cameras){
-        	if(!c.isOffline()){
-	            for (TraceableObject o : this.objects){
-	            	c.update_confidence(o);
-	            }
-	            if(!c.getVisibleObjects_bb().isEmpty()){
-	            	stats.addVisible();
-	            }
-        	}
+            if(!c.isOffline()){
+                for (TraceableObject o : this.objects){
+                    c.update_visiblity(o);
+                }
+                if(!c.getVisibleObjects_bb().isEmpty()){
+                    stats.addVisible();
+                }
+            
 
-        	//run BanditSolver, select next method, set AI! hope it works ;)
-        	AbstractAINode ai = c.getAINode();
-        	AbstractCommunication prevComm = ai.getComm();
-        	IBanditSolver bs = ai.getBanditSolver();
-        	int strategy = -1;
-        	if(bs != null){
-//        		if(doSelection)
-        			int prevStrat = getStratForAI(ai);
-        			strategy = bs.selectAction();
-        			///System.out.println(step + "-" + c.getName() + ": " + strategy);
-        			if(prevStrat != strategy)
-        				stats.setStrat(strategy, c.getName());
-        	}
-        	
-//        	System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
-        	switch (strategy) {
-			case 0:	//ABC
-				AbstractAINode newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI1);
-				break;
-			case 1:	//ASM
-				AbstractAINode newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI2);
-				break;
-			case 2:	//AST
-				AbstractAINode newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI3);
-				break;
-			case 3: //PBC
-				AbstractAINode newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI4);
-				break;
-			case 4: //PSM
-				AbstractAINode newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI5);
-				break;
-			case 5: //PST
-				AbstractAINode newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
-				c.setAINode(newAI6);
-				break;
-			default:
-				//STICK TO OLD
-			}
+                //run BanditSolver, select next method, set AI! hope it works ;)
+                AbstractAuctionSchedule ai = c.getAINode();
+//                AbstractCommunication prevComm = ai.getComm();
+                IBanditSolver bs = ai.getBanditSolver();
+                int strategy = -1;
+                if(bs != null){
+    //              if(doSelection)
+                        int prevStrat = getStratForAI(ai);
+                        strategy = bs.selectAction();
+                        ///System.out.println(step + "-" + c.getName() + ": " + strategy);
+                        if(prevStrat != strategy)
+                            stats.setStrat(strategy, c.getName());
+                }
+                
+    //          System.out.println(c.getName() + " current: " + ai.getClass() + ai.getComm() + " - next: " + strategy);
+                switch (strategy) {
+                case 0: //ABC
+                    AbstractAuctionSchedule newAI1 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI1);
+                    break;
+                case 1: //ASM
+                    AbstractAuctionSchedule newAI2 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Smooth(ai, c), ai); // newAINodeFromName("epics.ai.ActiveAINodeMulti", 1, staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI2);
+                    break;
+                case 2: //AST
+                    AbstractAuctionSchedule newAI3 = newAINodeFromName("epics.ai.ActiveAINodeMulti", new Step(ai, c), ai); // staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI3);
+                    break;
+                case 3: //PBC
+                    AbstractAuctionSchedule newAI4 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Broadcast(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI4);
+                    break;
+                case 4: //PSM
+                    AbstractAuctionSchedule newAI5 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Smooth(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI5);
+                    break;
+                case 5: //PST
+                    AbstractAuctionSchedule newAI6 = newAINodeFromName("epics.ai.PassiveAINodeMulti", new Step(ai, c), ai); //staticVG, ai.getVisionGraph(), reg);
+                    c.setAINode(newAI6);
+                    break;
+                default:
+                    //STICK TO OLD
+                }
+            }
+            else{
+                //deal with offline cameras (eg. advertise their objects as free of charge)
+                
+                for(TraceableObject tro : c.getTrackedObjects().values()){
+                    add_object(tro);
+                }
+            }
         }
 
         // Advertise each camera's owned objects
         for(CameraController c : this.cameras){
-        	c.getAINode().advertiseTrackedObjects();
+            if(!c.isOffline()){
+                c.getAINode().advertiseTrackedObjects();
+            }
         }
         
         // Place all bids before updateAI() is called in the next loop
         for(CameraController c : this.cameras){
-        	c.getAINode().updateReceivedDelay();
-        	c.getAINode().updateAuctionDuration();
-        	c.getAINode().checkIfSearchedIsVisible();
-        	c.forwardMessages(); // Push messages to relevant nodes
+            if(!c.isOffline()){
+                c.getAINode().updateReceivedDelay();
+                c.getAINode().updateAuctionDuration();
+                c.getAINode().checkIfSearchedIsVisible();
+                c.forwardMessages(); // Push messages to relevant nodes
+            }
         }
+        
+        List<CameraController> visited = new ArrayList<CameraController>();
+        double area = 0.0;
+        double totalTracked = 0.0;
         
         //do trading for all cameras
         for( CameraController c : this.cameras ){
-
-            double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
-            int nrMessages = c.getAINode().getSentMessages();
-            
-		    c.updateAI();
-
-			double commOverhead = 0.0;
-//			if(nrMessages > 0){
-//				commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
-//			}
-			
-			commOverhead = nrMessages;
-			
-			stats.setCommunicationOverhead(commOverhead, c.getName());
-		    
-		    //check if bandit solvers are used
-			IBanditSolver bs = c.getAINode().getBanditSolver();
-			if(bs != null){
-				stats.setReward(utility, commOverhead, c.getName());
-				bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getTrackedObjects().size())); 
-			}
-
+            if(!c.isOffline()){
+                double utility = c.getAINode().getUtility()+c.getAINode().getReceivedUtility() - c.getAINode().getPaidUtility();
+                int nrMessages = c.getAINode().getSentMessages();
+                
+                c.updateAI();
+    
+                double commOverhead = 0.0;
+    //          if(nrMessages > 0){
+    //              commOverhead = (nrMessages-c.getAINode().getNrOfBids()) / nrMessages; //
+    //          }
+                
+                commOverhead = nrMessages;
+                
+                stats.setCommunicationOverhead(commOverhead, c.getName());
+                
+                //check if bandit solvers are used
+                IBanditSolver bs = c.getAINode().getBanditSolver();
+                if(bs != null){
+                    stats.setReward(utility, commOverhead, c.getName());
+                    bs.setCurrentReward(utility, commOverhead, ((double) c.getAINode().getOwnedObjects().size())); 
+                }
+                
+                // calculate overlapping FOV
+                for(CameraController c2 : this.cameras){
+                   if(!c2.isOffline()){
+                       if(!c.getName().equals(c2.getName())){ //two different cameras
+                           if(!visited.contains(c2)){
+                               area += calculateOverlap(c,c2);
+                           }
+                       }    
+                   }
+                   
+                }
+                visited.add(c); //keep track of which elements have been already added to the area
+                stats.addConfidence(c.getAINode().getRelativeConfidence(), c.getName());
+    //            stats.addProportion(c.getAINode().getTrackedProportion(), c.getName());
+                totalTracked += c.getAINode().getTotalTrackedObjects();
+            }
         }
+        if(totalTracked > 0){
+            if(objects.size() > 0){
+                stats.addProportion((totalTracked / objects.size()), "");
+            }
+            else{
+                stats.addProportion(0.0d, "");
+            }
+        }
+        else{
+            stats.addProportion(0.0d, "");
+        }
+        
+        
+        try {
+            stats.addOverlap(area, "");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         this.computeUtility();
+//        this.computeEnergy();
         stats.nextTimeStep();
     }
 
@@ -1159,8 +1441,8 @@ public class SimCore {
 	 * @param ai the ai to get the index for
 	 * @return index for ai 
 	 */
-	private int getStratForAI(AbstractAINode ai) {
-		if(ai.getClass() == epics.ai.ActiveAINodeMulti.class){
+	private int getStratForAI(AbstractAuctionSchedule ai) {
+		if(ai.getClass() == epics.ai.auctionSchedules.ActiveAuctionSchedule.class){
 		    if(ai.getComm() instanceof Broadcast)
 		        return 0;
 		    else
@@ -1171,7 +1453,7 @@ public class SimCore {
 		                return 2;
 		}
 		else{
-			if(ai.getClass() == epics.ai.PassiveAINodeMulti.class){
+			if(ai.getClass() == epics.ai.auctionSchedules.PassiveAuctionSchedule.class){
 			    if(ai.getComm() instanceof Broadcast)
 	                return 3;
 	            else
@@ -1193,7 +1475,7 @@ public class SimCore {
 	private void checkAndProcessEvent(int currentTimeStep) {
 		for(SimSettings.Event e : events){
 		    if(e.timestep == currentTimeStep){
-		        System.out.println("event found " + e.event);
+		       // System.out.println("event found " + e.event);
 				//process event
 				if(e.event.equals("add")){
 				    if(e.participant == 1){ // camera
@@ -1202,7 +1484,7 @@ public class SimCore {
 					}
 					else{ //object 
 //						if(e.waypoints == null)
-							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name), e.waypoints, e.mean, e.std, e.fqName);
+							this.add_object(e.x, e.y, e.heading, e.speed, Double.parseDouble(e.name), e.waypoints, e.mean, e.std, ((this.movement.equals("")) ? e.fqName : this.movement));
 //						}
 //						else{
 //							this.add_object(e.speed, e.waypoints, Double.parseDouble(e.name));
@@ -1291,11 +1573,12 @@ public class SimCore {
 	 * Helper method to print the properties of all objects
 	 * @throws Exception
 	 */
-	private void printObjects() throws Exception {
+	@SuppressWarnings("unused")
+    private void printObjects() throws Exception {
 		Map<TraceableObject, List<CameraController>> tracked = new HashMap<TraceableObject, List<CameraController>>();
 		Map<TraceableObject, List<CameraController>> searched = new HashMap<TraceableObject, List<CameraController>>(); 
 		for(CameraController c : this.cameras){
-    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
+    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getOwnedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			if(tracked.containsKey(tor.getTraceableObject())){
     				tracked.get(tor.getTraceableObject()).add(c);
@@ -1356,7 +1639,7 @@ public class SimCore {
     	Map<TraceableObject, Boolean> searching = new HashMap<TraceableObject, Boolean>();
     	
     	for(CameraController c : this.cameras){
-    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getTrackedObjects().values()){
+    		for(epics.common.ITrObjectRepresentation to : c.getAINode().getOwnedObjects().values()){
     			TraceableObjectRepresentation tor = (TraceableObjectRepresentation) to;
     			tracing.put(tor.getTraceableObject(), true);
     			if(c.getVisibleObjects().containsKey(tor)){
@@ -1401,6 +1684,22 @@ public class SimCore {
         }
         return utility_sum;
     }
+    
+    /**
+     * computes the energy of the entire network and 
+     * adds this to the statistics
+     * @return the sum of all cameras utilities.
+     */
+//    public double computeEnergy(){
+//        double energy_sum = 0;
+//        for (CameraController c : this.cameras){
+//            if(!c.isOffline()){
+//                energy_sum += c.getEnergy();
+//                
+//            }
+//        }
+//        return energy_sum;
+//    }
 
     /**
      * returns all cameras
@@ -1499,8 +1798,193 @@ public class SimCore {
 	    return stats.getSummaryDesc(spaces);
 	}
 
-
+	/**
+	 * no statistics output
+	 * @param b
+	 */
     public void setQuiet(boolean b) {
         stats.setQuiet(b);
+    }
+    
+    /**
+     * creats a snapshot of the current simulation at current point in time. stores it as EPS file in location of simulator
+     * @param filename
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public void createSnapshot(String filename) throws FileNotFoundException, IOException {
+        double w = 600;
+        double h = 600;
+        CoordinateSystemTransformer cst = new CoordinateSystemTransformer(this.get_min_x(), this.get_max_x(), this.get_min_y(), this.get_max_y(), w, h);
+        cst.setWindowHeight(w);
+        cst.setWindowWidth(h);
+        int bbx = (int) cst.getRealHeight();
+        int bby = (int) cst.getRealWidth();
+        EpsGraphics g2 = new EpsGraphics("EpsTools Drawable Export", 
+                new FileOutputStream(filename), 0, 0, bbx, bby, ColorMode.COLOR_RGB);
+                
+//        int MIN_THICKNESS = 3;
+
+        g2.setColor(Color.white);
+        g2.fill( new Rectangle( 0, 0, 100, 100 ) );
+        
+        
+        g2.setColor(Color.BLUE);       
+        
+        g2.drawRect(0, 0, bby, bbx);
+        
+        
+        g2.setColor(Color.GREEN);
+        ArrayList<CameraController> cameras = this.getCameras();
+        for(CameraController c : cameras) {
+
+//            c.getAINode().getBanditSolver().getTotalReward();
+            
+            /*
+             * Camera dot
+             */
+            Random rand = new Random();
+            
+            float r = rand.nextFloat();
+            float g = rand.nextFloat();
+            float b = rand.nextFloat();
+            Color camCol = new Color(r, g, b, 1.0f);
+
+            if(c.isOffline()) {
+                g2.setColor(Color.GRAY);
+            } else {
+                g2.setColor(camCol);//Color.GREEN);
+            }
+
+            Point p = new Point(cst.simToWindowX(c.getX()), cst.simToWindowY(c.getY()), 8); //draw spots
+            g2.fill(p);
+            
+            /*
+             * rest of stuff
+             */
+
+            double headingA = c.getHeading() + c.getAngle()/2; // Math.toRadians(45);
+            double headingB = c.getHeading() - c.getAngle()/2;
+            double cx = c.getX();
+            double cy = c.getY();
+            double range = c.getRange();
+
+            double x = 0;
+            double y = -1;
+
+            double xpA = x * Math.cos( headingA ) - y * Math.sin( headingA );
+            double ypA = x * Math.sin( headingA ) - y * Math.cos( headingA );
+
+            double xpB = x * Math.cos( headingB ) - y * Math.sin( headingB );
+            double ypB = x * Math.sin( headingB ) - y * Math.cos( headingB );
+
+            xpA = xpA * range;
+            ypA = ypA * range;
+            xpB = xpB * range;
+            ypB = ypB * range;
+
+            if(( c.getNumVisibleObjects() < 1 )||(c.isOffline())){
+                g2.setColor(Color.LIGHT_GRAY);
+            }
+            else{
+                g2.setColor(Color.YELLOW);
+            }
+            
+            if(c.isOffline()){
+                g2.setColor(new Color(255, 150, 0));
+            }
+            
+            boolean polygon = false;
+
+            if(polygon) {
+                Polygon poly = new Polygon();
+                poly.addPoint( (int)cst.simToWindowX(cx), (int)cst.simToWindowY(cy));
+                poly.addPoint( (int)cst.simToWindowX(cx+xpA), (int)cst.simToWindowY(cy+ypA));
+                poly.addPoint( (int)cst.simToWindowX(cx+xpB), (int)cst.simToWindowY(cy+ypB));
+                g2.fillPolygon(poly);
+
+            } else {
+                
+                Line2D.Double q = new Line2D.Double(
+                        cst.simToWindowX(cx), cst.simToWindowY(cy),
+                        cst.simToWindowX(cx+xpA), cst.simToWindowY(cy+ypA) );
+                g2.draw(q);
+    
+                q = new Line2D.Double(
+                        cst.simToWindowX(cx), cst.simToWindowY(cy),
+                        cst.simToWindowX(cx+xpB), cst.simToWindowY(cy+ypB) );
+                g2.draw(q);
+
+                double headingMiddle = c.getHeading();
+                double xpM = x * Math.cos( headingMiddle ) - y * Math.sin( headingMiddle );
+                double ypM = x * Math.sin( headingMiddle ) - y * Math.cos( headingMiddle );
+                xpM = xpM * range;
+                ypM = ypM * range;
+                
+                 
+//              QuadCurve2D curve = new QuadCurve2D.Float();
+//              curve.setCurve(
+//                      cst.simToWindowX(cx+xpA), cst.simToWindowY(cy+ypA),   //from
+//                      cst.simToWindowX(cx+xpM), cst.simToWindowY(cy+ypM),           //control
+//                      cst.simToWindowX(cx+xpB), cst.simToWindowY(cy+ypB) ); //to
+//              g2.draw(curve);
+                
+                q = new Line2D.Double(
+                        cst.simToWindowX(cx+xpA), cst.simToWindowY(cy+ypA),
+                        cst.simToWindowX(cx+xpB), cst.simToWindowY(cy+ypB) );
+                g2.draw(q);
+                
+                
+                java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
+                double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
+                double head = chead - Math.toDegrees(c.getAngle())/2;
+                                
+                double simWinDist = Math.sqrt(Math.pow(cst.simToWindowX(cx)-cst.simToWindowX(cx+xpB),2) + Math.pow(cst.simToWindowY(cy)-cst.simToWindowY(cy+ypB),2));
+                arc2.setArcByCenter((int)cst.simToWindowX(c.getX()), (int)cst.simToWindowY(c.getY()),simWinDist, head, Math.toDegrees(c.getAngle()), Arc2D.PIE);
+                g2.draw(arc2);
+            }
+
+            
+           
+            Color test = new Color(r, g, b, 0.1f);
+           
+            if(!c.isOffline()){
+                Map<Location, Double> nbLoc = c.getAINode().getNoBidLocations();
+                if(nbLoc != null){
+                    for (Location loc : nbLoc.keySet()) {
+                        g2.setColor(test);//camCol.brighter()); // Color.LIGHT_GRAY);
+                        p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 2);
+                        g2.fill(p);
+                        
+                    }
+                }
+                            
+                Map<Location, Double> hoLoc = c.getAINode().getHandoverLocations();
+                if(hoLoc != null){
+                    for (Location loc : hoLoc.keySet()) {
+                        g2.setColor(camCol); //Color.BLUE);
+                        p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+    //                    g2.fill(p);
+                        g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()-2, (int)p.getCenterX()+2, (int) p.getCenterY()+2);
+                        g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()+2, (int)p.getCenterX()+2, (int) p.getCenterY()-2);
+                    }
+                }
+                
+                
+                Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
+                if(olLoc != null){
+                    for (Location loc : olLoc.keySet()){
+                        g2.setColor(test); //camCol.brighter()); //Color.RED);
+                        p = new Point(cst.simToWindowX(cst.toCenterBasedX(loc.getX())), cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
+    
+                        g2.drawRect((int)p.getCenterX()-2, (int)p.getCenterY()-1, 2, 2);
+                    }
+                }
+            }
+        }
+        
+        
+        g2.flush();
+        g2.close();
     }
 }

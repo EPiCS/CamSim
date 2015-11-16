@@ -125,7 +125,8 @@ public class GlobalRegistration implements IRegistration {
 		objectIsAdvertised(tc);
 	}
 	
-	private void printAllInformation(){
+	@SuppressWarnings("unused")
+    private void printAllInformation(){
 		System.out.println("==================== PRINTING GLOBAL REGISTRATION INFORMATION ===========================");
 		String cams = "-- CAMERAS: ";
 		for (ICameraController cc : allCameras) {

@@ -21,6 +21,13 @@ public class Message implements IMessage {
         this.content = content;
     }
 
+    /**
+     * Constructor for Message
+     * @param from
+     * @param to
+     * @param msgType
+     * @param content
+     */
     public Message( String from, String to, MessageType msgType, Object content ){
         this.init( from, to, msgType, content );
     }
@@ -39,6 +46,11 @@ public class Message implements IMessage {
 
     public MessageType getType() {
         return this.msgType;
+    }
+    
+    @Override
+    public String toString(){
+        return "From: " + ((from.equals("")) ? "null" : from) + " to: " + to + " type: " + msgType.toString(); 
     }
 
 }

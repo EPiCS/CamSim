@@ -9,10 +9,16 @@ import epics.common.IMessage.MessageType;
  */
 public abstract class AbstractCommunication {
 
-	protected AbstractAINode ai; 
+	protected AbstractAuctionSchedule ai; 
 	protected ICameraController camController;
 	
-	public AbstractCommunication(AbstractAINode ai, ICameraController camController) {
+	/**
+	 * 
+	 * Constructor for AbstractCommunication
+	 * @param ai corresponding ai node
+	 * @param camController corresponding camera controller
+	 */
+	public AbstractCommunication(AbstractAuctionSchedule ai, ICameraController camController) {
 		this.ai = ai;
 		this.camController = camController;
 	}
@@ -29,10 +35,16 @@ public abstract class AbstractCommunication {
 	/** 
 	 * Broadcast the message to all nodes, without using
 	 * a special multicast policy 
+	 * @param mt 
+	 * @param o 
 	 */
 	public abstract void broadcast(MessageType mt, Object o);
 
-    public void setAI(AbstractAINode ai) {
+	/**
+	 * allows to (re-)set the ai node 
+	 * @param ai new ai node
+	 */
+    public void setAI(AbstractAuctionSchedule ai) {
         this.ai = ai;        
     }
 }

@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -15,15 +14,38 @@ import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 import epics.camsim.core.SimSettings.CameraSettings;
 
+/**
+ * Simulating data from a real world scenario
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ * 
+ */
 public class SimSimReal {
     
+    /**
+     * defines if statistics for individual cameras should be kept
+     */
     public static boolean allStatistics = false;
-    public static boolean runOnlyHomogeneous = false;
+    /**
+     * run only homogeneous combinations of auction schedules and communication policies
+     */
+    public static boolean runOnlyHomogeneous = true;
+    /**
+     * run simulation sequentially (no paralell processing)
+     */
 	public static boolean runSequential = true;
+	/**
+	 * 
+	 */
 	public static boolean runByParameter = false;
 	private static boolean runAllErrorVersions = false;
-	public static boolean runAllPossibleVersions = true;
-	public static boolean runBandits = true;
+	/**
+	 * run all possible heterogeneous combinations of auction schedules and communication policies
+	 */
+	public static boolean runAllPossibleVersions = false;
+	/**
+	 * run the bandit solvers to select an auction schedule and communication policy for each camera
+	 */
+	public static boolean runBandits = false;
 	private static boolean diffSeed = true;
 	
 	static int duration = 7120; //14240; //how many timesteps
@@ -45,13 +67,17 @@ public class SimSimReal {
 	
 	static ExecutorService exService;
 	
+	/**
+	 * Main method
+	 * @param args
+	 */
 	public static void main(String[] args){
 		
 				
 		DateFormat df = new SimpleDateFormat("ddMMYYYY");
 		
 		
-		initTotalDirName = "E://Results//" + df.format(new java.util.Date());;
+		initTotalDirName = "D://Results//" + df.format(new java.util.Date());;
 		directory = new File(initTotalDirName);
 		int count = 0;
 		while(!directory.mkdirs()){
@@ -65,7 +91,7 @@ public class SimSimReal {
 		
 		
 		//get folder
-		File dir = new File("E:\\Scenarios\\RealDataT1.4_AR");
+		File dir = new File("D:\\Scenarios\\RealDataT1.4_AR");
 		
 		RunAllRealDataScen(dir);
 	}
@@ -75,9 +101,7 @@ public class SimSimReal {
 		for(File folder : dir.listFiles()){
 			//get all files from folder			
 			if(folder.isDirectory()){
-				
-				long seed = initialSeed;
-				
+								
 				ArrayList<String> names = new ArrayList<String>();
 				ArrayList<ArrayList<ArrayList<Double>>> confs = new ArrayList<ArrayList<ArrayList<Double>>>();
 				ArrayList<ArrayList<ArrayList<Integer>>> vis = new ArrayList<ArrayList<ArrayList<Integer>>>();
@@ -88,8 +112,8 @@ public class SimSimReal {
 					ArrayList<ArrayList<Double>> confsCam = new ArrayList<ArrayList<Double>>();
 					ArrayList<ArrayList<Integer>> visCam = new ArrayList<ArrayList<Integer>>();
 					
-					ArrayList<Double> c = new ArrayList<Double>();
-					ArrayList<Integer> v = new ArrayList<Integer>();
+//					ArrayList<Double> c = new ArrayList<Double>();
+//					ArrayList<Integer> v = new ArrayList<Integer>();
 					//read file for data - add to simsettingsdata
 					Scanner s;
 					try {
@@ -173,6 +197,14 @@ public class SimSimReal {
 	    
 	}
 
+	/**
+	 * Generates a list of possible combinations of auction schedules and communication policies recursively and traverses the list in order to process all possible combinations
+	 * @param reps cameras in the simulation
+	 * @param input objects in the simulations
+	 * @param ss current simsetting
+	 * @param count number of combinations done
+	 * @param scenDirName scenario file name
+	 */
 	public static void doVariation(LinkedList<ArrayList<CameraSettings>> reps, States[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
 		long seed = initialSeed;
 		SimSettings simS = ss.copy();
@@ -241,7 +273,7 @@ public class SimSimReal {
             		}
             		else{
             			directory.mkdirs(); //directory for currently used setting 
-    	                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, -1, 50, 0.5, true, false);
+    	                SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, -1, 50, 0.5, "", true, false);
     	                for (int i = 0; i < duration; i++) {
     	                    try {
     							sim.update();
@@ -291,7 +323,7 @@ public class SimSimReal {
                         }
                         
                         
-                        SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, true, true);
+                        SimCore sim = new SimCore(seed, scenDirName + dirName + "//SoftMax-"+ epsilon+"//" + alpha + "//run" + r + ".csv", ss, false, epsilon, alpha, "", true, true);
                                 
                         for (int k = 0; k < duration; k++) {
                             try {
@@ -443,7 +475,7 @@ public class SimSimReal {
                 }
                 
                                         
-                SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, true, true);//output_file, ss, false);
+                SimCore sim = new SimCore(seed, scenDirName + dirName + "//epsilonGreedy//" + alpha + "//run" + r + ".csv", ss, false, 0.01, alpha, "", true, true);//output_file, ss, false);
                 for (int k = 0; k < duration; k++) {
                     try {
                         sim.update();
@@ -555,7 +587,7 @@ public class SimSimReal {
                 }
                 else{
                     directory.mkdirs();
-                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, true, true);//output_file, ss, false);
+                    SimCore sim = new SimCore(seed, scenDirName + dirName + "//ucb1//" + alpha + "//run" + r + ".csv", ss, false, -1, 50, alpha, "", true, true);//output_file, ss, false);
                     for (int k = 0; k < duration; k++) {
                         try {
                             sim.update();
@@ -579,22 +611,39 @@ public class SimSimReal {
         String algo = "epics.ai.ActiveAINodeMulti";
         
         //for all cameras load the same configuration
-        for(int i = 0; i < 2; i++){
+        for(int i = 0; i < 3; i++){
             String dirname = "";
-            if(i == 0){
+            switch (i) {
+            case 0:
                 algo = "epics.ai.ActiveAINodeMulti";
-            }
-            else{
+                break;
+            case 1:
                 algo = "epics.ai.PassiveAINodeMulti";
+                break;
+            case 2:
+                algo = "epics.ai.dynamicSchedules.WeightedDynamicSchedule";
+                break;  
+            default:
+                algo = "epics.ai.dynamicSchedules.WeightedDynamicSchedule";
+                break;
             }
             for(int j = 0; j < 3; j++){
                 for(CameraSettings cs : ss.cameras){
-                    if(i == 0){
+                    switch (i) {
+                    case 0:
                         dirname += "a"+j;
-                    }
-                    else{
+                        break;
+                    case 1:
                         dirname += "p"+j;
+                        break;
+                    case 2:
+                        dirname += "w"+j;
+                        break;  
+                    default:
+                        dirname += "darn"+j;
+                        break;
                     }
+                    
                         
                     cs.ai_algorithm = algo; 
                     cs.comm = j;
@@ -617,7 +666,7 @@ public class SimSimReal {
                         directory.mkdirs();
                         
                         //SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, -1, 0.5, false, true);//output_file, ss, false);
-                        SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, true, false);
+                        SimCore sim = new SimCore(seed, scenDirName + dirname + "//run" + r + ".csv", ss, false, -1, 50, 0.5, "", true, false);
                         //new SimCore(seed, run, ss, global, camError, camReset, alpha);
                         for (int k = 0; k < duration; k++) {
                             try {
@@ -710,7 +759,7 @@ public class SimSimReal {
 						}
 						else{
 							directory.mkdirs();
-							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, true, true);//output_file, ss, false);
+							SimCore sim = new SimCore(seed, scenDirName + dirName + "//run" + r + ".csv", ss, false, ce, re, 0.5, "", true, true);//output_file, ss, false);
 
 							for (int dur = 0; dur < duration; dur++) {
 								try {

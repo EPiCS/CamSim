@@ -29,26 +29,78 @@ import org.xml.sax.SAXException;
  */
 public class SimSettings implements Cloneable{
     
-    public static final int FIX_LIMIT = 0;
-    public int usePredefVG = -1; //-1 = as defined in "static" attribute in file, 0 = static VG as predefined in file, 1 = do not use VG if defined in file (dynamic though), 2 = dynamic but starting with VG as predefined in file 
+    /**
+     * limit for each camera to track objects. 0 = infinite
+     */
+    private static final int FIX_LIMIT = 0;
+    /**
+     * use a predefined vision graph
+     * -1 = as defined in "static" attribute in file, 0 = static VG as predefined in file, 1 = do not use VG if defined in file (dynamic though), 2 = dynamic but starting with VG as predefined in file 
+     */
+    public int usePredefVG = -1; 
     private boolean fixAlgo = false;
     private boolean fixComm = false;
     
+    /**
+     * Settings for a single camera from XML
+     * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+     *
+     */
     public class CameraSettings implements Cloneable{
 
+        /**
+         * name of camera
+         */
         public String name;
+        /**
+         * x-coordinate of cam
+         */
         public Double x;
+        /**
+         * y-coordinate of cam
+         */
         public Double y;
+        /**
+         * heading of cam
+         */
         public Double heading;
+        /**
+         * angle of field of view of cam
+         */
         public Double viewing_angle;
+        /**
+         * distance camera can 'see'
+         */
         public Double range;
+        /**
+         * auctioning schedule of cam
+         */
         public String ai_algorithm;
+        /**
+         * communication policy number of camera
+         */
         public Integer comm;
+        /**
+         * fully qualified name of communication
+         */
         public String customComm;
+        /**
+         * limit of tracked objects by camera
+         */
         public Integer limit;
+        /**
+         * bandit used by camera
+         */
         public String bandit;
         
+        /**
+         * predefined confidences in case of real world footage
+         */
         public ArrayList<ArrayList<Double>> predefConfidences;
+        
+        /**
+         * predefined visiblities of objects for this camera in case of using real world footage
+         */
         public ArrayList<ArrayList<Integer>> predefVisibility;
 
         CameraSettings(){}
@@ -80,6 +132,20 @@ public class SimSettings implements Cloneable{
             this.range = 0.0;
         }
 
+        /**
+         * 
+         * Constructor for SimSettings.java
+         * @param name
+         * @param x
+         * @param y
+         * @param heading
+         * @param viewing_angle
+         * @param range
+         * @param ai_algorithm
+         * @param comm
+         * @param customComm
+         * @param limit
+         */
         CameraSettings(
                 String name,
                 double x, double y,
@@ -103,6 +169,9 @@ public class SimSettings implements Cloneable{
             this.limit = limit;
         }
 
+        /**
+         * method to print content to command land
+         */
         public void printSelfToCMD(){
             System.out.println("{ name: " + name );
             System.out.println("  x: " + x );
@@ -130,19 +199,48 @@ public class SimSettings implements Cloneable{
         }
     }
 
+    /**
+     * settings for an object from the xml file
+     * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+     *
+     */
     public class TrObjectSettings implements Cloneable{
 
+        /**
+         * location in x of object
+         */
         public Double x;
+        /**
+         * y-coordinate of location of object
+         */
         public Double y;
+        /**
+         * direction the object is heading
+         */
         public Double heading;
+        /**
+         * speed of object
+         */
         public Double speed;
-        public String fqName;
+        /**
+         * used movement implementation of object 
+         */
+        public String movementClass;
+        /**
+         * waypoints of the object
+         */
         public ArrayList<Point2D> waypoints;
+        /**
+         * standard deviation of the objecjt (in case of (directed) brownian usage)
+         */
         public Double std;
+        /**
+         * mean of the object (in case of (directed) brownian usage)
+         */
         public Double mean;
         
-        /*
-         * TODO: Implement features as collection
+        /**
+         * features of object
          */
         public Double features;
 
@@ -161,12 +259,15 @@ public class SimSettings implements Cloneable{
             this.heading = heading;
             this.speed = speed;
             this.features = features;
-            this.fqName = fqN;
+            this.movementClass = fqN;
             this.mean = mean;
             this.std = std;
             this.waypoints = waypoints;
         }
 
+        /**
+         * prints itself to command line
+         */
         public void printSelfToCMD(){
             System.out.println("{ x: " + x );
             System.out.println("  y: " + y );
@@ -177,10 +278,15 @@ public class SimSettings implements Cloneable{
                 System.out.println("    ("+point.getX()+", "+point.getY()+")");
             }
             System.out.println("  ]");
-            System.out.println("  name: " + fqName + " }");
+            System.out.println("  name: " + movementClass + " }");
         }
     }
     
+/**
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ * 
+ */
 //    public class TrObjectWithWaypoints {
 //    	
 //    	public Double speed;
@@ -205,6 +311,11 @@ public class SimSettings implements Cloneable{
 //        }
 //    }
     
+    /**
+     * represenation of the static vision graph from XML
+     * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+     *
+     */
     public class StaticVisionGraph implements Cloneable{
     	Map<String, ArrayList<String>> vg;
     	
@@ -215,10 +326,18 @@ public class SimSettings implements Cloneable{
     		vg = new HashMap<String, ArrayList<String>>();
     	}
     	
+    	/**
+    	 * add new node with neighbours to VG
+    	 * @param node
+    	 * @param neighbours
+    	 */
     	public void addValue(String node, ArrayList<String> neighbours){
     		vg.put(node, neighbours);
     	}
     	
+    	/**
+    	 * print VG to command line
+    	 */
     	public void printSelfToCMD(){
     		System.out.println("visiongraph stays static: " + usePredefVG);
     		for(Map.Entry<String, ArrayList<String>> kvp : vg.entrySet()){
@@ -239,6 +358,11 @@ public class SimSettings implements Cloneable{
     	}
     }
     
+    /**
+     * representation of events from XML
+     * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+     * 
+     */
     public class Event implements Cloneable{
     	int timestep;
     	int participant; //1 = camera, 2 = object, 3=GRC
@@ -260,9 +384,22 @@ public class SimSettings implements Cloneable{
     	String fqName = "";
     	String bandit;
     	
+    	/**
+    	 * 
+    	 * Constructor for SimSettings.java
+    	 */
     	public Event(){
     	}
     	
+    	/**
+    	 * 
+    	 * Constructor for EVENT 
+    	 * @param ts
+    	 * @param part
+    	 * @param n
+    	 * @param ev
+    	 * @param dur
+    	 */
     	public Event(int ts, int part, String n, String ev, int dur){
     		timestep = ts;
     		participant = part;
@@ -271,6 +408,23 @@ public class SimSettings implements Cloneable{
     		duration = dur;
     	}
     	
+    	/**
+    	 * 
+    	 * Constructor for EVENT
+    	 * @param ts
+    	 * @param part
+    	 * @param n
+    	 * @param ev
+    	 * @param heading
+    	 * @param ran
+    	 * @param ang
+    	 * @param xPos
+    	 * @param yPos
+    	 * @param limit
+    	 * @param comm
+    	 * @param cc
+    	 * @param bandit
+    	 */
     	public Event(int ts, int part, String n, String ev, double heading, double ran, double ang, double xPos, double yPos, int limit, int comm, String cc, String bandit){
     		timestep = ts;
     		participant = part;
@@ -288,6 +442,22 @@ public class SimSettings implements Cloneable{
     		this.bandit = bandit;
     	}
     	
+    	/**
+    	 * 
+    	 * Constructor for EVENT
+    	 * @param ts
+    	 * @param part
+    	 * @param n
+    	 * @param ev
+    	 * @param head
+    	 * @param sp
+    	 * @param xPos
+    	 * @param yPos
+    	 * @param waypoints
+    	 * @param mean
+    	 * @param std
+    	 * @param fqName
+    	 */
     	public Event(int ts, int part, String n, String ev, double head, double sp, double xPos, double yPos, ArrayList<Point2D> waypoints, double mean, double std, String fqName){
     		this.waypoints = waypoints;
     		timestep = ts;
@@ -303,6 +473,9 @@ public class SimSettings implements Cloneable{
     		y = yPos;
     	}
 
+    	/**
+    	 * print event to command line
+    	 */
 		public void printSelfToCMD() {
 			if(participant == 1){
 				System.out.println("participant: camera");
@@ -326,25 +499,64 @@ public class SimSettings implements Cloneable{
     	
     }
     
+    /**
+     * min x of simulation
+     */
     public Double min_x;
+    /**
+     * max x of simulation
+     */
     public Double max_x;
+    /**
+     * min y of simulation
+     */
     public Double min_y;
+    /**
+     * max y of simulation
+     */
     public Double max_y;
+    /**
+     * collection cameras in simulation
+     */
     public ArrayList<CameraSettings> cameras = new ArrayList<CameraSettings>();
+    /**
+     * collection objects in simulation
+     */
     public ArrayList<TrObjectSettings> objects = new ArrayList<TrObjectSettings>();
 //    public ArrayList<TrObjectWithWaypoints> objectsWithWaypoints = new ArrayList<TrObjectWithWaypoints>();
+    /**
+     * collection events in simulation
+     */
     public ArrayList<Event> events = new ArrayList<Event>();
+    /**
+     * vision graph defined in xml for simulation
+     */
     public StaticVisionGraph visionGraph;
     
     
     private String algorithm = "";
     private int communication = 0;
     private String customComm = null;
-
+    private String bandit = "";
+    
+    /**
+     * 
+     * Constructor for SimSettings.java
+     */
     public SimSettings(){}
     
-    public SimSettings(String algo, String comm, String customComm, int staticVG){
+    /**
+     * 
+     * Constructor for SimSettings.java
+     * @param algo
+     * @param comm
+     * @param customComm
+     * @param staticVG
+     * @param bandit
+     */
+    public SimSettings(String algo, String comm, String customComm, int staticVG, String bandit){
     	usePredefVG = staticVG;
+    	this.bandit = bandit; 
     	if(!algo.equals("")){
     		fixAlgo = true;
     		algorithm = algo;
@@ -361,6 +573,9 @@ public class SimSettings implements Cloneable{
     	}
     }
 
+    /**
+     * prints simulation to command line including all collections
+     */
     public void printSelfToCMD(){
 
         System.out.println("min_x: " + min_x);
@@ -403,15 +618,22 @@ public class SimSettings implements Cloneable{
 
     }
     
+    /**
+     * loads information about cameras based on real world footage 
+     * @param names of cameras
+     * @param conf confidences for objects and cameras
+     * @param vis visiblities of objects in cameras
+     * @return
+     */
     public boolean loadRealFromLists(ArrayList<String> names, ArrayList<ArrayList<ArrayList<Double>>> conf, ArrayList<ArrayList<ArrayList<Integer>>> vis){
     	
     	if(algorithm.equals("")){
-    		algorithm = "epics.ai.ActiveAINodeMulti";
+    		algorithm = "epics.ai.auctionSchedules.ActiveAuctionSchedule";
     	}
     	int maxObj = 0;
     	for(int i = 0; i < names.size(); i++){
     		CameraSettings cs = new CameraSettings(names.get(i), conf.get(i), 
-    				vis.get(i), algorithm, communication, customComm, this.FIX_LIMIT);
+    				vis.get(i), algorithm, communication, customComm, this.getFixLimit());
     		if (conf.get(i).size() > maxObj) {
     			maxObj = conf.get(i).size();
     		}
@@ -424,6 +646,11 @@ public class SimSettings implements Cloneable{
     	return true;
     }
 
+    /**
+     * loads information from XML file
+     * @param filename
+     * @return
+     */
     public boolean loadFromXML(String filename) {
 
         this.cameras.clear();
@@ -436,8 +663,6 @@ public class SimSettings implements Cloneable{
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
             doc.getDocumentElement().normalize();
-
-            Element eRoot = doc.getDocumentElement();
 
             NodeList nList = doc.getElementsByTagName("simulation");
             Node nSimulation = nList.item(0);
@@ -470,9 +695,12 @@ public class SimSettings implements Cloneable{
                 cs.heading = Double.parseDouble(eCamera.getAttribute("heading"));
                 cs.viewing_angle = Double.parseDouble(eCamera.getAttribute("viewing_angle"));
                 cs.range = Double.parseDouble(eCamera.getAttribute("range"));
-                cs.bandit = "";
-                if(eCamera.hasAttribute("bandit"))
-                	cs.bandit = eCamera.getAttribute("bandit");
+                cs.bandit = bandit;
+                if(bandit.equals("")){
+                    if(eCamera.hasAttribute("bandit")){
+                    	cs.bandit = eCamera.getAttribute("bandit");
+                    }
+                }
                 
                 if(fixAlgo){
                 	cs.ai_algorithm = algorithm;
@@ -486,7 +714,6 @@ public class SimSettings implements Cloneable{
                 }
                 else{
                 	cs.comm = Integer.parseInt(eCamera.getAttribute("comm"));
-                	String cc = "";
                     if(eCamera.hasAttribute("customcom"))
                         cs.customComm = eCamera.getAttribute("customcom");
                 }
@@ -494,7 +721,7 @@ public class SimSettings implements Cloneable{
                 	cs.limit = Integer.parseInt(eCamera.getAttribute("limit"));
                 }
                 else{
-                	cs.limit = new Integer(FIX_LIMIT);
+                	cs.limit = new Integer(getFixLimit());
                 }
                 
                 this.cameras.add(cs);
@@ -644,7 +871,7 @@ public class SimSettings implements Cloneable{
             			String cc = "";
             			if(eEvent.hasAttribute("customcom"))
             			    cc = eEvent.getAttribute("customcom");
-            			int limit = FIX_LIMIT;
+            			int limit = getFixLimit();
             			String bs = "";
             			if(eEvent.hasAttribute("bandit"))
             				bs = eEvent.getAttribute("bandit");
@@ -656,7 +883,6 @@ public class SimSettings implements Cloneable{
             			events.add(e);
             		}
             		else if(event.equals("change")){
-            			double head = Double.parseDouble(eEvent.getAttribute("heading"));
             			double range = Double.parseDouble(eEvent.getAttribute("range"));
             			double angle = Double.parseDouble(eEvent.getAttribute("viewing_angle"));
             			double x = Double.parseDouble(eEvent.getAttribute("x"));
@@ -669,7 +895,7 @@ public class SimSettings implements Cloneable{
                             cc = eEvent.getAttribute("customcom");
             			int comm = -1;
             			double heading = Double.parseDouble(eEvent.getAttribute("heading"));
-            			int limit = FIX_LIMIT;
+            			int limit = getFixLimit();
             			e = new Event(ts, part, name, event, heading, range, angle, x, y, limit, comm, cc, bs);
             			events.add(e);
             		}
@@ -750,6 +976,13 @@ public class SimSettings implements Cloneable{
         return false;
     }
 
+    /**
+     * get value for an XML tag
+     * @param sTag
+     * @param eElement
+     * @return
+     */
+    @SuppressWarnings("unused")
     private String getTagValue(String sTag, Element eElement) {
         NodeList nlList = eElement.getElementsByTagName(sTag).item(0).getChildNodes();
         Node nValue = (Node) nlList.item(0);
@@ -757,6 +990,10 @@ public class SimSettings implements Cloneable{
         return nValue.getNodeValue();
     }
 
+    /**
+     * save information in SimSettings to an XML file
+     * @param filename
+     */
     public void saveToXML(String filename) {
 
         try {
@@ -825,9 +1062,13 @@ public class SimSettings implements Cloneable{
 
     }
 
+    /**
+     * coppy these settings
+     * @return
+     */
 	public SimSettings copy() {
 		
-		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.customComm, this.usePredefVG);
+		SimSettings ss = new SimSettings(this.algorithm, "" + this.communication, this.customComm, this.usePredefVG, this.bandit);
 		
 		
 		ss.cameras = (ArrayList<CameraSettings>) this.cameras.clone();
@@ -852,4 +1093,12 @@ public class SimSettings implements Cloneable{
 		return ss;
 		
 	}
+
+	/**
+	 * get FIX_LIMIT
+	 * @return
+	 */
+    public int getFixLimit() {
+        return FIX_LIMIT;
+    }
 }

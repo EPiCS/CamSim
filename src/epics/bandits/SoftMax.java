@@ -1,9 +1,6 @@
 package epics.bandits;
 
-import javax.print.attribute.standard.NumberOfDocuments;
-
 import epics.common.AbstractBanditSolver;
-import epics.common.IBanditSolver;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
 
@@ -38,6 +35,21 @@ public class SoftMax extends AbstractBanditSolver {
 		this.temperature = temperature;
 	}
 	
+	/**
+	 * Constructor for SoftMax.java
+	 * @param numberOfOptions
+	 * @param temperature 
+	 * @param alpha
+	 * @param beta
+	 * @param gamma
+	 * @param interval
+	 * @param rg
+	 */
+	public SoftMax(int numberOfOptions, double temperature, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg){
+        super(numberOfOptions, temperature, alpha, beta, gamma, interval, rg);
+        this.temperature = temperature;
+    }
+	
 	/**-
 	 * @param eg
 	 * @param comm
@@ -53,7 +65,7 @@ public class SoftMax extends AbstractBanditSolver {
 	 */
 	@Override
 	public int selectAction() {
-		int strategy;
+//		int strategy;
 
 		if(count >= _interval){
 			if(currentStrategy != -1){
@@ -92,6 +104,38 @@ public class SoftMax extends AbstractBanditSolver {
 	 * @see epics.common.BanditSolver#bestAction()
 	 */
 	public String bestAction(){
-	    return ""+ currentStrategy;
+	    double[] p = new double[armsTotalReward.length];
+	    double res = Double.MIN_NORMAL;
+	    int highest = -1;
+	    for(int i = 0; i < armsTotalReward.length; i++){
+            if((armsTotalReward[i] / armsCount[i]) > res){
+                res = (armsTotalReward[i] / armsCount[i]);
+                highest = i;
+            }
+        }
+	    return ""+ highest;
 	}
+
+    @Override
+    public int selectActionWithoutReward() {
+        double totalActionProbability = 0.0;
+        double[] p = new double[armsTotalReward.length];
+        
+        for(int i = 0; i < armsTotalReward.length; i++){
+            p[i] = Math.exp((armsTotalReward[i] / armsCount[i])/temperature);
+            totalActionProbability += p[i];
+        }
+        
+        double x = randomG.nextDouble(USE.BANDIT);
+        
+        double random_number =  x * totalActionProbability;
+  
+        int bestIndex = 0;
+        for(;bestIndex < p.length && random_number > 0; bestIndex++)
+            random_number -= p[bestIndex];
+        
+        currentStrategy = bestIndex-1;
+        
+        return currentStrategy;
+    }
 }

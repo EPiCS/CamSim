@@ -4,12 +4,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 
+/**
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ * 
+ */
 public class SimRunner implements Runnable {
 
 	int duration;
@@ -30,6 +33,20 @@ public class SimRunner implements Runnable {
 	private String outputFile = "";
 		
 	
+	/**
+	 * Constructor for SimRunner.java
+	 * @param seed
+	 * @param dir
+	 * @param file
+	 * @param ss
+	 * @param global
+	 * @param camError
+	 * @param camReset
+	 * @param dur
+	 * @param alpha
+	 * @param real
+	 * @param allStatistics
+	 */
 	public SimRunner(long seed, String dir, String file, SimSettings ss, boolean global, int camError, int camReset, int dur, double alpha, boolean real, boolean allStatistics){
 		this.seed = new Long(seed);
 		this.run = new String(dir + "//" + file);
@@ -46,6 +63,22 @@ public class SimRunner implements Runnable {
 		duration = dur;
 	}
 	
+	/**
+	 * Constructor for SimRunner.java
+	 * @param seed
+	 * @param dir
+	 * @param file
+	 * @param runs
+	 * @param ss
+	 * @param global
+	 * @param camError
+	 * @param camReset
+	 * @param dur
+	 * @param alpha
+	 * @param real
+	 * @param diffSeed
+	 * @param allStats
+	 */
 	public SimRunner(long seed, String dir, String file, int runs, SimSettings ss, boolean global, int camError, int camReset, int dur, double alpha, boolean real, boolean diffSeed, boolean allStats){
 		this.seed = new Long(seed);
 		this.run = new String(dir + "//" + file);
@@ -63,6 +96,9 @@ public class SimRunner implements Runnable {
 		
 		duration = dur;
 	}
+	/* (non-Javadoc)
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
 		
@@ -71,7 +107,7 @@ public class SimRunner implements Runnable {
 		
 		if(runs == 0){
 			ss = ss.copy();
-			SimCore sim = new SimCore(seed, run, ss, global, camError, camReset, alpha, realData, allStatistics);//output_file, ss, false);
+			SimCore sim = new SimCore(seed, run, ss, global, camError, camReset, alpha, "", realData, allStatistics);//output_file, ss, false);
 			
 			for (int i = 0; i < duration; i++) {
 	            try {
@@ -100,7 +136,7 @@ public class SimRunner implements Runnable {
     				seed =r;
     			}
     			
-                SimCore sim = new SimCore(seed, dir + "//run" + r + ".csv", ss, false, -1, 50, 0.5, realData, true);
+                SimCore sim = new SimCore(seed, dir + "//run" + r + ".csv", ss, false, -1, 50, 0.5, "", realData, true);
                 for (int i = 0; i < duration; i++) {
                     try {
 						sim.update();

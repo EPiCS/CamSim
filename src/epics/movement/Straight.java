@@ -14,6 +14,15 @@ import epics.common.*;
 
 public class Straight extends AbstractMovement{
 
+    /**
+     * Constructor for Straight movement. The Object moves in straight line until it reaches the border of the simulation environment. bounces back in a random direction.
+     * @param x x-coordinate of starting point for the object
+     * @param y y-coordinate of starting point for the object
+     * @param heading initial heading of the object
+     * @param speed initial speed
+     * @param rg random generator - should be the same for all objects
+     * @param sim simulation environment
+     */
     public Straight(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim) {
         super(x, y, heading, speed, rg, sim);
     }

@@ -4,7 +4,7 @@ import java.util.Random;
 
 /**
  *
- * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
+ * @author Lukas Esterle and Marcin Bogdanski <mxb039@cs.bham.ac.uk>
  */
 public class RandomNumberGenerator {
     
@@ -15,8 +15,14 @@ public class RandomNumberGenerator {
     private Random ranError = null;
     private Random ranBandit = null;
     private Random ranNormal = null;
+    private Random ranDynamicSchedule = null;
     private long _seed;
     
+    /**
+     * 
+     * Constructor for RandomNumberGenerator
+     * @param seed initial seed
+     */
     public RandomNumberGenerator(long seed) {
     	init(seed);
         _seed = seed;
@@ -30,9 +36,15 @@ public class RandomNumberGenerator {
     	ranError = new Random(seed);
     	ranBandit = new Random(seed);
     	ranNormal = new Random(seed);
+    	ranDynamicSchedule = new Random(seed);
         _seed = seed;
     }
 
+    /**
+     * get a random double number for specific rng
+     * @param u type of random number generator
+     * @return
+     */
     public double nextDouble(RandomUse.USE u)  {
     	switch (u) {
 			case UNIV:
@@ -49,12 +61,18 @@ public class RandomNumberGenerator {
 				return ranBandit.nextDouble();
 			case MOVE:
 			    return ranNormal.nextDouble();
+			case DYNSCHED:
+			    return ranDynamicSchedule.nextDouble();
 			default:
 				return ranUniversal.nextDouble();
 		}
     }
     
-
+    /**
+     * get an integer for a specific rng
+     * @param u type of random number generator
+     * @return
+     */
     public int nextInt(RandomUse.USE u){
     	switch (u) {
 			case UNIV:
@@ -71,12 +89,19 @@ public class RandomNumberGenerator {
 				return ranBandit.nextInt();
 			case MOVE:
                 return ranNormal.nextInt();
+			case DYNSCHED:
+                return ranDynamicSchedule.nextInt();
 			default:
 				return ranUniversal.nextInt();
 		}
     }
     
-
+ /**
+  * get an integer smaller n for specific rng
+  * @param n maximum random number
+  * @param u type of random number generator
+  * @return
+  */
     public int nextInt( int n, RandomUse.USE u ){
     	switch (u) {
 			case UNIV:
@@ -93,6 +118,8 @@ public class RandomNumberGenerator {
 				return ranBandit.nextInt(n);
 			case MOVE:
                 return ranNormal.nextInt(n);
+			case DYNSCHED:
+                return ranDynamicSchedule.nextInt(n);
 			default:
 				return ranUniversal.nextInt(n);
 		}
@@ -131,11 +158,17 @@ public class RandomNumberGenerator {
                 return ranBandit.nextGaussian();
             case MOVE:
                 return ranNormal.nextGaussian();
+            case DYNSCHED:
+                return ranDynamicSchedule.nextGaussian();
             default:
                 return ranUniversal.nextGaussian();
         }
     }
 
+    /**
+     * return initial seed
+     * @return
+     */
     public long getSeed() {
         return _seed;
     }

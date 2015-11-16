@@ -9,16 +9,39 @@ import epics.common.AbstractMovement;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
 
+/**
+ * DirectedBrownian is based on the well-known Brownian movement. The main difference is, the object may change its direction and speed only within a small variation window instead of any direction with any speed. This shoule reflect a more natural movement of people. 
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class DirectedBrownian extends AbstractMovement{
+    /**
+     * Constructor for DirectedBrownian
+     * @param x x-coordinate for initial (starting) position
+     * @param y y-coordinate for initial (starting) position
+     * @param heading initial direction of the object
+     * @param speed initial speed of the obejct
+     * @param rg random number generator
+     * @param sim simulation environment
+     */
     public DirectedBrownian(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim){
         super(x, y, heading, speed, rg, sim);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see epics.common.AbstractMovement#getWaypoints()
+     */
     @Override
     public List<Point2D> getWaypoints() {
         return new ArrayList<Point2D>();
     }
 
+    /*
+     * (non-Javadoc)
+     * @see epics.common.AbstractMovement#update()
+     */
     @Override
     public void update() {
         double x_move = 0;
@@ -29,7 +52,7 @@ public class DirectedBrownian extends AbstractMovement{
         speed += (sran / 10); //- 0.5) / 10;
         heading += (hran / 2);// - 0.5) / 2; 
         
-        System.out.println(sran + " - " + hran);
+//        System.out.println(sran + " - " + hran);
         
         x_move = Math.sin(heading) * speed;
         y_move = Math.cos(heading) * speed;

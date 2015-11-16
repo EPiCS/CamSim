@@ -1,5 +1,11 @@
 package epics.common;
 
+/**
+ * 
+ * 
+ * @author Lukas Esterle
+ *
+ */
 public class RandomUse {
 	public enum USE{
 		UNIV,
@@ -8,6 +14,6 @@ public class RandomUse {
 		COMM,
 		ERROR,
 		BANDIT,
-		MOVE
+		MOVE, DYNSCHED
 	}
 }

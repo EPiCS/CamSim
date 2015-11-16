@@ -6,7 +6,7 @@
             <camera ai_algorithm="epics.ai.PassiveAINodeMulti" heading="0.0" name="Cam_02" range="30.0" viewing_angle="50.0" x="-18.0" y="0.0" comm="0"/>
         </cameras>
         <objects>
-		<object features="1.5" heading="90.0" speed="1.0" x="-30.0" y="-2.0"/>
+		<object features="1.5" heading="90.0" speed="1.0" x="-30.0" y="2.0"/>
         </objects>
 	<events>
 	    <event timestep="0" participant="object" name="1.0" event="add" heading="90.0" speed="1.5" x="-30.0" y="3.0">
