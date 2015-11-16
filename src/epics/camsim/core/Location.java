@@ -1,16 +1,36 @@
 package epics.camsim.core;
 
+/**
+ * the Location class represents the location of the object and allows for comparison with other locations
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class Location implements Comparable<Location>{
     double x;
     double y;
     
+    /**
+     * returns x of the location
+     * @return
+     */
     public double getX(){
         return x;
     }
+    
+    /**
+     * returns y of the location
+     * @return
+     */
     public double getY(){
         return y;
     }
     
+    /**
+     * Constructor for Location
+     * @param x
+     * @param y
+     */
     public Location(double x, double y){
         this.x = x;
         this.y = y;
@@ -65,6 +85,11 @@ public class Location implements Comparable<Location>{
         }
     }
     
+    /**
+     * returns the angle to another location in degree
+     * @param l
+     * @return
+     */
     public double angleTo(Location l){
         double[] d = distanceTo(l);
         double angle = 0.0; // = Math.toDegrees(Math.atan(d[0]/d[1]))*2;
@@ -123,6 +148,11 @@ public class Location implements Comparable<Location>{
         return x + " " + y;
     }
     
+    /**
+     * moves this location by x and y
+     * @param x
+     * @param y
+     */
     public void moveBy(double x, double y){
         this.x += x;
         this.y += y;

@@ -26,10 +26,12 @@ public class TraceableObject{
      * Constructor
      * @param id Unique identifier for an object, that is how object
      * distinguish between objects.
+     * @param sim 
      * @param x Object position on X axis
      * @param y Object position on Y axis
      * @param heading Object heading, 0 is north, PI/2 is east )
      * @param speed
+     * @param rg 
      */
     public TraceableObject( double id, SimCore sim, double x, double y, double heading, double speed, RandomNumberGenerator rg ){
         this.move = new Straight(x, y, heading, speed, rg, sim);
@@ -40,6 +42,11 @@ public class TraceableObject{
         this.features.add(id);
     }
     
+    /**
+     * Constructor for TraceableObject
+     * @param id unique id of object
+     * @param move movement behaviour of object
+     */
     public TraceableObject(double id, AbstractMovement move){
         this.features.add(id);
         maxX=move.getBoundaries()[0];
@@ -49,6 +56,14 @@ public class TraceableObject{
         this.move = move;
     }
     
+    /**
+     * Constructor for TraceableObject
+     * @param id unique id of object
+     * @param sim simulation environment
+     * @param speed movement speed of object
+     * @param waypoints waypoints the object moves along
+     * @param rg random number generator
+     */
     public TraceableObject( double id, SimCore sim, double speed, List<Point2D> waypoints, RandomNumberGenerator rg){
         assert( waypoints.size() >= 2 );
         this.features.add(id);
@@ -63,9 +78,17 @@ public class TraceableObject{
         move.update();
     }
     
+    /**
+     * x-coordinate of object
+     * @return
+     */
     public double getX(){
     	return move.getX();
     }
+    /**
+     * y-coordinate of object
+     * @return
+     */
     public double getY(){
     	return move.getY();
     }
@@ -85,6 +108,10 @@ public class TraceableObject{
         return (minY+move.getY())*(-1);
     }
 
+    /**
+     * heading of object
+     * @return
+     */
     public double getHeading(){
     	return move.getHeading();
     }
@@ -100,7 +127,8 @@ public class TraceableObject{
 
     /** Provides the XML string representing this object. Requires the 
      * indentation string as an argument in order to indent multi-line 
-     * entries (i.e. objects with waypoints) */
+     * entries (i.e. objects with waypoints) 
+     * @return */
 	public String toXMLString() {
 		String feat = "" + this.features;
     	feat = feat.substring(1, feat.length()-1);

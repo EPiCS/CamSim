@@ -1,7 +1,6 @@
 package epics.camsim.core;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
@@ -16,24 +15,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
-
-
-
-
-
-
-
-
-
-
-
-import java.util.function.Consumer;
 
 import com.sun.javafx.geom.Arc2D;
 
@@ -45,9 +31,6 @@ import epics.ai.commpolicy.Smooth;
 import epics.ai.commpolicy.Step;
 import epics.camwin.CoordinateSystemTransformer;
 import epics.camwin.Point;
-import epics.camwin.SimCoreModel;
-import epics.camwin.WindowMain;
-//import epics.camsim.core.SimSettings.TrObjectWithWaypoints;
 import epics.common.AbstractAuctionSchedule;
 import epics.common.AbstractCommunication;
 import epics.common.AbstractMovement;
@@ -55,7 +38,6 @@ import epics.common.CmdLogger;
 import epics.common.IBanditSolver;
 import epics.common.ICameraController;
 import epics.common.IMessage;
-import epics.common.ITrObjectRepresentation;
 import epics.common.IMessage.MessageType;
 import epics.common.IRegistration;
 import epics.common.RandomNumberGenerator;
@@ -292,8 +274,10 @@ public class SimCore {
 	 * @param alpha the alpha value for the weighted reward function used in bandit solvers
      * @param realData indicates if real data has been used
      * @param allStatistics indicates if statistics are also taken for each camera seperately
+     * @param summary 
 	 * @param summaryFile File for a summarised statistics file
 	 * @param paramFile parameterfile for simulations
+     * @param movement 
 	 */
 	private void initSimCore(long seed, String output, boolean global,
 			int camError, int camReset, double alpha,
@@ -394,7 +378,7 @@ public class SimCore {
         }
 
         for (SimSettings.TrObjectSettings tro : ss.objects){
-            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.mean, tro.std, ((this.movement.equals("")) ? tro.fqName : this.movement));
+            this.add_object(tro.x, tro.y, tro.heading, tro.speed, tro.features, tro.waypoints, tro.mean, tro.std, ((this.movement.equals("")) ? tro.movementClass : this.movement));
         }
         
 //        for (TrObjectWithWaypoints objWithWP : ss.objectsWithWaypoints) {

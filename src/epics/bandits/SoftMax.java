@@ -1,9 +1,6 @@
 package epics.bandits;
 
-import javax.print.attribute.standard.NumberOfDocuments;
-
 import epics.common.AbstractBanditSolver;
-import epics.common.IBanditSolver;
 import epics.common.RandomNumberGenerator;
 import epics.common.RandomUse.USE;
 
@@ -38,6 +35,16 @@ public class SoftMax extends AbstractBanditSolver {
 		this.temperature = temperature;
 	}
 	
+	/**
+	 * Constructor for SoftMax.java
+	 * @param numberOfOptions
+	 * @param temperature 
+	 * @param alpha
+	 * @param beta
+	 * @param gamma
+	 * @param interval
+	 * @param rg
+	 */
 	public SoftMax(int numberOfOptions, double temperature, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg){
         super(numberOfOptions, temperature, alpha, beta, gamma, interval, rg);
         this.temperature = temperature;
@@ -58,7 +65,7 @@ public class SoftMax extends AbstractBanditSolver {
 	 */
 	@Override
 	public int selectAction() {
-		int strategy;
+//		int strategy;
 
 		if(count >= _interval){
 			if(currentStrategy != -1){
@@ -111,14 +118,6 @@ public class SoftMax extends AbstractBanditSolver {
 
     @Override
     public int selectActionWithoutReward() {
-        int strategy;
-
-//        //Calculate total number of trials of all arms
-//        double totalArmsCount = 0.0;
-//        for (int i = 0; i < armsCount.length; i++)
-//            totalArmsCount += armsCount[i];
-
-        //sum exp(q(b)/temperature)
         double totalActionProbability = 0.0;
         double[] p = new double[armsTotalReward.length];
         

@@ -59,12 +59,18 @@ public class Main {
         System.out.println();
     }
 
+    /**
+     * prompts a short usage info on the command line
+     */
     public static void usage() {
         System.out.println("USAGE: ");
         System.out.println("  program [OPTIONS] input_file");
         System.out.println("\nuse -h for help");
     }
 
+    /**
+     * prints the help information on the command line
+     */
     public static void help() {
         usage();
 
@@ -96,6 +102,7 @@ public class Main {
 
     /**
      * @param args the command line arguments
+     * @throws Exception 
      */
     public static void main(String[] args) throws Exception {
 
@@ -296,6 +303,9 @@ public class Main {
         print_parameters();
     }
 
+    /**
+     * sim core model for this simulation
+     */
     public static SimCoreModel sim_model;
 
 }

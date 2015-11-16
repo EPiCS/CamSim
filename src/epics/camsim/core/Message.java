@@ -21,6 +21,13 @@ public class Message implements IMessage {
         this.content = content;
     }
 
+    /**
+     * Constructor for Message
+     * @param from
+     * @param to
+     * @param msgType
+     * @param content
+     */
     public Message( String from, String to, MessageType msgType, Object content ){
         this.init( from, to, msgType, content );
     }

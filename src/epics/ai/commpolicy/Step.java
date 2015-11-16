@@ -1,10 +1,10 @@
-package epics.commpolicy;
+package epics.ai.commpolicy;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import epics.common.AbstractAINode;
+import epics.common.AbstractAuctionSchedule;
 import epics.common.ICameraController;
 import epics.common.ITrObjectRepresentation;
 import epics.common.RandomNumberGenerator;
@@ -21,11 +21,21 @@ public class Step extends AbstractCommunication {
 
 	Broadcast broadcast;
 	
-	public Step(AbstractAINode ai, ICameraController camController) {
+	/**
+	 * Constructor for Step
+	 * @param ai the AI node using the communication policy
+	 * @param camController the camera using the AI node and the communication policy
+	 */
+	public Step(AbstractAuctionSchedule ai, ICameraController camController) {
 		super(ai, camController);
 		broadcast = new Broadcast(ai, camController);
 	}
 	
+	/**
+	 * Multicasts to cameras with a certain linkstrength. if linkstrength is less than a certain threshold, the camera only communicates with a small probability.
+	 * @param mt the message type to be communicated
+	 * @param o content of the message
+	 */
 	public void multicast(MessageType mt, Object o) {
 		Map<ITrObjectRepresentation, List<String>> advertised = ai.getAdvertisedObjects();
 		Map<ITrObjectRepresentation, Integer> stepsTillBroadcast = ai.getStepsTillBroadcast();
@@ -33,9 +43,9 @@ public class Step extends AbstractCommunication {
 		
 		if (mt == MessageType.StartSearch) {
 			ITrObjectRepresentation io = (ITrObjectRepresentation) o;
-			if (AbstractAINode.USE_BROADCAST_AS_FAILSAVE) {
+			if (AbstractAuctionSchedule.USE_BROADCAST_AS_FAILSAVE) {
 				if (!stepsTillBroadcast.containsKey(io)) {
-					stepsTillBroadcast.put(io, AbstractAINode.STEPS_TILL_BROADCAST);
+					stepsTillBroadcast.put(io, AbstractAuctionSchedule.STEPS_TILL_BROADCAST);
 				}
 			}
 			
@@ -66,7 +76,7 @@ public class Step extends AbstractCommunication {
 			}
 
 			if(sent == 0){
-				if(AbstractAINode.DEBUG_CAM){
+				if(AbstractAuctionSchedule.DEBUG_CAM){
 					System.out.println(this.camController.getName() + " tried to MC --> now BC");
 				}
 				broadcast(mt, o);

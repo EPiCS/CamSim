@@ -1,10 +1,10 @@
-package epics.commpolicy;
+package epics.ai.commpolicy;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import epics.common.AbstractAINode;
+import epics.common.AbstractAuctionSchedule;
 import epics.common.ICameraController;
 import epics.common.IMessage.MessageType;
 import epics.common.ITrObjectRepresentation;
@@ -18,7 +18,12 @@ public class Fix extends AbstractCommunication {
 
 	Broadcast broadcast;
 	
-	public Fix(AbstractAINode ai, ICameraController camController) {
+	/**
+	 * Constructor for Fix communication policy
+	 * @param ai ai using this communication policy
+	 * @param camController camera controller using this policy (via ai)
+	 */
+	public Fix(AbstractAuctionSchedule ai, ICameraController camController) {
 		super(ai, camController);
 		broadcast = new Broadcast(ai, camController);
 	}

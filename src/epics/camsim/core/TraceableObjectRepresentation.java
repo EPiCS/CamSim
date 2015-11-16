@@ -18,12 +18,21 @@ public class TraceableObjectRepresentation implements ITrObjectRepresentation {
 
 	private double _price;
 
+	/**
+	 * Constructor for TraceableObjectRepresentation - camera internal represenation of object
+	 * @param to actual traced object
+	 * @param features unique features/id of object
+	 */
     public TraceableObjectRepresentation( TraceableObject to, List<Double> features ){
         this.to = to;
         _price = 0;
         this.features = features;
     }
 
+    /**
+     * returns the actual object
+     * @return
+     */
     public TraceableObject getTraceableObject(){
         return this.to;
     }

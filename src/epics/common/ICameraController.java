@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import epics.camsim.core.Location;
-import epics.camsim.core.TraceableObjectRepresentation;
 
 /**
  *

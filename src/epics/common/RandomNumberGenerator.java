@@ -4,7 +4,7 @@ import java.util.Random;
 
 /**
  *
- * @author Marcin Bogdanski <mxb039@cs.bham.ac.uk>
+ * @author Lukas Esterle and Marcin Bogdanski <mxb039@cs.bham.ac.uk>
  */
 public class RandomNumberGenerator {
     
@@ -18,6 +18,11 @@ public class RandomNumberGenerator {
     private Random ranDynamicSchedule = null;
     private long _seed;
     
+    /**
+     * 
+     * Constructor for RandomNumberGenerator
+     * @param seed initial seed
+     */
     public RandomNumberGenerator(long seed) {
     	init(seed);
         _seed = seed;
@@ -35,6 +40,11 @@ public class RandomNumberGenerator {
         _seed = seed;
     }
 
+    /**
+     * get a random double number for specific rng
+     * @param u type of random number generator
+     * @return
+     */
     public double nextDouble(RandomUse.USE u)  {
     	switch (u) {
 			case UNIV:
@@ -58,7 +68,11 @@ public class RandomNumberGenerator {
 		}
     }
     
-
+    /**
+     * get an integer for a specific rng
+     * @param u type of random number generator
+     * @return
+     */
     public int nextInt(RandomUse.USE u){
     	switch (u) {
 			case UNIV:
@@ -82,7 +96,12 @@ public class RandomNumberGenerator {
 		}
     }
     
-
+ /**
+  * get an integer smaller n for specific rng
+  * @param n maximum random number
+  * @param u type of random number generator
+  * @return
+  */
     public int nextInt( int n, RandomUse.USE u ){
     	switch (u) {
 			case UNIV:
@@ -146,6 +165,10 @@ public class RandomNumberGenerator {
         }
     }
 
+    /**
+     * return initial seed
+     * @return
+     */
     public long getSeed() {
         return _seed;
     }

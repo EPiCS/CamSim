@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import epics.auctionSchedules.ActiveAINodeMulti;
+import epics.ai.auctionSchedules.ActiveAuctionSchedule;
 import epics.camsim.core.Location;
 import epics.common.AbstractAuctionSchedule;
 import epics.common.IBanditSolver;
@@ -21,7 +21,7 @@ import epics.common.StatsPerZoom;
  * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
  *
  */
-public class BanditSolverZoom extends ActiveAINodeMulti{
+public class BanditSolverZoom extends ActiveAuctionSchedule{
 
         List<StatsPerZoom> stats = new ArrayList<StatsPerZoom>();
         

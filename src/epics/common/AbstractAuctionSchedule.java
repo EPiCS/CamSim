@@ -170,6 +170,7 @@ public abstract class AbstractAuctionSchedule {
 	 * This constructor simply calls instantiateAINode(). Overriding classes
      * should only call super and do real handling in instantiateAINode().
      * This is painful but is to enforce these arguments in the constructor. 
+	 * @param staticVG1 
      * 
 	 * @param comm communication used
 	 * @param staticVG if true, only static vision graph is used
@@ -558,6 +559,7 @@ public abstract class AbstractAuctionSchedule {
 
     /**
      * returns the number of bids received overall by this camera
+     * @return 
      */
     public int getNrOfBids() {
         return _nrBidsReceived;
@@ -573,6 +575,7 @@ public abstract class AbstractAuctionSchedule {
     
     /**
      * the utility received from other cameras for selling objects in this timestep
+     * @return 
      */
     public double getReceivedUtility() {
         return _receivedUtility;
@@ -588,12 +591,14 @@ public abstract class AbstractAuctionSchedule {
 	
 	/**
 	 * get the number of sent messages in this timestep
+	 * @return 
 	 */
 	public int getSentMessages(){
 		return sentMessages;
 	}
 	
-	/** Adds one to the number of sent messages in this time step */
+	/** Adds one to the number of sent messages in this time step 
+	 * @return */
 	public int incrementSentMessages() {
 		sentMessages++;
 		return sentMessages;
@@ -813,17 +818,20 @@ public abstract class AbstractAuctionSchedule {
     }
     
     /** Returns the mapping from owned objects to the neighbouring cameras 
-     * to which those objects are being advertised */
+     * to which those objects are being advertised 
+     * @return */
     public Map<ITrObjectRepresentation, List<String>> getAdvertisedObjects() {
     	return advertised;
     }
     
-    /** Get the stepsTillBroadcast object */
+    /** Get the stepsTillBroadcast object 
+     * @return */
     public Map<ITrObjectRepresentation, Integer> getStepsTillBroadcast() {
     	return stepsTillBroadcast;
     }
     
-    /** Get the random number generator object for this AI node */
+    /** Get the random number generator object for this AI node 
+     * @return */
     public RandomNumberGenerator getRandomGen() {
     	return randomGen;
     }
@@ -878,7 +886,6 @@ public abstract class AbstractAuctionSchedule {
 	 */
 	public IMessage processMessage(IMessage message){
         Object result = null;
-//        System.out.println("IN PROCESSMESSAGE: " + message.toString());
         switch (message.getType()) {
             case AskConfidence:
                 result = handle_askConfidence(message.getFrom(), (ITrObjectRepresentation) message.getContent());
@@ -894,6 +901,10 @@ public abstract class AbstractAuctionSchedule {
                 break;
             case StartTracking:
                 result = handle_startTracking(message.getFrom(), (ITrObjectRepresentation) message.getContent());
+                break;
+            default:
+                System.err.println("MESSAGE TYPE NOT FOUND IN ABSTRACT AUCTION");
+                break;
         }
 
         if (result == null) {
@@ -1003,6 +1014,7 @@ public abstract class AbstractAuctionSchedule {
      * broadcasts a given message to all other cameras in the network
      * @param mt the message to be sent to other cameras 
      * @param o the object this message relates to
+     * @throws ClassCastException 
      * @throws NullPointerException in case the object can not be casted correctly
      */
     protected void broadcast(MessageType mt, Object o) throws ClassCastException{
@@ -1016,7 +1028,7 @@ public abstract class AbstractAuctionSchedule {
 	 */
 	public void setComm(AbstractCommunication com) {
         communicationPolicy = com;
-        if(com instanceof epics.commpolicy.Fix){
+        if(com instanceof epics.ai.commpolicy.Fix){
             USE_BROADCAST_AS_FAILSAVE = false;
         }
     }
@@ -1059,6 +1071,7 @@ public abstract class AbstractAuctionSchedule {
 	/** Called when communication is made with the given camera about the 
      * given object, in order to strengthen the pheromone link.
      * @param destinationName the name of the remote camera and link to be strengthened
+	 * @param itro 
      */
     public void strengthenVisionEdge(String destinationName, ITrObjectRepresentation itro) {
     	if(!staticVG){
@@ -1441,7 +1454,8 @@ public abstract class AbstractAuctionSchedule {
 	/** Get a mapping between camera names and values for the pheromone links
 	 * between the AI node and those cameras. This is used for drawing the 
 	 * vision graph.
-	 * Here, it's the same as the actual vision graph */
+	 * Here, it's the same as the actual vision graph 
+	 * @return */
     public Map<String, Double> getDrawableVisionGraph() {
         return getVisionGraph();
     }
@@ -1465,58 +1479,65 @@ public abstract class AbstractAuctionSchedule {
         }
     }
     
-    /** Whether the key exists for this cam name (ignoring object here) */
+    /** Whether the key exists for this cam name (ignoring object here) 
+     * @param camName 
+     * @param itro 
+     * @return */
     public boolean vgContainsKey(String camName, ITrObjectRepresentation itro) { 
     	return getVisionGraph().containsKey(camName);
     }
     
-	/** Get all values in the vision graph (ignoring object here) */
+	/** Get all values in the vision graph (ignoring object here) 
+	 * @param itro 
+	 * @return */
     public Collection<Double> vgGetValues(ITrObjectRepresentation itro) {
     	return getVisionGraph().values();
     }
     
-	/** Get all cameras with values in the vision graph */
+	/** Get all cameras with values in the vision graph 
+	 * @return */
     public Set<String> vgGetCamSet() {
     	return getVisionGraph().keySet();
     }
     
-	/** Get the pheromone value for this camera name (ignoring object here) */
+	/** Get the pheromone value for this camera name (ignoring object here) 
+	 * @param camName 
+	 * @param itro 
+	 * @return */
     public Double vgGet(String camName, ITrObjectRepresentation itro) {
     	return getVisionGraph().get(camName);
     }
     
     /** Put a value in the vision graph under this camera name (ignoring 
-     * object here) */
+     * object here) 
+     * @param camName 
+     * @param itro 
+     * @param value 
+     * @return */
     public Double vgPut(String camName, ITrObjectRepresentation itro, Double value) {
     	return getVisionGraph().put(camName, value);
     }
     
-    /** Get all entries (key-value pairs) in the vision graph */
+    /** Get all entries (key-value pairs) in the vision graph 
+     * @return */
     public Set<Map.Entry<String, Double>> vgEntrySet() {
     	return getVisionGraph().entrySet();
     }
     
-    /** Remove from the vision graph the key-value pair for the given key */
+    /** Remove from the vision graph the key-value pair for the given key 
+     * @param name 
+     * @return */
     public Double vgRemove(String name) {
     	return getVisionGraph().remove(name);
     }
     
-    /**
-     * helper class to print a human readable version of the vision graph.
-     */
-    private void printVisionGraph(){
-    	String neighbours = "";
-    	for (String neighbour : visionGraph.keySet()) {
-			neighbours += "; " + neighbour; 
-		}
-    	System.out.println(this.camController.getName() + 
-    			" has the following neighbours:" + neighbours);
-	}
-    
-	/** For specifying params of an AI node after construction time. 
+    /** For specifying params of an AI node after construction time. 
 	 * For example, setting a 'debug' field to true. This method should handle
 	 * strings for keys and convert the value string to the appropriate type.
-	 * This method should return whether the param was successfully applied. */
+	 * This method should return whether the param was successfully applied. 
+	 * @param key 
+	 * @param value 
+	 * @return */
 	public boolean setParam(String key, String value) {
 		return false; // No params settable for AbstractAINode yet
 	}
@@ -1538,7 +1559,8 @@ public abstract class AbstractAuctionSchedule {
         stepsTillFreeResources.remove(target);
     }
 	
-	/** Returns the name of the underlying CameraController object */
+	/** Returns the name of the underlying CameraController object 
+	 * @return */
 	public String getName() {
 		return this.camController.getName();
 	}

@@ -4,8 +4,19 @@ import java.awt.Dimension;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JScrollPane;
-
+/**
+ * information set for dataPanel
+ * 
+ * !! NOT USED !!!
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class DataView  extends JInternalFrame{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     static int openFrameCount = 0;
     static final int xOffset = 30, yOffset = 30;
     
@@ -13,6 +24,18 @@ public class DataView  extends JInternalFrame{
     
     SimCoreModel _sim;
  
+    /**
+     * 
+     * Constructor for DataView.java
+     * @param title
+     * @param locx
+     * @param locy
+     * @param w
+     * @param h
+     * @param valX
+     * @param valY
+     * @param sim
+     */
     public DataView(String title, int locx, int locy, int w, int h, int valX, int valY, SimCoreModel sim) {
         super(title, 
               true, //resizable
@@ -49,6 +72,9 @@ public class DataView  extends JInternalFrame{
         repaint();
     }
     
+    /**
+     * update panel
+     */
 	public void update()
     {
 		dataPanel.add(_sim.computeUtility());

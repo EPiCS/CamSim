@@ -35,6 +35,8 @@ public abstract class AbstractCommunication {
 	/** 
 	 * Broadcast the message to all nodes, without using
 	 * a special multicast policy 
+	 * @param mt 
+	 * @param o 
 	 */
 	public abstract void broadcast(MessageType mt, Object o);
 

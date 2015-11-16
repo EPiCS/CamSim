@@ -13,7 +13,6 @@ import java.util.Set;
 import epics.camsim.core.TraceableObject;
 import epics.camsim.core.TraceableObjectRepresentation;
 import epics.common.AbstractAuctionSchedule;
-import epics.common.AbstractCommunication;
 import epics.common.IBanditSolver;
 import epics.common.IRegistration;
 import epics.common.ITrObjectRepresentation;
@@ -660,7 +659,9 @@ public class HistoricalAINode {
 	/** Given an object, look at first two time steps of movement and 
 	 * categorise based on the object's direction.
 	 * See information around the categories field for information on what
-	 * each category means.  */
+	 * each category means.  
+	 * @param itro 
+	 * @return */
 	public int getCategoryForObject(ITrObjectRepresentation itro) {
 		LinkedList<Point2D.Double> pointsForObject = historicalLocations.get(itro);
 

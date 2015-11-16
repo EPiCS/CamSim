@@ -23,14 +23,23 @@ public class RunParams {
         return INSTANCE;
     }
 
-    /** Load all parameters from this properties file and dump all previous
-     * properties (no current support for loading properties from multiple files). */
+    /** 
+     * Load all parameters from this properties file and dump all previous
+     * properties (no current support for loading properties from multiple files).
+     * @param filepath
+     * @throws IOException
+     */
     public static void loadFromFile(String filepath) throws IOException {
         setPropertiesFile(filepath);
         System.out.println("Params File loaded");
     }
     
-    /** Loads the given file if no params have been loaded from any file at all */
+    /** 
+     * Loads the given file if no params have been loaded from any file at all
+     * @param filepath
+     * @return
+     * @throws IOException
+     */
     public static boolean loadIfNotLoaded(String filepath) throws IOException {
     	if (INSTANCE == null) {
     		loadFromFile(filepath);
@@ -39,48 +48,95 @@ public class RunParams {
     	return false;
     }
 
+    /**
+     * 
+     * @param filepath
+     * @return
+     * @throws IOException
+     */
     public static RunParams setPropertiesFile(String filepath) throws IOException {
         INSTANCE = new RunParams(filepath);
         return INSTANCE;
     }
 
-    /** Convenience method, referring to getString() */
+    /** 
+     * Convenience method, referring to getString()
+     * @param key
+     * @return
+     */
     public static String get(String key) {
     	return getString(key);
     }
     
+    /**
+     * 
+     * @param key
+     * @return
+     */
     public static String getString(String key) {
     	return getInstance().getProperty(key);
     }
 
+    /**
+     * 
+     * @param key
+     * @return
+     */
     public static Integer getInt(String key) {
         return Integer.parseInt(getInstance().getProperty(key));
     }
 
+    /**
+     * 
+     * @param key
+     * @return
+     */
     public static Double getDouble(String key) {
         return Double.parseDouble(getInstance().getProperty(key));
     }
 
+    /**
+     * 
+     * @param key
+     * @return
+     */
     public static Float getFloat(String key) {
         return Float.parseFloat(getInstance().getProperty(key));
     }
 
+    /**
+     * 
+     * @param key
+     * @return
+     */
     public static Boolean getBool(String key){
         return Boolean.parseBoolean(key);
     }
-
+    
+    /**
+     * 
+     * @return
+     */
     public static String getAllPropertiesString() {
         return getInstance().prop.toString();
     }
 
-    /** Returns set of entries with type 'Object, Object', but keys  
+    /** 
+     * Returns set of entries with type 'Object, Object', but keys  
      * should be cast to Strings and values to their appropriate type.
-     * Order not guaranteed! */
+     * Order not guaranteed!
+     * @return
+     */
     public static Set<Entry<Object, Object>> getAllProperties() {
     	return getInstance().prop.entrySet();
     }
     
-    /** Sets a property. Returns previous property if existed */
+    /** 
+     * Sets a property. Returns previous property if existed 
+     * @param key
+     * @param value
+     * @return
+     */
     public static String overrideProperty(String key, String value) {
         return (String) getInstance().prop.setProperty(key, value);
     }
@@ -98,12 +154,17 @@ public class RunParams {
      * - Properties are line-separated by \r, \n or \r\n
      * - One property per line that looks like "key=value", e.g.
      *    hostname=localhost
+     * @param filepath 
+     * @throws IOException 
+     * @throws FileNotFoundException 
      */
     private RunParams(String filepath) throws IOException, FileNotFoundException {
         prop.load(new FileInputStream(filepath));
     }
 
-    /** If a property is contained in the properties file, returns it. Otherwise null */
+    /** If a property is contained in the properties file, returns it. Otherwise null 
+     * @param key 
+     * @return */
     private String getProperty(String key) {
         return prop.getProperty(key);
     }

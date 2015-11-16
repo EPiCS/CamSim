@@ -65,6 +65,16 @@ public class PassiveAuctionSchedule extends AbstractAuctionSchedule { //ActiveAI
     	super(staticVG, vg, r, auctionDuration, rg);
     }
 	
+	/**
+	 * 
+	 * Constructor for PassiveAuctionSchedule.java
+	 * @param staticVG
+	 * @param vg
+	 * @param r
+	 * @param auctionDuration
+	 * @param rg
+	 * @param bs
+	 */
 	public PassiveAuctionSchedule(boolean staticVG, 
     		Map<String, Double> vg, IRegistration r, int auctionDuration, RandomNumberGenerator rg, IBanditSolver bs) {
     	super(staticVG, vg, r, auctionDuration, rg, bs);

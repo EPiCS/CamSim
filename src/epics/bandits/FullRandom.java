@@ -1,10 +1,7 @@
 package epics.bandits;
 
-import java.util.Random;
-
 import epics.common.AbstractBanditSolver;
 import epics.common.RandomNumberGenerator;
-import epics.common.RandomUse.USE;
 
 /**
  * Full Random Bandit Problem Solver

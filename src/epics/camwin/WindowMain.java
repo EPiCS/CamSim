@@ -2,8 +2,6 @@ package epics.camwin;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
@@ -14,7 +12,6 @@ import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -32,25 +29,41 @@ import epics.camsim.core.SimSettings;
 
 public class WindowMain implements ActionListener{
 	
+    /**
+     * main jframe
+     */
 	public JFrame frame;
+	/**
+	 * timer of simulator
+	 */
 	public Timer timer;
+	/**
+	 * model of simulator
+	 */
 	public SimCoreModel sim_model;
 	boolean modeDemo3 = false;
     boolean modeDemo1 = false;
+    /**
+     * visual output of simulation
+     */
     public WorldView wv;
+    /** 
+     * predefined scenarios
+     */
+    @SuppressWarnings("rawtypes")
     JComboBox demos;
     DataView dv;
     JButton save;
-//    JLabel curL;
     
+    /**
+     * 
+     * Constructor for WindowMain.java
+     * @param sm
+     * @param input
+     */
 	public WindowMain(SimCoreModel sm, String input){
 		sim_model = sm;
 
-		//new InfoView(sm);
-		
-//    	String filename = input.substring(input.lastIndexOf("\\")+1);
-		
-//		curL = new JLabel("Currently running: " + filename);
 		timer = new Timer(100, new ActionListener() {
 
             public void actionPerformed(ActionEvent ae) {
@@ -60,6 +73,9 @@ public class WindowMain implements ActionListener{
 	}	
 	JDesktopPane desktop;
 	
+	/**
+	 * Creates and displays the GUI
+	 */
     public void createAndShowGUI() {
         frame = new JFrame("Camera Simulator");
         frame.setSize(1024, 768);
@@ -69,7 +85,6 @@ public class WindowMain implements ActionListener{
         int w = 300;
         int h = 300;
         dv = new DataView("data", frame.getSize().width - w -16, frame.getSize().height - h-38, w, h, 1000, 80, sim_model);
-//        dv.setVisible(true);
         desktop.add(dv);
         frame.setContentPane(desktop);
         frame.setVisible(true);
@@ -87,32 +102,18 @@ public class WindowMain implements ActionListener{
         JPanel button_panel = createButtons();
         frame.add(button_panel, BorderLayout.NORTH);
         
-//        JPanel info_panel = createInfo();
-//        frame.add(info_panel, BorderLayout.SOUTH);
 
         frame.setBackground(Color.red);
-
-        //SimCore sim = new SimCore(0, -30, 30, -30, 30);
        
         wv = new WorldView(sim_model);
-//        ScrollPane sp = new ScrollPane();
-//        
-//        sp.add(wv, BorderLayout.CENTER);
         frame.add(wv, BorderLayout.CENTER);
-        //frame.add(sp, BorderLayout.CENTER);
         
         frame.setVisible(true);
 
 	}
-	
-    private JPanel createInfo() {
-		JPanel info = new JPanel();
-//		info.add(curL);
-		
-		return info;
-	}
 
-	private JPanel createButtons() {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+    private JPanel createButtons() {
     	JPanel button_panel = new JPanel();
         
         String[] demoString = {"Select simulation file ...", "Demo I","Demo II","Demo III"};
@@ -176,10 +177,16 @@ public class WindowMain implements ActionListener{
         return button_panel;
 	}
 
+	/**
+	 * restart timer for simultation
+	 */
 	public void timeReset() {
         timer.stop();
     }
 
+	/**
+	 * forward timer and entire simulation by one step 
+	 */
     public void timeStep() {
         try {
 			sim_model.update();
@@ -191,7 +198,12 @@ public class WindowMain implements ActionListener{
         frame.repaint();
     }
 
-	@Override
+    /*
+     * (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+	@SuppressWarnings("rawtypes")
+    @Override
 	public void actionPerformed(ActionEvent e) {
 		FileFilter scenariosFilter = new FileFilter() {
 			@Override
@@ -328,14 +340,15 @@ public class WindowMain implements ActionListener{
 		}
 	}
 
+	/**
+	 * loads first demo
+	 */
 	public void loadDemo1() {
 		modeDemo3 = false;
         modeDemo1 = true;
         timeReset();
 
         sim_model.loadDemo(1);
-
-//        curL.setText("Currently running: Demo I");
         
         frame.repaint(); 
 	}
@@ -347,8 +360,6 @@ public class WindowMain implements ActionListener{
         
         sim_model.loadDemo(2);
         
-//      curL.setText("Currently running: Demo II");
-        
         frame.repaint();
 	}
 
@@ -358,8 +369,6 @@ public class WindowMain implements ActionListener{
       	timeReset();
       	
       	sim_model.loadDemo(3);
-      	
-//      curL.setText("Currently running: Demo III");
         
       	frame.repaint();
 	}

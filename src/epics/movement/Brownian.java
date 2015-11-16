@@ -8,6 +8,11 @@ import epics.camsim.core.SimCore;
 import epics.common.*;
 import epics.common.RandomUse.USE;
 
+/**
+ * Brownian movement implementation for objects in the CamSim simulation environment
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class Brownian extends AbstractMovement{
 
     double mean = 0.0;
@@ -17,6 +22,17 @@ public class Brownian extends AbstractMovement{
     double initX;
     double initY;
     
+    /**
+     * Constructor for Brownian
+     * @param x x-coordinate of initial (starting) position
+     * @param y y-coordinate of initial (starting) position
+     * @param heading initial heading direction
+     * @param speed initial speed
+     * @param rg random number generator
+     * @param sim simulation environment
+     * @param mean mean value for x and y
+     * @param std standard deviation for x and y.
+     */
     public Brownian(double x, double y, double heading, double speed, RandomNumberGenerator rg, SimCore sim,  double mean, double std){
         super(x, y, heading, speed, rg, sim);
         this.initX = x;

@@ -3,11 +3,28 @@ package epics.bandits;
 import epics.common.AbstractBanditSolver;
 import epics.common.RandomNumberGenerator;
 
+/**
+ * UCB2 implementation to approach the idealised problem of explore vs. exploit.
+ * @see <a href="http://link.springer.com/article/10.1023%2FA%3A1013689704352?LI=true#page-1">UCB2 </a>
+ * 
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class UCB2 extends AbstractBanditSolver {
 
 	int[] selected ;
 	double special_alpha = 0.5; //could this be epsilon??
 	
+    /**
+     * Constructor for UCB2 - with two-fold utility function.
+     * alpha = [0,1]. Alpha is the priority of the first parameter, 1-alpha is the priority for the second parameter.
+     * @param numberOfOptions number of options for the bandit solver to choose from
+     * @param epsilon not used in this implementation 
+     * @param alpha the alpha value to trade of communication vs utility
+     * @param interval the interval the bandit solver explores/exploits options
+     * @param rg the random number generator
+     */
 	public UCB2(int numberOfOptions, double epsilon, double alpha,
 			int interval, RandomNumberGenerator rg) {
 		super(numberOfOptions, epsilon, alpha, interval, rg);
@@ -15,6 +32,12 @@ public class UCB2 extends AbstractBanditSolver {
 		selected = new int[numberOfOptions];
 	}
   
+	/**
+     * Constructor for UCB1 from another bandit solver
+     * @param eg other bandit solver to create UCB1 from
+     * @param comm communication strategy
+     * @param algo auction schedule
+     */
 	public UCB2(AbstractBanditSolver eg, int comm, String algo) {
 		super(eg, comm, algo);
 		this.special_alpha = ((UCB2) eg).special_alpha;
@@ -24,7 +47,7 @@ public class UCB2 extends AbstractBanditSolver {
 	
 	@Override
 	public int selectAction() {
-		int strategy;
+//		int strategy;
 
 		if(count >= _interval){
 			if(currentStrategy != -1){
@@ -89,7 +112,7 @@ public class UCB2 extends AbstractBanditSolver {
 
     @Override
     public int selectActionWithoutReward() {
-        int strategy;
+//        int strategy;
 
         if(count >= _interval){
                        

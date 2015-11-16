@@ -20,6 +20,10 @@ public class Statistics {
 	private String summary = null;
     private int time_step = 0;
 
+    /**
+     * return current time step
+     * @return
+     */
     public int get_time_step() {
         return time_step;
     }
@@ -43,8 +47,6 @@ public class Statistics {
     private ArrayList<Integer> strategy = new ArrayList<Integer>();
     private ArrayList<Double> overlap = new ArrayList<Double>();
     
-    
-    private long threadId;
 	private Integer strategy_tmp;
 	private double tmp_totutil;
 	private ArrayList<Double> totUtil = new ArrayList<Double>();
@@ -54,9 +56,6 @@ public class Statistics {
 	private double comm_oh_cumulative;
 	private boolean addPerCam = false;
     private long _randSeed;
-//    static {
-//        init(null, null);
-//    }
 
     private ArrayList<Double> proportion = new ArrayList<Double>();
 
@@ -71,11 +70,24 @@ public class Statistics {
     private ArrayList<Double> confidence = new ArrayList<Double>();
 
     
-    
+    /**
+     * Constructor for Statistics.java
+     * @param outputFile
+     * @param summaryFile
+     * @param allStatistics
+     * @param randSeed
+     */
     public Statistics(String outputFile, String summaryFile, boolean allStatistics, long randSeed) {
     	init(outputFile, summaryFile, allStatistics, randSeed);
     }
 
+    /**
+     * initiate statistics - reset everything
+     * @param outputFile
+     * @param summaryFile
+     * @param allStatistics
+     * @param randSeed
+     */
     public void init(String outputFile, String summaryFile, boolean allStatistics, long randSeed) {
     	this.allStatistics = allStatistics;
     	_randSeed = randSeed;
@@ -116,10 +128,11 @@ public class Statistics {
         confidence_tmp = 0;
     }
 
+    /**
+     * close current statistics. write everything to file
+     * @throws Exception
+     */
     public void close() throws Exception{
-//    	if(threadId != Thread.currentThread().getId()){
-//			throw new Exception("thread " + Thread.currentThread().getId() + "not equal to initiator thread ("+ threadId +")");
-//    	}
         if (output != null) {
 
         	PrintWriter out = null;
@@ -173,10 +186,11 @@ public class Statistics {
         }
     }
 
+    /**
+     * prepare for next timestep - save everything, and reset temporary values
+     * @throws Exception
+     */
     public void nextTimeStep() throws Exception{
-//    	if(threadId != Thread.currentThread().getId()){
-//    		throw new Exception("thread " + Thread.currentThread().getId() + "not equal to initiator thread ("+ threadId +")");
-//    	}
         time.add(time_step);
         utility.add(util_tmp);
         communication.add(comm_tmp);
@@ -220,7 +234,12 @@ public class Statistics {
         }
     }
 
-    /** Spaces=true inserts a space after each value for human-readable version */
+    /** 
+     * Spaces=true inserts a space after each value for human-readable version 
+     * @param spaces 
+     * @return 
+     * @throws Exception 
+     **/
     public String getSummary(boolean spaces) throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){
 //    		throw new Exception("thread " + Thread.currentThread().getId() + "not equal to initiator thread ("+ threadId +")");
@@ -242,7 +261,12 @@ public class Statistics {
     	return summary;
     }
     
-    /** Spaces=true inserts a space after each field name for human-readable version */
+    /** 
+     * Spaces=true inserts a space after each field name for human-readable version 
+     * @param spaces 
+     * @return 
+     * @throws Exception 
+     **/
     public String getSummaryDesc(boolean spaces) throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){
 //    		throw new Exception("thread " + Thread.currentThread().getId() + "not equal to initiator thread ("+ threadId +")");
@@ -264,9 +288,19 @@ public class Statistics {
     	return desc;
     }
     
+    /**
+     * 
+     * @throws Exception
+     */
     public void addVisible() throws Exception{
     }
 
+    /**
+     * add utility for one timestep
+     * @param utility
+     * @param camName
+     * @throws Exception
+     */
     public void addUtility(double utility, String camName) throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){
 //    		throw new Exception("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
@@ -283,6 +317,12 @@ public class Statistics {
     	}
     }
 
+    /**
+     * add communication for one timestep
+     * @param communication
+     * @param camName
+     * @throws Exception
+     */
     public void addCommunication(double communication, String camName) throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){
 //    		throw new Exception("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
@@ -299,6 +339,12 @@ public class Statistics {
         }
     }
     
+    /**
+     * add confidence for one timestep
+     * @param conf
+     * @param camName
+     * @throws Exception
+     */
     public void addConfidence(double conf, String camName) throws Exception{
         confidence_tmp += conf;
         
@@ -312,6 +358,13 @@ public class Statistics {
         }
     }
     
+    /**
+     * add proportion for one timestep
+     * 
+     * @param prop
+     * @param camName
+     * @throws Exception
+     */
     public void addProportion(double prop, String camName) throws Exception{
         proportion_tmp += prop;
         
@@ -329,7 +382,12 @@ public class Statistics {
         }
     }
     
-    
+    /**
+     * add communication overhead for one timestep 
+     * @param overhead
+     * @param camName
+     * @throws Exception
+     */
     public void setCommunicationOverhead(double overhead, String camName) throws Exception{
     	comm_oh_tmp += overhead;
     	if(addPerCam){
@@ -342,10 +400,21 @@ public class Statistics {
     	}
     }
 
+    /**
+     * add handovers for current timestep
+     * @param handover
+     */
     public void addHandover(double handover) {
         handover_tmp += handover;
     }
 
+    /**
+     * add utility of individual cameras for this timestep.
+     * @param cam
+     * @param camUtility
+     * @param camName
+     * @throws Exception
+     */
 	public void addCamUtility(String cam, Map<String, Double> camUtility, String camName)  throws Exception{
 //    	if(threadId != Thread.currentThread().getId()){
 //    		throw new Exception("thread " + Thread.currentThread().getId() + " not equal to initiator thread ("+ threadId +")");
@@ -361,6 +430,11 @@ public class Statistics {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param strat
+	 * @param camName
+	 */
 	public void setStrat(int strat, String camName){
 		strategy_tmp ++;
 		
@@ -374,6 +448,12 @@ public class Statistics {
 		}
 	}
 
+	/**
+	 * set reward of this timestep
+	 * @param utility2
+	 * @param commOverhead
+	 * @param camName
+	 */
 	public void setReward(double utility2, double commOverhead, String camName) {
 		tmp_totutil += utility2;
 		
@@ -387,6 +467,11 @@ public class Statistics {
 		}
 	}
 	
+	/**
+	 * add overlap for this timestep
+	 * @param en
+	 * @param camName
+	 */
 	public void addOverlap(double en, String camName){
 	    overlap_tmp += en;
         
@@ -400,10 +485,18 @@ public class Statistics {
         }
 	}
 	
+	/**
+	 * no output on command line
+	 * @param q
+	 */
 	public void setQuiet(boolean q){
 	    quiet = q;
 	}
 	
+	/**
+	 * print information per camera to files
+	 * @param camName
+	 */
 	private void createCamStatistics(String camName) {
 		if(output.contains("/")){
 		    String ocam = output.substring(0, output.lastIndexOf('/')-1) + "_" + camName + output.substring(output.lastIndexOf('/')+1);

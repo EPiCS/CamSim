@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -15,14 +14,37 @@ import epics.camsim.core.SimCore;
 import epics.camsim.core.SimSettings;
 import epics.camsim.core.SimSettings.CameraSettings;
 
+/**
+ * Simulating data from a real world scenario
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ * 
+ */
 public class SimSimReal {
     
+    /**
+     * defines if statistics for individual cameras should be kept
+     */
     public static boolean allStatistics = false;
+    /**
+     * run only homogeneous combinations of auction schedules and communication policies
+     */
     public static boolean runOnlyHomogeneous = true;
+    /**
+     * run simulation sequentially (no paralell processing)
+     */
 	public static boolean runSequential = true;
+	/**
+	 * 
+	 */
 	public static boolean runByParameter = false;
 	private static boolean runAllErrorVersions = false;
+	/**
+	 * run all possible heterogeneous combinations of auction schedules and communication policies
+	 */
 	public static boolean runAllPossibleVersions = false;
+	/**
+	 * run the bandit solvers to select an auction schedule and communication policy for each camera
+	 */
 	public static boolean runBandits = false;
 	private static boolean diffSeed = true;
 	
@@ -45,6 +67,10 @@ public class SimSimReal {
 	
 	static ExecutorService exService;
 	
+	/**
+	 * Main method
+	 * @param args
+	 */
 	public static void main(String[] args){
 		
 				
@@ -75,9 +101,7 @@ public class SimSimReal {
 		for(File folder : dir.listFiles()){
 			//get all files from folder			
 			if(folder.isDirectory()){
-				
-				long seed = initialSeed;
-				
+								
 				ArrayList<String> names = new ArrayList<String>();
 				ArrayList<ArrayList<ArrayList<Double>>> confs = new ArrayList<ArrayList<ArrayList<Double>>>();
 				ArrayList<ArrayList<ArrayList<Integer>>> vis = new ArrayList<ArrayList<ArrayList<Integer>>>();
@@ -88,8 +112,8 @@ public class SimSimReal {
 					ArrayList<ArrayList<Double>> confsCam = new ArrayList<ArrayList<Double>>();
 					ArrayList<ArrayList<Integer>> visCam = new ArrayList<ArrayList<Integer>>();
 					
-					ArrayList<Double> c = new ArrayList<Double>();
-					ArrayList<Integer> v = new ArrayList<Integer>();
+//					ArrayList<Double> c = new ArrayList<Double>();
+//					ArrayList<Integer> v = new ArrayList<Integer>();
 					//read file for data - add to simsettingsdata
 					Scanner s;
 					try {
@@ -173,6 +197,14 @@ public class SimSimReal {
 	    
 	}
 
+	/**
+	 * Generates a list of possible combinations of auction schedules and communication policies recursively and traverses the list in order to process all possible combinations
+	 * @param reps cameras in the simulation
+	 * @param input objects in the simulations
+	 * @param ss current simsetting
+	 * @param count number of combinations done
+	 * @param scenDirName scenario file name
+	 */
 	public static void doVariation(LinkedList<ArrayList<CameraSettings>> reps, States[] input, SimSettings ss, int count, String scenDirName){// ArrayList<CameraSettings> item, int count, String scenDirName){
 		long seed = initialSeed;
 		SimSettings simS = ss.copy();

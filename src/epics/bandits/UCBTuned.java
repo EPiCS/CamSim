@@ -5,19 +5,47 @@ import java.util.ArrayList;
 import epics.common.AbstractBanditSolver;
 import epics.common.RandomNumberGenerator;
 
+
+/**
+ * UCB1-Tuned implementation to approach the idealised problem of explore vs. exploit.
+ * @see <a href="http://link.springer.com/article/10.1023%2FA%3A1013689704352?LI=true#page-1">UCB1-Tuned</a>
+ * 
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
+ */
 public class UCBTuned extends AbstractBanditSolver {
-	
+    
+    /**
+     * Constructor for UCB1-Tuned - with two-fold utility function.
+     * alpha = [0,1]. Alpha is the priority of the first parameter, 1-alpha is the priority for the second parameter.
+     * @param numberOfOptions number of options for the bandit solver to choose from
+     * @param epsilon not used in this implementation 
+     * @param alpha the alpha value to trade of communication vs utility
+     * @param interval the interval the bandit solver explores/exploits options
+     * @param rg the random number generator
+     */
 	public UCBTuned(int numberOfOptions, double epsilon, double alpha,
 			int interval, RandomNumberGenerator rg) {
 		super(numberOfOptions, epsilon, alpha, interval, rg);
 	}
   
+	/**
+     * Constructor for UCB1 from another bandit solver
+     * @param eg other bandit solver to create UCB1 from
+     * @param comm communication strategy
+     * @param algo auction schedule
+     */
 	public UCBTuned(AbstractBanditSolver eg, int comm, String algo) {
 		super(eg, comm, algo);
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see epics.common.AbstractBanditSolver#selectAction()
+	 */
 	public int selectAction() {
-	      int strategy;
+//	      int strategy;
 
 	      if(count >= _interval){
 	    	  if(currentStrategy != -1){

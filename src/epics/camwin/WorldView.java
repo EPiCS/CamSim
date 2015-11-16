@@ -2,7 +2,6 @@
 package epics.camwin;
 
 import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.event.*;
 import java.awt.geom.Line2D;
 import java.io.FileNotFoundException;
@@ -17,24 +16,39 @@ import net.sf.epsgraphics.EpsGraphics;
 
 import com.sun.javafx.geom.Arc2D;
 
+import epics.ai.commpolicy.*;
 import epics.camsim.core.*;
-import epics.commpolicy.*;
 
 /**
- * Draws a spatial network on a panel
+ * Draws a graphical representation of the simulation on a panel
+ * 
+ * @author Lukas Esterle <lukas [dot] esterle [at] aau [dot] at>
+ *
  */
 public class WorldView extends JPanel implements Observer {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private static final boolean SHOW_LABELS = false;
     private static final boolean SHOW_RES_LABELS = false;
 	private SimCoreModel sim_model;
     private CoordinateSystemTransformer cst;
 
+    /**
+     * sets the simulation model
+     * @param model
+     */
     public void setModel( SimCoreModel model ){
         this.sim_model = model;
         this.cst = this.sim_model.createCoordinateSystemTransformer(100, 100);
     }
 	
+    /**
+     * Constructor for WorldView
+     * @param model
+     */
     public WorldView(SimCoreModel model) {
 		super();
 		setBackground(Color.white);
@@ -42,15 +56,21 @@ public class WorldView extends JPanel implements Observer {
         setToolTipText("test");
     }
     
+    /*
+     * (non-Javadoc)
+     * @see javax.swing.JComponent#processMouseMotionEvent(java.awt.event.MouseEvent)
+     */
     @Override
     public void processMouseMotionEvent(MouseEvent e) {
     	double dx = cst.winToSimX(e.getLocationOnScreen().x);
     	double dy = cst.winToSimY(e.getLocationOnScreen().y);
     	setToolTipText(e.getLocationOnScreen().x + "," + e.getLocationOnScreen().y);
-    	
-    	//System.out.println("dx: " + dx + ", dy: " + dy + ", min " + e.getLocationOnScreen().x + ", max " + e.getLocationOnScreen().y);
     }
     
+    /*
+     * (non-Javadoc)
+     * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+     */
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
@@ -393,6 +413,12 @@ public class WorldView extends JPanel implements Observer {
     	repaint();
     }
 
+    /**
+     * creates a snapshot of the graphical representation of the simulation as an EPS file. 
+     * @param filename the filename to store the EPS file
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     public void createSnapshot(String filename) throws FileNotFoundException, IOException {
         int bby = (int) this.cst.getRealHeight();
         int bbx = (int) this.cst.getRealWidth();
@@ -414,13 +440,6 @@ public class WorldView extends JPanel implements Observer {
         g2.setColor(Color.BLUE);       
         
         g2.drawRect(0, 0, bbx, bby);
-        
-        
-//      g2.setColor(Color.green);
-//
-//  
-//      g2.setColor(Color.white);
-//      g2.fill(new Rectangle(0, 0, width, height));
         
         g2.setColor(Color.GREEN);
         ArrayList<CameraController> cameras = sim_model.getCameras();
@@ -580,27 +599,11 @@ public class WorldView extends JPanel implements Observer {
 
             } else {
                 
-//                Line2D.Double q = new Line2D.Double(
-//                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-//                        this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA) );
-//                g2.draw(q);
-//    
-//                q = new Line2D.Double(
-//                        this.cst.simToWindowX(cx), this.cst.simToWindowY(cy),
-//                        this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
-//                g2.draw(q);
-
                 double headingMiddle = c.getHeading();
                 double xpM = x * Math.cos( headingMiddle ) - y * Math.sin( headingMiddle );
                 double ypM = x * Math.sin( headingMiddle ) - y * Math.cos( headingMiddle );
                 xpM = xpM * range;
-                ypM = ypM * range;
-
-                
-//                q = new Line2D.Double(
-//                        this.cst.simToWindowX(cx+xpA), this.cst.simToWindowY(cy+ypA),
-//                        this.cst.simToWindowX(cx+xpB), this.cst.simToWindowY(cy+ypB) );
-//                g2.draw(q);
+                ypM = ypM * range;             
     
                 java.awt.geom.Arc2D arc2 = new java.awt.geom.Arc2D.Double();
                 double chead = 90 + (Math.toDegrees(headingMiddle)*(-1)); 
@@ -693,7 +696,6 @@ public class WorldView extends JPanel implements Observer {
                 for (Location loc : hoLoc.keySet()) {
                     g2.setColor(camCol); //Color.BLUE);
                     p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 3);
-//                    g2.fill(p);
                     g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()-2, (int)p.getCenterX()+2, (int) p.getCenterY()+2);
                     g2.drawLine((int)p.getCenterX()-2, (int) p.getCenterY()+2, (int)p.getCenterX()+2, (int) p.getCenterY()-2);
                 }
@@ -703,7 +705,7 @@ public class WorldView extends JPanel implements Observer {
             Map<Location, Double> olLoc = c.getAINode().getOverlapLocation();
             if(olLoc != null){
                 for (Location loc : olLoc.keySet()){
-                    g2.setColor(test); //camCol.brighter()); //Color.RED);
+                    g2.setColor(test);
                     p = new Point(this.cst.simToWindowX(cst.toCenterBasedX(loc.getX())), this.cst.simToWindowY(cst.toCenterBasedY(loc.getY())), 1);
 //                  g2.fill(p);
                     g2.drawRect((int)p.getCenterX()-2, (int)p.getCenterY()-1, 2, 2);

@@ -57,8 +57,6 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
     protected double totalPerformance;
     protected double totalCommunication;
 
-    private int counterinit = 0;
-
     private double _nrObjects;
 
     private double beta = 0.0;
@@ -76,6 +74,8 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
      * @param comm The initial communication
      * @param algo The initial algorithm
      * @param alpha The value alpha is initialised with
+     * @param interval 
+     * @param rg 
      */
 	public AbstractBanditSolver(int numberOfOptions, double epsilon, double alpha, int interval, RandomNumberGenerator rg) {
 		  
@@ -156,7 +156,7 @@ public abstract class AbstractBanditSolver implements IBanditSolver {
 		  
 		  int alg = 0;
 		    try {
-				if(Class.forName(algo).equals(epics.auctionSchedules.ActiveAINodeMulti.class))
+				if(Class.forName(algo).equals(epics.ai.auctionSchedules.ActiveAuctionSchedule.class))
 					alg = 0;
 				else
 					alg = 1;

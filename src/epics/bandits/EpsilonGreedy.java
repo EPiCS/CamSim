@@ -28,7 +28,7 @@ public class EpsilonGreedy extends AbstractBanditSolver{ // implements IBanditSo
 	 *  alpha describes the weighting factor for the utility function. the higher alpha, the more focus
 	 *  on performance of the tracker, the lower alpha, the more focus on low communication.
 	 * 
-	 * @param numberOfOptions the number of possible configurations
+	 * @param numberOfOptions the number of possible selections
 	 * @param epsilon the percentage of exploration
 	 * @param alpha the weighing factor for the utility function
 	 * @param interval how many timesteps until the bandit solver is being evaluated
@@ -38,6 +38,17 @@ public class EpsilonGreedy extends AbstractBanditSolver{ // implements IBanditSo
 		super(numberOfOptions, epsilon, alpha, interval, rg);
 	}
 	
+	/**
+	 * Constructor for EpsilonGreedy 
+	 * This constructor is used for selecting zoom levels having a handle for three options
+	 * @param numberOfOptions the number of possible selections
+	 * @param epsilon
+	 * @param alpha the first weighing factor for the utility function (confidence)
+	 * @param beta the second weighing factor for the utility function (proportion)
+	 * @param gamma the third weighing factor for the utility function (overlap)
+	 * @param interval how many timesteps until the bandit solver is being evaluated
+     * @param rg the given random number generator for this instance
+	 */
 	public EpsilonGreedy(int numberOfOptions, double epsilon, double alpha, double beta, double gamma, int interval, RandomNumberGenerator rg) {
         super(numberOfOptions, epsilon, alpha, interval, rg);
     }
